@@ -174,7 +174,7 @@ int main(int argc, char** argv) {
 	}
 	Sleep(1000);
 	// Move captions folder to custom directory if it already doesn't exist.
-	// <rant>It's fucking irritating that the .dat file complies to tf/resource and not the .txt's home directory..</rant>
+	// <rant>It's so irritating that the .dat file complies to tf/resource and not the .txt's home directory..</rant>
 	if (std::filesystem::exists(TFdirectory.string()+"custom/customvoicemenucaptions/resource")) std::filesystem::remove_all(TFdirectory.string()+"custom/customvoicemenucaptions/resource");
 	std::filesystem::create_directories(TFdirectory.string()+"custom/customvoicemenucaptions");
 	std::filesystem::copy(std::filesystem::temp_directory_path().string()+"customvoicemenucaptions/resource",TFdirectory.string()+"custom/customvoicemenucaptions/resource");
