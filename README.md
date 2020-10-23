@@ -1,0 +1,2 @@
+# Voicemenu Generator
+A generator for custom voice menus focused on TF2, but may work for source games (Untested!). Warning though, this generator has no error checking when compiling, except for missing braces. Note that this repository exists as a backup. 
