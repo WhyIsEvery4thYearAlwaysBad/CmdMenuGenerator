@@ -112,8 +112,7 @@ void ParseTokens(std::vector<std::pair<Page,unsigned char> >& pages, const bool&
 			} while (tokens.at(i).type!=Token_type::TERMINAL && tokens.at(i).val!="|");
 			// Prep for next bind.
 			nkeys[nkeyit]++;
-			if (isconcise==false && nkeys[nkeyit]%10==0) nkeys[nkeyit]=(nkeys[nkeyit]%10)+1;
-			else if (isconcise==true && nkeys[nkeyit]%6==0) nkeys[nkeyit]=(nkeys[nkeyit]%5)+1;
+			nkeys[nkeyit]=(nkeys[nkeyit]%10)+1;
 		}
 		// STRING { - New Page
 		else if (StreamIsNewPage(i)) {
