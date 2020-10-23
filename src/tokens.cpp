@@ -96,8 +96,7 @@ void ParseTokens(std::vector<std::pair<Page,unsigned char> >& pages, const bool&
 			pages.at(pageiter).first.binds.push_back({nkeys[nkeyit],tokens.at(i).val,tempformat,tokens.at(i+1).val+"; cvm.exitmenu"});
 			// Add keys.
 			nkeys[nkeyit]++;
-			if (isconcise==false && nkeys[nkeyit]%10==0) nkeys[nkeyit]=(nkeys[nkeyit]%10)+1;
-			else if (isconcise==true && nkeys[nkeyit]%6==0) nkeys[nkeyit]=(nkeys[nkeyit]%5)+1;
+			nkeys[nkeyit]=(nkeys[nkeyit]%10)+1;
 			i+=2;
 		}
 		// TOGGLE <STRING> <STRING>.. | - Toggle Bind
