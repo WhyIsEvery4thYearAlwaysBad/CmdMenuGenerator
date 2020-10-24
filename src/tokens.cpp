@@ -57,7 +57,7 @@ void Tokenize(const std::string& str, unsigned char& depthval) {
 	}
 }
 
-void ParseTokens(std::vector<std::pair<Page,unsigned char> >& pages, const bool& isconcise, unsigned char& depthval) {
+void ParseTokens(std::vector<std::pair<Page,unsigned char> >& pages, const bool& isconcise, unsigned char& depthval, unsigned long& bindcount) {
 	unsigned char nkeyit=0; 
 	unsigned char nkeys[256]={1};
 	unsigned int pageiter=0;
@@ -83,6 +83,7 @@ void ParseTokens(std::vector<std::pair<Page,unsigned char> >& pages, const bool&
 		// <STRING> <STRING> - New Bind
 		// else if (tokens.at(i).type==Token_type::STRING && tokens.at(i+1).type==Token_type::STRING) {
 		else if (StreamIsBind(i)) {
+			bindcount++;
 			std::string tempformat=Format(tokens.at(i).val);
 			// Add to a list if already found.
 			unsigned short duplicate_num=1;
@@ -102,6 +103,7 @@ void ParseTokens(std::vector<std::pair<Page,unsigned char> >& pages, const bool&
 		// TOGGLE <STRING> <STRING>.. | - Toggle Bind
 		// else if (tokens.at(i).type==Token_type::NONTERMINAL && tokens.at(i).val=="TOGGLE" && tokens.at(i+1).type==Token_type::STRING && tokens.at(i+2).type==Token_type::STRING) {
 		else if (StreamIsToggleBind(i)) {
+			bindcount++;
 			pages.at(pageiter).first.binds.push_back({nkeys[nkeyit],tokens.at(i+1).val,Format(tokens.at(i+1).val),tokens.at(i+2).val});
 			i+=3;
 			do {

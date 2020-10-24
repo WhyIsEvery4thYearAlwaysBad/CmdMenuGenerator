@@ -42,8 +42,9 @@ int main(int argc, char** argv) {
 	printf("Tokenizing Stream.\n");
 	Tokenize(InFileContent,depth);
 	printf("Tokenized Stream. Parsing Tokens.\n");
-	ParseTokens(pages,concise,depth);
-	printf("Parsed Tokens. Creating main cfg.\n");
+	unsigned long bindcount=0u;
+	ParseTokens(pages,concise,depth,bindcount);
+	printf("Parsed Tokens. (%lu binds compiled.) \nCreating main cfg.\n",bindcount);
 	if (depth!=0) {printf("Missing a brace somewhere...");return -1;}
 	// Directories
 	std::filesystem::create_directories(std::filesystem::temp_directory_path().string()+"customvoicemenu/cfg");
