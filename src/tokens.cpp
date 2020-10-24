@@ -96,7 +96,7 @@ void ParseTokens(std::vector<std::pair<Page,unsigned char> >& pages, const bool&
 			pages.at(pageiter).first.binds.push_back({nkeys[nkeyit],tokens.at(i).val,tempformat,tokens.at(i+1).val+"; cvm.exitmenu"});
 			// Add keys.
 			nkeys[nkeyit]++;
-			nkeys[nkeyit]=(nkeys[nkeyit]%10)+1;
+			if ((nkeys[nkeyit]%10)==0) nkeys[nkeyit]=(nkeys[nkeyit]%10)+1;
 			i+=2;
 		}
 		// TOGGLE <STRING> <STRING>.. | - Toggle Bind
@@ -112,7 +112,7 @@ void ParseTokens(std::vector<std::pair<Page,unsigned char> >& pages, const bool&
 			} while (tokens.at(i).type!=Token_type::TERMINAL && tokens.at(i).val!="|");
 			// Prep for next bind.
 			nkeys[nkeyit]++;
-			nkeys[nkeyit]=(nkeys[nkeyit]%10)+1;
+			if ((nkeys[nkeyit]%10)==0) nkeys[nkeyit]=(nkeys[nkeyit]%10)+1;
 		}
 		// STRING { - New Page
 		else if (StreamIsNewPage(i)) {
