@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
 	if (!EvaluateLaunchOptions(argc,argv)) return -1;
 	// if (launchoptionfilefound==false && argc>1) std::cerr<<"Where the hell is the file?\n";
 	if (argc<=1 || launchoptionhelp==true) {
-		std::cout<<"USEAGE: cvm_generator.exe <file> <args>\nArguments:\n-usingconfig";
+		std::cout<<"USEAGE: cvm_generator.exe <file> <args>\nArguments:\n-usingconfig\n-tf-path= - Path to tf folder.\n-config= - Path to your config. Isn't actually used, but it still must be valid.\n";
 		return -1;
 	}
 	bool overrideexists=false;
@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
 	std::ofstream exec(std::filesystem::temp_directory_path().string()+"customvoicemenu/cfg/activate_cvm.cfg");
 	exec<<"closecaption 1\ncc_lang customvoicemenu\nalias cvm.nullkeys \"alias cvm.1 ; alias cvm.2 ; alias cvm.3 ; alias cvm.4 ; alias cvm.5 ; alias cvm.6 ; alias cvm.7 ; alias cvm.8 ; alias cvm.9\"\nalias cvm.exitmenu \"cc_linger_time 0; cc_emit #cvm.clear_screen; alias +cvm.opencvm cvm.cvmstate0; cvm.resetkeys\"\nalias +cvm.opencvm cvm.cvmstate0\nalias -cvm.opencvm ;\nalias cvm.cvmstate0 \"exec cvm_root; alias -cvm.opencvm alias +cvm.opencvm cvm.cvmstate1; bind 1 cvm.1; bind 2 cvm.2; bind 3 cvm.3; bind 4 cvm.4; bind 5 cvm.5; bind 6 cvm.6; bind 7 cvm.7; bind 8 cvm.8; bind 9 cvm.9\"\nalias cvm.cvmstate1 \"cvm.exitmenu; alias -cvm.opencvm alias +cvm.opencvm cvm.cvmstate0\"\ncvm.exitmenu\nalias cvm.resetkeys "<<keymap["#cvm.resetkeys"]<<'\n';
 	
-	// Write override reset keys to the class configs if possible. If -usingconfig is present, print to console.
+	// Write override reset keys to the class configs if possible. If -config= is present, print to console.
 	if (usingconfig==true) {
 		if (overrideexists==true) for (auto& s : keymap) {
 			printf("Enter the reset key overrides into your class cfgs:\n");
