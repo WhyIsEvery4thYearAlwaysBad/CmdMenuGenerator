@@ -36,7 +36,7 @@ For example:
 —————————————————————————————
 	Compiling and Running
 —————————————————————————————
-To compile your voicemenu, put the filepath as a parameter to cvm_generate.exe. When compiling your voicemenu, the pages will be saved as cfgs with neutered filenames. The following characters and strings WILL be changed:
+To compile your voicemenu, put the filepath as a parameter to cvm_generate.exe. When compiling your voicemenu, the pages will be saved as cfgs with the filenames being formatted.
 To actually open a voicemenu, bind a key to an ±alias with cvm.menu_<formatted menu name> and +cvm.openmenu, and set the -alias to run -cvm.opemenu. 
 Note that if duplicate page names are found after being formatted, it will have a number appended to it, indicating the order with the first not having a number at all.
 For example:
