@@ -57,7 +57,7 @@ void Tokenize(const std::string& str, unsigned char& depthval) {
 	}
 }
 
-void ParseTokens(std::vector<std::pair<Page,unsigned char> >& pages, const bool& isconcise, unsigned char& depthval, unsigned long& bindcount) {
+bool ParseTokens(std::vector<std::pair<Page,unsigned char> >& pages, const bool& isconcise, unsigned char& depthval, unsigned long& bindcount) {
 	unsigned char nkeyit=0; 
 	unsigned char nkeys[256]={1};
 	unsigned int pageiter=0;
@@ -141,12 +141,22 @@ void ParseTokens(std::vector<std::pair<Page,unsigned char> >& pages, const bool&
 			i+=2;
 		}
 		else if (tokens.at(i).type==Token_type::TERMINAL && tokens.at(i).val=="}") {
-			depthval--, nkeyit--, pageiter=GetParentPage(pageiter), i+=1;
+			if (pages.at(pageiter).second==0) {
+				nkeys[nkeyit]=1;
+			}
+			else {
+				pageiter=GetParentPage(pageiter);
+				nkeyit--;
+			}
+			depthval--;
+			i+=1;
 		}
 		else if (tokens.at(i).type==Token_type::TERMINAL && tokens.at(i).val=="|") i++;
 		else {
 			printf("I think we found an error chief... (At Token %llu.)\n",i);
+			return false;
 			i++;
 		}
 	}
+	return true;
 }

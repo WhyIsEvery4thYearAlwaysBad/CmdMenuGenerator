@@ -3,7 +3,8 @@ How to Use:
 cvm_generate.exe <filename> <launch options>
 Launch Options:
 ⦁ -tf-path=<path> - Filepath to tf directory.
-⦁ -config=<configpath> - If set, will print the class overrides to console, rather than write to class cfgs.
+⦁ -config=<configpath> - If set, will print the class overrides to console, rather than write to class cfgs. <configpath> isn't actually used, but it has to be a valid filepath.
+Run this in a terminal, because you will get output.
 ————————————————
 	Syntax
 ————————————————
@@ -13,31 +14,38 @@ Compiler uses tokenization. Use // to make comments.
 ⦁ Bind - An entry. (Syntax: <TITLE : STRING> <COMMANDSTR: STRING>) (e.g "AmongUsIsCringe" "say Among Us is bad." In-Game: 5. AmongUsIsCringe)
 ⦁ Toggle Bind - A bind that changes it's state every time it's selected. (Syntax: <TITLE : STRING> <COMMANDSTR : STRING>... |)
 Strings that aren't part of a key value should be written as caption strings (strings that use the source caption language). Binds can use numberkeys 1-9, with the first bind using 1. 
-Anymore after that and the number key loops back to 1. (Yes I realize that this makes previous binds unusable. Just stay under 9 binds per page for now.)
-Example Voicemenu
-"root" {
-	"Messages" {
+Anymore after that and the number key loops back to 1. (Yes I realize that this makes previous binds unusable. Just stay under 9 binds per page.)
+
+Example Voicemenu: 
+
+	"root" {
+		"Messages" {
 		TOGGLE "Random crit bind."	"say Random crits are fair and balanced." "Random crit bind." "say Random Ccits are great!" "Random crit bind." "say Random Crits are- ok this joke is getting old." |
 		"Selling Diamonds." "say Come up Come up! I'm selling a strange killstreak Your Eternal Reward!"
 		"Mining Diamonds" "Hey LoOK gUYs I'm MinIng fOR DIamoNDs!"
+		}
+		"POOTIS" "voicemenu 1 4"
 	}
-	"POOTIS" "voicemenu 1 4"
-}
+	
+Any name formatted will change the following from their unformatted counter parts:
+⦁ Caption tags, non-alnum Characters, and invalid filename characters are removed.
+⦁ Uppercase letters become lowercase.
+⦁ Spaces ( ) are replaced with underscores (_).
+For example:
+⦁ If the page name was "[Random Crit Binds]", the cfg file found in the vpk would be "random_crit_binds".
 —————————————————————————————
 	Compiling and Running
 —————————————————————————————
 To compile your voicemenu, put the filepath as a parameter to cvm_generate.exe. When compiling your voicemenu, the pages will be saved as cfgs with neutered filenames. The following characters and strings WILL be changed:
-⦁ Caption tags, non-alnum Characters, and invalid filename characters are removed.
-⦁ Uppercase letters become lowercase.
-⦁ Spaces ( ) are replaced with underscores (_).
-To actually run your voicemenu, bind a key to +cvm.openmenu. Note that root page MUST be named root as that is executed when +cvm.openmenu is ran. To close the voicemenu, press the key bound to +cvm.opemenu or select a bind.
-If you want to run a specific page, open customvoicemenu.vpk and the cfg name of the page should be there. (You could of course open the console in game and type exec to get a list as well.)
+To actually open a voicemenu, bind a key to an ±alias with cvm.menu_<formatted menu name> and +cvm.openmenu, and set the -alias to run -cvm.opemenu. 
+Note that if duplicate page names are found after being formatted, it will have a number appended to it, indicating the order with the first not having a number at all.
 For example:
-⦁ If the page name was "[Random Crit Binds]", the cfg file found in the vpk would be "random_crit_binds".
-Also note that if duplicate page names are found (AFTER being neutered to use in filenames), the subsequent duplicates will have a number appeneded. 
-For example:
-⦁ If "Music" was used as a page name three times. The second and third pages would be music_1 and music_2 respectively.
+⦁ If "Music" was used as a page name three times. The Pages would be music, music_1, and music_2 respectively.
 ⦁ If there pages "<clr:100,255,100>SPAM", "<B>SPAM</B>", and "<I>SPAM</I>", they would be named "spam", "spam_1", and "spam_2" respectively.
+This is how you would open a menu:
+alias +open_menu_spam "cvm.menu_spam; +cvm.opencvm"
+alias -open_menu_spam "-cvm.opencvm"
+bind <KEY> +open_menu_spam
 ———————————————————————————
 	Key Value Reference
 ———————————————————————————
@@ -51,3 +59,5 @@ For example:
 ————————————
 ⦁ Last keymap defined with a space between the key and ':' generates an out of range error.
 ⦁ Generator runs in an infinite loop if the syntax isn't correct.
+⦁ If using more than 1 key to activate different menus, when one of them has already been pressed, it takes two presses to actually activate the menu.
+⦁ Captions don't compile correctly the first time, after compiling an edited voicemenu file.

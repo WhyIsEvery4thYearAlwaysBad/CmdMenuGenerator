@@ -13,8 +13,8 @@
 #define GetNextChar(str,i,c) str.find(c,i+1)-i
 std::vector<std::pair<Page,unsigned char> > pages; // {Page, Depth}
 const std::string badfpcharacters="|?\"\\:*<>";
-std::filesystem::path TFdirectory="C:/Program Files (x86)/Steam/steamapps/common/Team Fortress 2/tf";
-std::map<std::string,std::string> keymap={{"#cvm.defaultcolor",""},{"#cvm.boldbydefault","false"},{"#cvm.italicizebydefault","false"},{"#cvm.resetkeys","bind 1 slot1; bind 2 slot2; bind 3 slot3; bind 4 slot4; bind 5 slot5; bind 6 slot6; bind 7 slot7; bind 8 slot8; bind 9 slot9; bind 0 slot10"},{"#cvm.resetkeys.scout",""},{"#cvm.resetkeys.soldier",""},{"#cvm.resetkeys.pyro",""},{"#cvm.resetkeys.demoman",""},{"#cvm.resetkeys.heavy",""},{"#cvm.resetkeys.engineer",""},{"#cvm.resetkeys.medic",""},{"#cvm.resetkeys.sniper",""},{"#cvm.resetkeys.spy",""}};
+std::filesystem::path TFdirectory="C:/Program Files (x86)/Steam/steamapps/common/Team Fortress 2/tf/";
+std::map<std::string,std::string> keymap={{"#cvm.defaultcolor",""},{"#cvm.boldbydefault","false"},{"#cvm.italicizebydefault","false"},{"#cvm.resetkeys","\"bind 1 slot1; bind 2 slot2; bind 3 slot3; bind 4 slot4; bind 5 slot5; bind 6 slot6; bind 7 slot7; bind 8 slot8; bind 9 slot9; bind 0 slot10\""},{"#cvm.resetkeys.scout",""},{"#cvm.resetkeys.soldier",""},{"#cvm.resetkeys.pyro",""},{"#cvm.resetkeys.demoman",""},{"#cvm.resetkeys.heavy",""},{"#cvm.resetkeys.engineer",""},{"#cvm.resetkeys.medic",""},{"#cvm.resetkeys.sniper",""},{"#cvm.resetkeys.spy",""}};
 std::wstring_convert<std::codecvt_utf8<wchar_t>,wchar_t> convert;
 extern char* inputfilename;
 extern char* ModName;
@@ -43,15 +43,27 @@ int main(int argc, char** argv) {
 	Tokenize(InFileContent,depth);
 	printf("Tokenized Stream. Parsing Tokens.\n");
 	unsigned long bindcount=0u;
-	ParseTokens(pages,concise,depth,bindcount);
+	if (!ParseTokens(pages,concise,depth,bindcount)) return -1;
 	printf("Parsed Tokens. (%lu binds compiled.) \nCreating main cfg.\n",bindcount);
 	if (depth!=0) {printf("Missing a brace somewhere...");return -1;}
 	// Directories
 	std::filesystem::create_directories(std::filesystem::temp_directory_path().string()+"customvoicemenu/cfg");
 	// Main exec.
 	std::ofstream exec(std::filesystem::temp_directory_path().string()+"customvoicemenu/cfg/activate_cvm.cfg");
-	exec<<"closecaption 1\ncc_lang customvoicemenu\nalias cvm.nullkeys \"alias cvm.1 ; alias cvm.2 ; alias cvm.3 ; alias cvm.4 ; alias cvm.5 ; alias cvm.6 ; alias cvm.7 ; alias cvm.8 ; alias cvm.9\"\nalias cvm.exitmenu \"cc_linger_time 0; cc_emit #cvm.clear_screen; alias +cvm.opencvm cvm.cvmstate0; cvm.resetkeys\"\nalias +cvm.opencvm cvm.cvmstate0\nalias -cvm.opencvm ;\nalias cvm.cvmstate0 \"exec cvm_root; alias -cvm.opencvm alias +cvm.opencvm cvm.cvmstate1; bind 1 cvm.1; bind 2 cvm.2; bind 3 cvm.3; bind 4 cvm.4; bind 5 cvm.5; bind 6 cvm.6; bind 7 cvm.7; bind 8 cvm.8; bind 9 cvm.9\"\nalias cvm.cvmstate1 \"cvm.exitmenu; alias -cvm.opencvm alias +cvm.opencvm cvm.cvmstate0\"\ncvm.exitmenu\nalias cvm.resetkeys "<<keymap["#cvm.resetkeys"]<<'\n';
-	
+	exec<<R"(closecaption 1
+cc_lang customvoicemenu
+alias cvm.nullkeys "alias cvm.1 ; alias cvm.2 ; alias cvm.3 ; alias cvm.4 ; alias cvm.5 ; alias cvm.6 ; alias cvm.7 ; alias cvm.8 ; alias cvm.9"
+alias cvm.exitmenu "cc_linger_time 0; cc_emit #cvm.clear_screen; alias +cvm.opencvm cvm.cvmstate0; cvm.resetkeys"
+alias +cvm.opencvm cvm.cvmstate0
+alias -cvm.opencvm ;
+alias cvm.cvmstate0 "cvm.openmenu; alias -cvm.opencvm alias +cvm.opencvm cvm.cvmstate1; bind 1 cvm.1; bind 2 cvm.2; bind 3 cvm.3; bind 4 cvm.4; bind 5 cvm.5; bind 6 cvm.6; bind 7 cvm.7; bind 8 cvm.8; bind 9 cvm.9"
+alias cvm.cvmstate1 "cvm.exitmenu; alias -cvm.opencvm alias +cvm.opencvm cvm.cvmstate0"
+cvm.exitmenu
+alias cvm.resetkeys )"<<keymap["#cvm.resetkeys"]<<'\n';
+	for (auto& page : pages) {
+		exec<<"alias cvm.menu_"<<page.first.formatted_title<<" alias cvm.openmenu \"exec cvm_"<<page.first.formatted_title<<"\""<<'\n';
+	}
+	exec << "alias cvm.openmenu ;\n";
 	// Write override reset keys to the class configs if possible. If -config= is present, print to console.
 	if (usingconfig==true) {
 		if (overrideexists==true) for (auto& s : keymap) {
@@ -202,5 +214,5 @@ int main(int argc, char** argv) {
 	std::filesystem::remove_all(std::filesystem::temp_directory_path().string()+"customvoicemenu");
 	std::filesystem::remove_all(std::filesystem::temp_directory_path().string()+"customvoicemenucaptions");
 	//Done!
-	std::cout<<"Done! Now just insert exec activate_cvm somewhere, and bind +cvm.opencvm.\n";
+	std::cout<<"Done! Now just insert exec activate_cvm somewhere.\n";
 }

@@ -12,6 +12,7 @@ struct Bind {
 		formatted_name.push_back(p_fname);
 		commandstr.push_back(p_cmdstr);
 	}
+	~Bind() {}
 };
 struct Page {
 	std::string title;
@@ -21,4 +22,5 @@ struct Page {
 	Page() {}
 	Page(const std::string& p_title, const std::string& p_ftitle)
 	: title(p_title), formatted_title(p_ftitle) {}
+	~Page() {}
 };
