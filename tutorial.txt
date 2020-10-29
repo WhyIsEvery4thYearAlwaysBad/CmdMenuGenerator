@@ -4,7 +4,7 @@ cvm_generate.exe <filename> <launch options>
 Launch Options:
 ⦁ -tf-path=<path> - Filepath to tf directory.
 ⦁ -config=<configpath> - If set, will print the class overrides to console, rather than write to class cfgs. <configpath> isn't actually used, but it has to be a valid filepath.
-Run this in a terminal, because you will get output.
+Run this in a terminal, because you will get output. Note that this program does have error detection, but it is awful. 
 ————————————————
 	Syntax
 ————————————————
@@ -58,6 +58,6 @@ bind <KEY> +open_menu_spam
 	Bugs
 ————————————
 ⦁ Last keymap defined with a space between the key and ':' generates an out of range error.
-⦁ Generator runs in an infinite loop if the syntax isn't correct.
+⦁ Generator tends runs in an infinite loop if the syntax isn't correct.
 ⦁ If using more than 1 key to activate different menus, when one of them has already been pressed, it takes two presses to actually activate the menu.
 ⦁ Captions don't compile correctly the first time, after compiling an edited voicemenu file.
