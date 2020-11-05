@@ -2,8 +2,9 @@
 How to Use:
 cvm_generate.exe <filename> <launch options>
 Launch Options:
-⦁ -tf-path=<path> - Filepath to tf directory.
-⦁ -config=<configpath> - If set, will print the class overrides to console, rather than write to class cfgs. <configpath> isn't actually used, but it has to be a valid filepath.
+⦁ -config - If set, will print the class overrides to console, rather than write to class cfgs.
+⦁ -o= - Output directory. This is where the files will go. Must be a valid path. (Default path is "./customvoicemenu")
+⦁ /? - Opens help dialog.
 Run this in a terminal, because you will get output. Note that this program does have error detection, but it is awful. 
 ————————————————
 	Syntax

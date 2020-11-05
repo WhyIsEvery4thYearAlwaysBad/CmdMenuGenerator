@@ -2,50 +2,49 @@
 #include <iostream>
 #include <cstdio>
 #include <filesystem>
-char* inputfilename="";
-char* ModName="";
+void ShowHelp() {
+	std::cout<<R"(Usage: <cvm_generate executable> <file> <args>
+Arguments:
+	-config - Prints overrides to console rather than to class cfgs.
+	-o= - Output directory. (Default path is "./customvoicemenu")
+	/? - Help)";
+}
+const char* inputfilename="";
+const char* ModName="";
 bool usingconfig=false;
 bool launchoptionfilefound=false;
 bool launchoptionhelp=false;
-extern std::filesystem::path TFdirectory;
+std::string outputdir="./customvoicemenu";
 // Gets Information from launch options.
 // Also validates that they actually work with a returned boolean.
 // Launch Options:
-// -config=<path> - Defines your config path.
-// -tf-path=<path> - Defines the tf path.
+// -config - Defines your config path.
+// -o=<path> - Output path for folder.
+// /? - Help
 bool EvaluateLaunchOptions(int argc, char** argv) {
 	FILE* FileExists;
 	bool launchoptionsvalid=true;
 	for (int i=1; i < argc; i++) {
-		if (strncmp(argv[i],"-config=",8)==0) {
-			if (usingconfig==true) {
-				std::cerr<<"One config or the other.\n";
-				launchoptionsvalid=false;
-			}
+		if (strncmp(argv[i],"-config",7)==0) {
 			usingconfig=true;
-			// Leave if it's blank
-			if (strcmp(argv[i],"-config=")==0) {
-				std::cerr<<"The mod path is supposed to be HERE! -config=<---\n";
-				launchoptionsvalid=false;
-			}
-			ModName=argv[i]+8;
-			FileExists=fopen(ModName,"r");
-			if (FileExists==nullptr) {
-				if (strcmp(argv[i],".vpk")==strlen(argv[i])-3) std::cerr<<"VPK file "<<ModName<< "does not exist.\n";
-				else std::cerr<<"Folder "<<ModName<< " does not exist.\n";
-				launchoptionsvalid=false;
-				fclose(FileExists);	
-			}
-			fclose(FileExists);
 		}
-		else if (strncmp(argv[i],"-tf-path=",9)==0) {
+		else if (strncmp(argv[i],"-o=",3)==0) {
 			// tf path cannot be blank.
-			if (strcmp(argv[i],"-tf-path=")==0) {
-				std::cerr<<"TF path cannot be blank.\n";
+			if (strcmp(argv[i],"-o=")==0 || strcmp(argv[i],"-o=\"\"")==0) {
+				std::cerr<<"Output path cannot be blank.\n";
 				launchoptionsvalid=false;
 			}
-			TFdirectory=argv[i]+9;
-			if (TFdirectory.string().back()!='/') TFdirectory+='/';
+			outputdir=argv[i]+3;
+			std::filesystem::path temp=outputdir;
+			const std::string invalidfilenames=". .. / // \\ \\\\";
+			if (invalidfilenames.find(temp.filename().string())!=std::string::npos) {
+				std::cerr<<"Bad output directory path \""<<outputdir<<"\"\n";
+				launchoptionsvalid=false;
+			}
+		}
+		else if (strcmp(argv[i],"/?")==0) {
+			ShowHelp();
+			launchoptionhelp=true;
 		}
 		else if (strchr(argv[i],'-')!=0||strchr(argv[i],'-')!=(char*)1) {
 			if (launchoptionfilefound) {

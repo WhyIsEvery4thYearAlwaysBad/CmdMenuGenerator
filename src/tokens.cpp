@@ -58,6 +58,7 @@ void Tokenize(const std::string& str, unsigned char& depthval) {
 }
 
 bool ParseTokens(std::vector<std::pair<Page,unsigned char> >& pages, const bool& isconcise, unsigned char& depthval, unsigned long& bindcount) {
+	bool StreamValid=true;
 	unsigned char nkeyit=0; 
 	unsigned char nkeys[256]={1};
 	unsigned int pageiter=0;
@@ -72,7 +73,6 @@ bool ParseTokens(std::vector<std::pair<Page,unsigned char> >& pages, const bool&
 	// STRING { - New Page
 	for (std::size_t i=0; i < tokens.size();) {
 		// #<nonterminal>: <nonterminal|string> - New Key map
-		// if (tokens.at(i).val.front()=='#' && tokens.at(i).type==Token_type::NONTERMINAL && (tokens.at(i+1).type==Token_type::NONTERMINAL || tokens.at(i+1).type==Token_type::STRING)) {
 		if (StreamIsKeymap(i)) {
 			// Remove colons.
 			if (tokens.at(i).val.back()==':') tokens.at(i).val.pop_back();
@@ -94,14 +94,13 @@ bool ParseTokens(std::vector<std::pair<Page,unsigned char> >& pages, const bool&
 				tempformat+='_'+std::to_string(duplicate_num);
 			}
 			bindlist+=tempformat;
-			pages.at(pageiter).first.binds.push_back({nkeys[nkeyit],tokens.at(i).val,tempformat,tokens.at(i+1).val+"; cvm.exitmenu"});
+			pages.at(pageiter).first.binds.push_back({nkeys[nkeyit],tokens.at(i).val,tempformat,tokens.at(i+1).val+"; _cvm.exitmenu"});
 			// Add keys.
 			nkeys[nkeyit]++;
 			if ((nkeys[nkeyit]%10)==0) nkeys[nkeyit]=(nkeys[nkeyit]%10)+1;
 			i+=2;
 		}
 		// TOGGLE <STRING> <STRING>.. | - Toggle Bind
-		// else if (tokens.at(i).type==Token_type::NONTERMINAL && tokens.at(i).val=="TOGGLE" && tokens.at(i+1).type==Token_type::STRING && tokens.at(i+2).type==Token_type::STRING) {
 		else if (StreamIsToggleBind(i)) {
 			bindcount++;
 			pages.at(pageiter).first.binds.push_back({nkeys[nkeyit],tokens.at(i+1).val,Format(tokens.at(i+1).val),tokens.at(i+2).val});
@@ -120,8 +119,6 @@ bool ParseTokens(std::vector<std::pair<Page,unsigned char> >& pages, const bool&
 		else if (StreamIsNewPage(i)) {
 			std::string tempformat=Format(tokens.at(i).val);
 			// Add page name to a list if already found to prevent hash collisions.
-			
-			//
 			unsigned short duplicate_num=1;
 			if (pagenamelist.find(tempformat)!=std::string::npos) {
 				while (pagenamelist.find(tempformat+'_'+std::to_string(duplicate_num))!=std::string::npos) duplicate_num++;
@@ -130,7 +127,6 @@ bool ParseTokens(std::vector<std::pair<Page,unsigned char> >& pages, const bool&
 			pagenamelist+=tempformat;
 			// Now push the page back.
 			pageiter=pages.size();
-			// pages.push_back({Page(tokens.at(i).val,tempformat),depthval});
 			pages.push_back({Page(tokens.at(i).val,tempformat),depthval});
 			// Binds the keys properly.
 			if (pages.back().second!=0) {
@@ -153,10 +149,10 @@ bool ParseTokens(std::vector<std::pair<Page,unsigned char> >& pages, const bool&
 		}
 		else if (tokens.at(i).type==Token_type::TERMINAL && tokens.at(i).val=="|") i++;
 		else {
-			printf("I think we found an error chief... (At Token %llu.)\n",i);
-			return false;
+			printf("I think we found an error chief.. (At Token %llu.)\n",i);
+			StreamValid=false;
 			i++;
 		}
 	}
-	return true;
+	return StreamValid;
 }
