@@ -105,14 +105,6 @@ alias _cvm.resetkeys )"<<keymap["#cvm.resetkeys"]<<'\n';
 	for (unsigned int pi=0; pi < pages.size(); pi++) {
 		cfgpath=outputdir+"/cfg/cvm_"+pages.at(pi).first.formatted_title+".cfg";
 		// If a page exists with the same name, append a number to the end.
-		if (std::filesystem::exists(cfgpath)) {
-			for (unsigned short duplicate_num=0; duplicate_num < INT16_MAX; duplicate_num++) {
-				if (!std::filesystem::exists(cfgpath)) {
-					cfgpath+='_'+std::to_string(duplicate_num);
-					break;
-				}
-			}
-		}
 		std::ofstream cfgfile(cfgpath);
 		// Write to cfg
 		cfgfile<<"cc_emit #cvm.clear_screen\ncc_emit #cvm."+pages.at(pi).first.formatted_title+'\n';
@@ -172,6 +164,7 @@ alias _cvm.resetkeys )"<<keymap["#cvm.resetkeys"]<<'\n';
 		}
 		// FIX for pressing buttons
 		cfgfile<<"\nexec cvm_multimenu_fix\nalias _cvm.mmenu_fix"<<pi<<" ;";
+		std::cout<<pages.at(pi).first.formatted_title<<'\n';
 	}
 	captionfile<<"\t}\n}";
 	exec.close(), multimenu_fix.close(), captionfile.close();
