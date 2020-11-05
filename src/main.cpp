@@ -164,7 +164,6 @@ alias _cvm.resetkeys )"<<keymap["#cvm.resetkeys"]<<'\n';
 		}
 		// FIX for pressing buttons
 		cfgfile<<"\nexec cvm_multimenu_fix\nalias _cvm.mmenu_fix"<<pi<<" ;";
-		std::cout<<pages.at(pi).first.formatted_title<<'\n';
 	}
 	captionfile<<"\t}\n}";
 	exec.close(), multimenu_fix.close(), captionfile.close();
