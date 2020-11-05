@@ -155,15 +155,13 @@ alias _cvm.resetkeys )"<<keymap["#cvm.resetkeys"]<<'\n';
 				cfgfile<<"alias cvm."<<std::to_string(GetBind(i).numberkey)<<" \""+togglename;
 				for (std::size_t subi=0; subi<GetBind(i).name.size(); subi++) {
 				if (GetBind(i).commandstr.at(subi).find("exec cvm_")==std::string::npos) {
-					cfgfile<<"; cvm.exitmenu\"\n";
+					cfgfile<<"; _cvm.exitmenu\"\n";
 					break;
 				}
 				if (subi==GetBind(i).name.size()-1) cfgfile<<"\"\n";
 				}
 			}
 		}
-		// FIX for pressing buttons
-		cfgfile<<"\nexec cvm_multimenu_fix\nalias _cvm.mmenu_fix"<<pi<<" ;";
 	}
 	captionfile<<"\t}\n}";
 	exec.close(), multimenu_fix.close(), captionfile.close();
