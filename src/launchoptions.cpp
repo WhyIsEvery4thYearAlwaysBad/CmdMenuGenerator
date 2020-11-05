@@ -34,13 +34,14 @@ bool EvaluateLaunchOptions(int argc, char** argv) {
 				std::cerr<<"Output path cannot be blank.\n";
 				launchoptionsvalid=false;
 			}
-			outputdir=argv[i]+3;
 			std::filesystem::path temp=outputdir;
 			const std::string invalidfilenames=". .. / // \\ \\\\";
 			if (invalidfilenames.find(temp.filename().string())!=std::string::npos) {
 				std::cerr<<"Bad output directory path \""<<outputdir<<"\"\n";
 				launchoptionsvalid=false;
 			}
+			outputdir=argv[i]+(argv[i][3]=='"' ? 4 : 3);
+			if (outputdir.back()=='"') outputdir.pop_back();
 		}
 		else if (strcmp(argv[i],"/?")==0) {
 			ShowHelp();
