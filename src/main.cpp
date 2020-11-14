@@ -70,7 +70,7 @@ alias _cvm.resetkeys ")"<<keymap["#cvm.resetkeys"]<<"\"\n";
 		std::size_t i=0;
 		for (auto& page : pages) {
 			// Use files instead of aliases since the length limit hurts this program with aliases.
-			std::ofstream selectmenucmd(outputdir+"/cfg/cvm.menu="+page.first.formatted_title);
+			std::ofstream selectmenucmd(outputdir+"/cfg/menu="+page.first.formatted_title+".cfg");
 			selectmenucmd<<"_cvm.mmenu_fix"<<i<<"\nalias _cvm.openmenu \"exec _cvm_page_"<<page.first.formatted_title;
 			multimenu_fix<<"alias _cvm.mmenu_fix"<<i<<"\"alias +cvm.openmenu _cvm.cvmstate0\"\n";
 			i++;

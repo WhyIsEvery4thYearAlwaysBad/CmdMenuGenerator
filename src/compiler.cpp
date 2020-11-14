@@ -287,13 +287,30 @@ void MenuCreate(unsigned short& bindcount) {
 			Parser::SetKV(static_cast<Parser::KVToken&>(**t));
 			break;
 		case Parser::MenuTokenType::MENU_NEW_PAGE:
-			//For binds to pages.
-			tpage=static_cast<Parser::PageToken&>(**t);
-			if (!pagestack.empty()) {
+			{
+				bool bindpagecreated=false;
+				//For binds to pages.
+				tpage=static_cast<Parser::PageToken&>(**t);
+				std::size_t i=0llu;
 				pagestack.push_front({Page(tpage.Name),tpage.depth});	
-				(pagestack.begin()+1)->first.binds.push_back(Bind(nkeystack.top(),tpage.Name,"exec _cvm_page_"+Format(tpage.Name)));
+				if (pagestack.size()>=2) (pagestack.begin()+1)->first.binds.push_back(Bind(nkeystack.top(),tpage.Name,"exec _cvm_page_"+Format(tpage.Name)));
+				for (auto& t : pagestack)
+				{
+					if (t.first.formatted_title==pagestack.front().first.formatted_title) {
+						i++;
+					}
+				}
+				for (auto& t : pages)
+				{
+					if (t.first.formatted_title==pagestack.front().first.formatted_title) {
+						i++;
+					}
+				}
+				if (i>=2) {
+					pagestack.front().first.formatted_title+='_'+std::to_string(i-1);
+					if (pagestack.size()>=2) (pagestack.begin()+1)->first.binds.back().cmdstr.front()+='_'+std::to_string(i-1);
+				}
 			}
-			else pagestack.push_front({Page(tpage.Name),tpage.depth});
 			nkeystack.push(1u);
 			break;
 		case Parser::MenuTokenType::MENU_END_PAGE:

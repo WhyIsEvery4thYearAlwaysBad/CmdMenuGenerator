@@ -36,9 +36,9 @@ Example Voicemenu:
 	Compiling and Running
 —————————————————————————————
 To compile your voicemenu, put the filepath as a parameter to cvm_generate.exe. When compiling your voicemenu, the pages will be saved as cfgs with the filenames being formatted. After it has compiled, compile the captions. (It is technically usable at this point. However, I recommend compiling the output folder with the cfgs to a vpk, to reduce load times.)
-To actually open a voicemenu, you have to set the current menu with "exec cvm.menu=<formatted menu name>". After that, you can use +cvm.openmenu to open the menu. To exit it, simply run "cvm.exitmenu". For instance, to open the "|Taglines|" menu, bind a key to an ±alias with "exec cvm.menu=taglines" and +cvm.openmenu, and set the -alias to run -cvm.opemenu. 
+To actually open a voicemenu, you have to set the current menu with "exec menu=<formatted menu name>". After that, you can use +cvm.openmenu to open the menu. To exit it, simply run "cvm.exitmenu". For instance, to open the "|Taglines|" menu, bind a key to an ±alias with "exec cvm.menu=taglines" and +cvm.openmenu, and set the -alias to run -cvm.opemenu. 
 End result:
-	alias +open_menu_taglines "exec cvm.menu=taglines; +cvm.openmenu"
+	alias +open_menu_taglines "exec menu=taglines; +cvm.openmenu"
 	alias -open_menu_taglines "-cvm.openmenu"
 	bind <KEY> +open_menu_taglines
 Note that if duplicate page names are found after being formatted, it will have a number appended to it, indicating the order with the first not having a number at all.
