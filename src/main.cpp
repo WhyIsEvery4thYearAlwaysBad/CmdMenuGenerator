@@ -118,8 +118,8 @@ alias _cvm.resetkeys ")"<<keymap["#cvm.resetkeys"]<<"\"\n";
 			unsigned long temptogglenumber=togglenumber;
 			for (auto kbind=page->first.binds.begin(); kbind!=page->first.binds.end(); kbind++) {
 				if (kbind->istogglebind==true) {
-					temptogglenumber++;
 					cfgfile<<"_#cvm.toggle_"+std::to_string(temptogglenumber)<<'\n';
+					temptogglenumber++;
 				}
 				
 				if (kbind!=page->first.binds.begin() && kbind->istogglebind==false && (kbind-1)->istogglebind==true) {
@@ -133,8 +133,8 @@ alias _cvm.resetkeys ")"<<keymap["#cvm.resetkeys"]<<"\"\n";
 		// Write captions
 		if (page->first.binds.size()>0 && page->first.binds.front().name.size()<2) {
 			captionfile<<convert.from_bytes("\t\t\"_#cvm."+page->first.formatted_title+"\" \"");
-			if (keymap["#cvm.italicizedbydefault"].find("true")!=std::string::npos) captionfile<<"<I>";
 			if (keymap["#cvm.boldbydefault"].find("true")!=std::string::npos) captionfile<<"<B>";
+			if (keymap["#cvm.italicizedbydefault"].find("true")!=std::string::npos) captionfile<<"<I>";
 			captionfile<<convert.from_bytes(keymap["#cvm.defaultcolor"]);
 		}
 		for (auto kbind=page->first.binds.begin(); kbind!=page->first.binds.end(); kbind++) {
@@ -142,11 +142,11 @@ alias _cvm.resetkeys ")"<<keymap["#cvm.resetkeys"]<<"\"\n";
 				exec<<"alias _cvm.toggle_"<<std::to_string(togglenumber)<<" _cvm.toggle_"<<std::to_string(togglenumber)<<"_0\n";
 				exec<<"alias _#cvm.toggle_"<<std::to_string(togglenumber)<<" _#cvm.toggle_"<<std::to_string(togglenumber)<<"_0\n";
 				for (unsigned char sti=0u; sti < kbind->name.size(); sti++) {
-					exec<<"alias _cvm.toggle_"<<std::to_string(togglenumber)<<'_'<<std::to_string(sti)<<'\"'+kbind->cmdstr.at(sti)<<"\"\n";
+					exec<<"alias _cvm.toggle_"<<std::to_string(togglenumber)<<'_'<<std::to_string(sti)<<'\"'<<kbind->cmdstr.at(sti)<<"; alias _cvm.toggle_"<<std::to_string(togglenumber)<<" _cvm.toggle_"<<std::to_string(togglenumber)<<'_'<<std::to_string((sti+1)%kbind->name.size())<<"; alias _#cvm.toggle_"<<std::to_string(togglenumber)<<" _#cvm.toggle_"<<std::to_string(togglenumber)<<'_'<<std::to_string((sti+1)%kbind->name.size())<<"\"\n";
 					exec<<"alias _#cvm.toggle_"<<std::to_string(togglenumber)<<'_'<<std::to_string(sti)<<"\"cc_emit _#cvm.toggle_"<<std::to_string(togglenumber)<<'_'<<std::to_string(sti)<<"\"\n";
-					captionfile<<convert.from_bytes("\t\t\"_#cvm.toggle_"+std::to_string(togglenumber)+'_'+std::to_string(sti)+"\" \""+kbind->name.at(sti)+"\"\n");
+					captionfile<<convert.from_bytes("\t\t\"_#cvm.toggle_"+std::to_string(togglenumber)+'_'+std::to_string(sti)+"\" \""+(keymap["#cvm.boldbydefault"].find("true")!=std::string::npos ? "<B>" : "")+(keymap["#cvm.italicizedbydefault"].find("true")!=std::string::npos ? "<I>" : "")+keymap["#cvm.defaultcolor"]+std::to_string(kbind->numberkey)+". "+kbind->name.at(sti)+"\"\n");
 				}
-				cfgfile<<"alias _cvm."<<std::to_string(kbind->numberkey)<<" _cvm.toggle_"<<std::to_string(togglenumber)<<"\n";
+				cfgfile<<"alias _cvm."<<std::to_string(kbind->numberkey)<<" \"_cvm.toggle_"<<std::to_string(togglenumber)<<"; cvm.exitmenu\"\n";
 				togglenumber++;
 			}
 			else {

@@ -51,7 +51,6 @@ bool IsIdentChar(const char& c) {
 bool Tokenize(const std::string& str) {
 	bool errorsfound=false;
 	unsigned char depthval=0u;
-	std::size_t templinecolumn=1u;
 	std::string strtemp;
 	for (unsigned int i=0; i < str.length(); )
 	{
@@ -97,7 +96,6 @@ bool Tokenize(const std::string& str) {
 			break;
 		// strings
 		case '\"':
-			templinecolumn=linecolumn;
 			// New lines cannot be in strings. (I don't mean the '\n' character.)
 			for (i++, linecolumn++; i < str.length(); i++, linecolumn++) {
 				if (str.at(i)=='\n') {
@@ -288,7 +286,6 @@ void MenuCreate(unsigned short& bindcount) {
 			break;
 		case Parser::MenuTokenType::MENU_NEW_PAGE:
 			{
-				bool bindpagecreated=false;
 				//For binds to pages.
 				tpage=static_cast<Parser::PageToken&>(**t);
 				std::size_t i=0llu;
