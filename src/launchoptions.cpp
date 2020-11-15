@@ -17,7 +17,7 @@ std::string outputdir="./customvoicemenu";
 // Gets Information from launch options.
 // Also validates that they actually work with a returned boolean.
 // Launch Options:
-// -config - Defines your config path.
+// -config - Defines your config path. Removed for the time being until it becomes necessary.
 // -o=<path> - Output path for folder.
 // /? - Help
 bool EvaluateLaunchOptions(int argc, char** argv) {
