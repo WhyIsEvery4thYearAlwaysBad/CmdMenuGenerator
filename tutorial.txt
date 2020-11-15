@@ -52,7 +52,6 @@ For example:
 ⦁ #cvm.italicizedbydefault - If set to true, will italicize all entries with <I>. As a result, <I> in titles will unitalicize the selected characters. Note that the number key prepended will not be effected by this trick. Default value is "false".
 ⦁ #cvm.defaultcolor - Color tag that is inserted into every caption. To change a title's color insert the <clr> tag. Note that the number key prepended will not be effected by any <clr> tags. Default value is "".
 ⦁ #cvm.resetkeys - Command-String Alias that runs after selecting a bind. Default value is "bind 1 slot1; bind 2 slot2; bind 3 slot3; bind 4 slot4; bind 5 slot5; bind 6 slot6; bind 7 slot7; bind 8 slot8; bind 9 slot9; bind 0 slot10".
-⦁ #cvm.resetkeys.<classname> - Alias that runs only after selecting a bind if you are the specified class. Default value is "".
 ⦁ #cvm.predisplay_time - cc_predisplay_time ran after exiting menu. Key Value determines the cvar value. Default value is "0.25".
 ⦁ #cvm.linger_time - cc_linger_time ran after exiting menu. Key Value determines the cvar value. Default value is "0".
 ————————————

@@ -22,7 +22,6 @@ std::wstring_convert<std::codecvt_utf8<wchar_t>,wchar_t> convert;
 // From launch options
 extern const char* inputfilename;
 extern const char* ModName;
-extern bool usingconfig;
 extern bool launchoptionfilefound;
 extern bool launchoptionhelp;
 extern std::string outputdir;
@@ -77,23 +76,6 @@ alias _cvm.resetkeys ")"<<keymap["#cvm.resetkeys"]<<"\"\n";
 		}
 	}
 	exec << "alias _cvm.openmenu ;\n";
-	// Write override reset keys to the class configs if possible. If -config is present, print to console.
-	if (usingconfig==true) {
-		if (overrideexists==true) for (auto& s : keymap) {
-			std::cout<<"Enter the reset key overrides into your class cfgs:\n";
-			if (s.first.find("#cvm.resetkeys.")==0 && s.second!="") {
-				std::cout<<"alias "<<s.first.c_str()<<' '<<s.second.c_str()<<'\n';
-			}
-		}
-	}
-	else {
-		if (overrideexists==true) for (auto& s : keymap) {
-			if (s.first.substr(0,14)=="#cvm.resetkeys." && s.second!="") {
-				std::ofstream classcfg(outputdir+"/cfg/"+s.first.substr(14,s.first.length()-14)+".cfg");
-				classcfg<<"alias "<<s.first<<' '<<s.second<<'\n';
-			}
-		}
-	}
 	// Conversion to UCS-2.
 	std::locale utf16(std::locale::classic(),new std::codecvt_utf16<wchar_t, 0xffff, std::little_endian>);
 	std::cout<<"Done. Creating caption file.\n";

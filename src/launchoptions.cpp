@@ -5,7 +5,6 @@
 void ShowHelp() {
 	std::cout<<R"(Usage: <cvm_generate executable> <file> <args>
 Arguments:
-	-config - Prints overrides to console rather than to class cfgs.
 	-o= - Output directory. (Default path is "./customvoicemenu")
 	/? - Help)";
 }
@@ -25,10 +24,7 @@ bool EvaluateLaunchOptions(int argc, char** argv) {
 	FILE* FileExists;
 	bool launchoptionsvalid=true;
 	for (int i=1; i < argc; i++) {
-		if (strncmp(argv[i],"-config",7)==0) {
-			usingconfig=true;
-		}
-		else if (strncmp(argv[i],"-o=",3)==0) {
+		if (strncmp(argv[i],"-o=",3)==0) {
 			// tf path cannot be blank.
 			if (strcmp(argv[i],"-o=")==0 || strcmp(argv[i],"-o=\"\"")==0) {
 				std::cerr<<"Output path cannot be blank.\n";
