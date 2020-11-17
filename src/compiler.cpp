@@ -52,7 +52,7 @@ bool Tokenize(const std::string& str) {
 	bool errorsfound=false;
 	unsigned char depthval=0u;
 	std::string strtemp;
-	for (unsigned int i=0; i < str.length(); )
+	for (std::size_t i=0; i < str.length(); )
 	{
 		if (tokens.size()>0) tokens.back().val.shrink_to_fit();
 		// EOF Token
