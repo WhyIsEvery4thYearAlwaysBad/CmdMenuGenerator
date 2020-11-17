@@ -88,6 +88,28 @@ bool Tokenize(const std::string& str) {
 					if (*t=='\n') break;
 				}
 			}
+			/* Block comments */
+			else if (str.at(i+1)=='*') { //
+				std::size_t tempi=i;
+				std::size_t templinecolumn=linecolumn;
+				std::size_t templinenumber=linenumber;
+				for (auto t=str.begin()+i; t!=str.end(); t++, tempi++) {
+					if (*t=='\t') templinecolumn+=4;
+					else templinecolumn++;
+					if (*t=='\n') templinenumber++;
+					if (*t=='*' && *(t+1)=='/') {
+						i=tempi+2;
+						linecolumn=templinecolumn+2;
+						linenumber=templinenumber+2;
+						break;
+					}
+					if (t==str.end()-1) {
+						Error("error: Unclosed comment. ("+std::to_string(linenumber)+':'+std::to_string(linecolumn)+')');
+						i=tempi;
+						break;
+					}
+				}
+			}
 			else {
 				tokens.push_back(Token(linecolumn,linenumber,TokenType::UNDEFINED,"/"));
 				linecolumn++;
