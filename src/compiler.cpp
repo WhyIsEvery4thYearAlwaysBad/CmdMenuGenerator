@@ -81,6 +81,7 @@ bool Tokenize(const std::string& str) {
 		{
 		// comments
 		case '/':
+			// Line comments
 			if (str.at(i+1)=='/') {
 				for (auto t=str.begin()+i; t!=str.end(); t++, i++) {
 					if (*t=='\t') linecolumn+=4;
@@ -202,7 +203,6 @@ bool Tokenize(const std::string& str) {
 	if (errors.size()>=1) errorsfound=true;
 	return !errorsfound;
 }
-// TODO : ADD AST
 namespace Parser {
 	unsigned int depth=0u;
 	bool eoffound=false;
@@ -223,15 +223,12 @@ namespace Parser {
 					else if (i % 2 == 1) cmdlist[(i-2)/2]=(t+i)->val;
 					i++;
 				}
-				if (i % 2!=0) { // Even amount of strings indicate that the toggle bind has names and cmdstrs
+				if (i % 2!=0)  // Even amount of strings indicate that the toggle bind has names and cmdstrs
 					Error("error: Uneven amount of strings! ("+(t+i)->GetFileLoc()+")");
-				}
-				if (i<=1) {
+				if (i<=1) 
 					Error("error: Expected ≥2 strings. ("+(t+i)->GetFileLoc()+")");
-				}
-				if ((t+i)->type!=TokenType::VBAR) {
-					Error("error: Expected '|'. ("+(t+i-1)->GetFileLoc()+")");
-				}
+				if ((t+i)->type!=TokenType::VBAR) 
+					Error("error: Expected '|' ("+(t+i-1)->GetFileLoc()+")");
 				menutokens.push_back(new Parser::ToggleBindToken(namelist,cmdlist,(i-2)/2));
 				t+=i;
 			}
@@ -240,38 +237,34 @@ namespace Parser {
 					Error("error: Bind must be set in a page. ("+t->GetFileLoc()+')');
 				if ((t+1)->type!=TokenType::STRING) 
 					Error("error: Expected name string. ("+(t+1)->GetFileLoc()+")");
-				}
-				if ((t+2)->type!=TokenType::STRING) {
+				if ((t+2)->type!=TokenType::STRING) 
 					Error("error: Expected command string. ("+(t+2)->GetFileLoc()+")");
-				}
-				if ((t+3)->type!=TokenType::VBAR) {
-					Error("error: Expected '|'. ("+(t+3)->GetFileLoc()+")");
-				}
+				if ((t+3)->type!=TokenType::VBAR) 
+					Error("error: Expected '|' ("+(t+3)->GetFileLoc()+")");
 				menutokens.push_back(new Parser::BindToken((t+1)->val, (t+2)->val));
 				t+=4;
 			}
 			else if (t->type==TokenType::STRING) { // Check for new page.
-				if ((t+1)->type!=TokenType::LCBRACKET) {
-					Error("error: Expected '{'. ("+t->GetFileLoc()+")");
-				}
+				if ((t+1)->type!=TokenType::LCBRACKET) 
+					Error("error: Expected '{' ("+t->GetFileLoc()+")");
 				menutokens.push_back(new Parser::PageToken(t->val,depth));
 				depth++;
 				t+=2;
 			}
 			else if (t->type==TokenType::IDENTIFIER) { // Check for set keymaps
-				if ((t+1)->type!=TokenType::EQUALS) {
-					Error("error: Expected '='. ("+(t+1)->GetFileLoc()+")");
-				}
-				if ((t+2)->type!=TokenType::STRING) {
-					Error("error: Expected string. ("+(t+2)->GetFileLoc()+")");
-				}
+				if ((t+1)->type!=TokenType::EQUALS) 
+					Error("error: Expected '=' ("+(t+1)->GetFileLoc()+")");
+				if ((t+2)->type!=TokenType::STRING) 
+					Error("error: Expected string ("+(t+2)->GetFileLoc()+")");
+				if ((t+1)->type!=TokenType::EQUALS && (t+2)->type!=TokenType::STRING)
+					Error("error: Unknown identifier \'"+t->val+"\' ("+t->GetFileLoc()+')');
 				menutokens.push_back(new Parser::KVToken(t->val,(t+2)->val));
 				t+=3;
 			}
 			else if (t->type==TokenType::RCBRACKET) {
 				depth--;
 				if (depth==UINT32_MAX) {
-					Error("Stray '}'. ("+t->GetFileLoc()+")");
+					Error("Stray '}' ("+t->GetFileLoc()+")");
 					depth++;
 				}
 				menutokens.push_back(new Parser::PageEndToken());
@@ -339,7 +332,10 @@ void MenuCreate(unsigned short& bindcount) {
 			else pages.push_back(pagestack.front());
 			pagestack.pop_front();
 			nkeystack.pop();
-			if (!nkeystack.empty()) nkeystack.top()++;
+			if (!nkeystack.empty()) {
+				nkeystack.top()%=9;
+			 	nkeystack.top()++;
+			}
 			break;
 		case Parser::MenuTokenType::MENU_BIND:
 			pagestack.front().first.binds.push_back(Bind(nkeystack.top(),static_cast<Parser::BindToken&>(**t)));
