@@ -91,7 +91,7 @@ alias _cvm.resetkeys ")"<<keymap["#cvm.resetkeys"]<<"\"\n";
 	unsigned long togglenumber=0u;
 	for (auto page=pages.begin(); page!=pages.end(); page++, pi++) {
 		unsigned long segmentnumber=0u;
-		cfgpath=outputdir+"/cfg/_cvm_page_"+page->first.formatted_title+".cfg";
+		cfgpath=outputdir+"/cfg/$pageopen_"+page->first.formatted_title+".cfg";
 		// If a page exists with the same name, append a number to the end.
 		std::ofstream cfgfile(cfgpath);
 		// Write to cfg
