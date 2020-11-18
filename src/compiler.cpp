@@ -212,9 +212,10 @@ namespace Parser {
 			if (t->type==TokenType::TOGGLE) { // Check for toggle bind.
 				std::string namelist[MAX_TOGGLE_STATES];
 				std::string cmdlist[MAX_TOGGLE_STATES];
-				if ((t+1)->type!=TokenType::BIND) {
-					Error("Expected \"BIND\". ("+(t+1)->GetFileLoc()+")");
-				}
+				if (depth<=0) 
+					Error("error: Toggle bind must be set in a page. ("+t->GetFileLoc()+')');
+				if ((t+1)->type!=TokenType::BIND) 
+					Error("Expected \'BIND\' ("+(t+1)->GetFileLoc()+")");
 				unsigned int i=2;
 				while ((t+i)->type==TokenType::STRING)
 				{
@@ -235,7 +236,9 @@ namespace Parser {
 				t+=i;
 			}
 			else if (t->type==TokenType::BIND) { // Check for bind.
-				if ((t+1)->type!=TokenType::STRING) {
+				if (depth<=0) 
+					Error("error: Bind must be set in a page. ("+t->GetFileLoc()+')');
+				if ((t+1)->type!=TokenType::STRING) 
 					Error("error: Expected name string. ("+(t+1)->GetFileLoc()+")");
 				}
 				if ((t+2)->type!=TokenType::STRING) {

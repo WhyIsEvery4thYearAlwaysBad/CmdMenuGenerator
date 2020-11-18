@@ -1,7 +1,6 @@
 How to Use:
 cvm_generate.exe <filename> <launch options>
 Launch Options:
-⦁ -config - If set, will print the class overrides to console, rather than write to class cfgs.
 ⦁ -o= - Output directory. This is where the files will go. Must be a valid path. (Default path is "./customvoicemenu")
 ⦁ /? - Opens help dialog.
 Run this in a terminal, because you will get output. Note that this program does have error detection, but it is bad.
@@ -9,8 +8,8 @@ Run this in a terminal, because you will get output. Note that this program does
 	Syntax (In Psuedo-BNF Notation)
 ———————————————————————————————————————
 <key-value> ::= <key : identifier> "=" <value : string> ; Set a key to the specified value. (e.g #cvm.resetkeys="bind 69 420")
-<page> ::= <title : string> "{" (<bind> | <toggle-bind> | <page>) "}" ; A collection of binds. (e.g "Voicelines" { ... })
-<bind> ::= "BIND" <title : string> <cmdstr : string> "|" ; A key that when pressed, runs the command string. (e.g BIND "AmongUsIsCringe" "say Among Us is bad." |)
+<page> ::= <title : string> "{" (<bind> | <toggle-bind> | <page>) "}" ; A collection of binds. Must be in a page. (e.g "Voicelines" { ... })
+<bind> ::= "BIND" <title : string> <cmdstr : string> "|" ; A key that when pressed, runs the command string. Must be in a page. (e.g BIND "AmongUsIsCringe" "say Among Us is bad." |)
 <toggle-bind> ::= "TOGGLE" "BIND" <title : string> <cmdstr : string> [, <title : string> <cmdstr : string>…] "|" ; - A bind with multiple states. (e.g TOGGLE BIND "Enable AiMBoT" "cl_aimbot 1" "Disable aaAiMBoOt" "cl_aimbot 0" | )
 ; NOTE:
 ⦁ titles (<title>) should be written as caption strings (strings that use the source caption language). 
