@@ -20,12 +20,9 @@ std::deque<std::pair<Page,unsigned char> > pages; // {Page, Depth}
 std::map<std::string,std::string> keymap={{"#cvm.linger_time","0"},{"#cvm.predisplay_time","0.25"},{"#cvm.defaultcolor",""},{"#cvm.boldbydefault","false"},{"#cvm.italicizebydefault","false"},{"#cvm.resetkeys","bind 1 slot1; bind 2 slot2; bind 3 slot3; bind 4 slot4; bind 5 slot5; bind 6 slot6; bind 7 slot7; bind 8 slot8; bind 9 slot9; bind 0 slot10"},{"#cvm.resetkeys.scout",""},{"#cvm.resetkeys.soldier",""},{"#cvm.resetkeys.pyro",""},{"#cvm.resetkeys.demoman",""},{"#cvm.resetkeys.heavy",""},{"#cvm.resetkeys.engineer",""},{"#cvm.resetkeys.medic",""},{"#cvm.resetkeys.sniper",""},{"#cvm.resetkeys.spy",""}};
 std::wstring_convert<std::codecvt_utf8<wchar_t>,wchar_t> convert;
 // From launch options
-extern const char* inputfilename;
-extern const char* ModName;
-extern bool launchoptionfilefound;
-extern bool launchoptionhelp;
-extern std::string outputdir;
-bool overrideexists=false;
+extern std::filesystem::path inputfilename;
+extern bool launchoptionfilefound, launchoptionhelp;
+extern std::filesystem::path outputdir;
 int main(int argc, char** argv) {
 	unsigned short bindcount=0u;
 	if (!EvaluateLaunchOptions(argc,argv)) return -1;
@@ -49,11 +46,11 @@ int main(int argc, char** argv) {
 	// Creating parts from Menu tokens.
 	MenuCreate(bindcount);
 	// Directories
-	std::filesystem::create_directories(outputdir+"/cfg");
+	std::filesystem::create_directories(outputdir.string()+"/cfg");
 	// For a fix relating to multiple menus.
-	std::ofstream multimenu_fix(outputdir+"/cfg/_cvm_multimenu_fix.cfg");
+	std::ofstream multimenu_fix(outputdir.string()+"/cfg/_cvm_multimenu_fix.cfg");
 	// Main exec.
-	std::ofstream exec(outputdir+"/cfg/activate_cvm.cfg");
+	std::ofstream exec(outputdir.string()+"/cfg/activate_cvm.cfg");
 	exec<<R"(closecaption 1
 cc_lang _customvoicemenu
 alias _cvm.nullkeys "alias _cvm.1 ; alias _cvm.2 ; alias _cvm.3 ; alias _cvm.4 ; alias _cvm.5 ; alias _cvm.6 ; alias _cvm.7 ; alias _cvm.8 ; alias _cvm.9"
@@ -69,8 +66,8 @@ alias _cvm.resetkeys ")"<<keymap["#cvm.resetkeys"]<<"\"\n";
 		std::size_t i=0;
 		for (auto& page : pages) {
 			// Use files instead of aliases since the length limit hurts this program with aliases.
-			std::ofstream selectmenucmd(outputdir+"/cfg/menu="+page.first.formatted_title+".cfg");
-			selectmenucmd<<"_cvm.mmenu_fix"<<i<<"\nalias _cvm.openmenu \"exec _cvm_page_"<<page.first.formatted_title;
+			std::ofstream selectmenucmd(outputdir.string()+"/cfg/$menu="+page.first.formatted_title+".cfg");
+			selectmenucmd<<"_cvm.mmenu_fix"<<i<<"\nalias _cvm.openmenu \"exec openpage("<<page.first.formatted_title<<")\"";
 			multimenu_fix<<"alias _cvm.mmenu_fix"<<i<<"\"alias +cvm.openmenu _cvm.cvmstate0\"\n";
 			i++;
 		}
@@ -80,18 +77,18 @@ alias _cvm.resetkeys ")"<<keymap["#cvm.resetkeys"]<<"\"\n";
 	std::locale utf16(std::locale::classic(),new std::codecvt_utf16<wchar_t, 0xffff, std::little_endian>);
 	std::cout<<"Done. Creating caption file.\n";
 	// Create the captions directory once.
-	if (!std::filesystem::exists(outputdir+"captions")) std::filesystem::create_directories(outputdir+"captions/resource");
-	std::wofstream captionfile(outputdir+"captions/resource/closecaption__customvoicemenu.txt",std::ios_base::binary);
+	if (!std::filesystem::exists(outputdir.string()+"captions")) std::filesystem::create_directories(outputdir.string()+"captions/resource");
+	std::wofstream captionfile(outputdir.string()+"captions/resource/closecaption_customvoicemenu.txt",std::ios_base::binary);
 	captionfile.imbue(utf16);
 	captionfile<<(wchar_t)0xFEFF; // BOM.
-	captionfile<<"\"lang\"\n{\n\t\"Language\" \"_customvoicemenu\"\n\t\"Tokens\"\n\t{\n\t\t\"_#cvm.clear_screen\" \"<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	\"\n";
+	captionfile<<convert.from_bytes("\"lang\"\n{\n\t\"Language\" \"customvoicemenu\"\n\t\"Tokens\"\n\t{\n\t\t\"_#cvm.clear_screen\" \"<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	\"\n");
 	std::string cfgpath;
 	std::cout<<"Done. Creating CFGs and Captions.\n";
 	std::size_t pi=0u;
 	unsigned long togglenumber=0u;
 	for (auto page=pages.begin(); page!=pages.end(); page++, pi++) {
 		unsigned long segmentnumber=0u;
-		cfgpath=outputdir+"/cfg/$pageopen_"+page->first.formatted_title+".cfg";
+		cfgpath=outputdir.string()+"/cfg/$pageopen_"+page->first.formatted_title+".cfg";
 		// If a page exists with the same name, append a number to the end.
 		std::ofstream cfgfile(cfgpath);
 		// Write to cfg
@@ -105,7 +102,7 @@ alias _cvm.resetkeys ")"<<keymap["#cvm.resetkeys"]<<"\"\n";
 				}
 				
 				if (kbind!=page->first.binds.begin() && kbind->istogglebind==false && (kbind-1)->istogglebind==true) {
-					cfgfile<<"_#cvm."<<page->first.formatted_title<<"_seg_"<<std::to_string(segmentnumber)<<'\n';
+					cfgfile<<"cc_emit _#cvm."<<page->first.formatted_title<<"_seg_"<<std::to_string(segmentnumber)<<'\n';
 					segmentnumber++;
 				}
 			}
@@ -113,12 +110,13 @@ alias _cvm.resetkeys ")"<<keymap["#cvm.resetkeys"]<<"\"\n";
 		}
 		cfgfile<<"_cvm.nullkeys\n";
 		// Write captions
-		if (page->first.binds.size()>0 && page->first.binds.front().name.size()<2) {
-			captionfile<<convert.from_bytes("\t\t\"_#cvm."+page->first.formatted_title+"\" \"");
-			if (keymap["#cvm.boldbydefault"].find("true")!=std::string::npos) captionfile<<"<B>";
-			if (keymap["#cvm.italicizedbydefault"].find("true")!=std::string::npos) captionfile<<"<I>";
-			captionfile<<convert.from_bytes(keymap["#cvm.defaultcolor"]);
-		}
+		for (auto kbind=page->first.binds.begin(); kbind!=page->first.binds.end(); kbind++) {
+			if (kbind==page->first.binds.begin() && kbind->istogglebind!=true) {
+				captionfile<<convert.from_bytes("\t\t\"_#cvm."+page->first.formatted_title+"\" \"");
+				if (keymap["#cvm.boldbydefault"].find("true")!=std::string::npos) captionfile<<"<B>";
+				if (keymap["#cvm.italicizedbydefault"].find("true")!=std::string::npos) captionfile<<"<I>";
+				captionfile<<convert.from_bytes(keymap["#cvm.defaultcolor"]);
+			}
 		for (auto kbind=page->first.binds.begin(); kbind!=page->first.binds.end(); kbind++) {
 			if (kbind->istogglebind==true) {
 				exec<<"alias _cvm.toggle_"<<std::to_string(togglenumber)<<" _cvm.toggle_"<<std::to_string(togglenumber)<<"_0\n";

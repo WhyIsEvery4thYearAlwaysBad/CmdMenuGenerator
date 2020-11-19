@@ -300,7 +300,10 @@ void MenuCreate(unsigned short& bindcount) {
 		switch ((*t)->type)
 		{
 		case Parser::MenuTokenType::KV_SET:
-			Parser::SetKV(static_cast<Parser::KVToken&>(**t));
+			{
+				Parser::KVToken temp=static_cast<Parser::KVToken&>(**t);
+				keymap.insert_or_assign(temp.Key,temp.Value);
+			}
 			break;
 		case Parser::MenuTokenType::MENU_NEW_PAGE:
 			{
@@ -353,9 +356,4 @@ void MenuCreate(unsigned short& bindcount) {
 			break;
 		}
 	}
-}
-
-// Set key value pair.
-void Parser::SetKV(const Parser::KVToken& t) {
-	keymap.insert_or_assign(t.Key,t.Value);
 }

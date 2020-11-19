@@ -28,7 +28,7 @@ class Token {
 	}
 	~Token() {}
 	
-	std::string GetFileLoc() {
+	std::string inline GetFileLoc() {
 		return std::to_string(linenumber) + ":" + std::to_string(location);
 	}
 };

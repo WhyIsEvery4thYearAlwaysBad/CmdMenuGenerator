@@ -74,6 +74,5 @@ namespace Parser {
 		}
 	};
 	bool ParseTokens();
-	void SetKV(const Parser::KVToken& t); // Set Key-Value pair.
 };
 #endif
