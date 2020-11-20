@@ -8,12 +8,11 @@ Arguments:
 	-o= - Output directory. (Default path is "./customvoicemenu")
 	/? - Help)";
 }
-const char* inputfilename="";
-const char* ModName="";
+std::filesystem::path inputfilename="";
 bool usingconfig=false;
 bool launchoptionfilefound=false;
 bool launchoptionhelp=false;
-std::string outputdir="./customvoicemenu";
+std::filesystem::path outputdir="./customvoicemenu";
 // Gets Information from launch options.
 // Also validates that they actually work with a returned boolean.
 // Launch Options:
@@ -26,24 +25,25 @@ bool EvaluateLaunchOptions(int argc, char** argv) {
 	for (int i=1; i < argc; i++) {
 		if (strncmp(argv[i],"-o=",3)==0) {
 			// tf path cannot be blank.
-			if (strcmp(argv[i],"-o=")==0 || strcmp(argv[i],"-o=\"\"")==0) {
+			if (strcmp(argv[i],"-o=")==0/* || strcmp(argv[i],"-o=\"\"")==0*/) {
 				std::cerr<<"Output path cannot be blank.\n";
 				launchoptionsvalid=false;
+				continue;
 			}
-			std::filesystem::path temp=outputdir;
+			std::filesystem::path temp=argv[i]+3;
 			const std::string invalidfilenames=". .. / // \\ \\\\";
 			if (invalidfilenames.find(temp.filename().string())!=std::string::npos) {
-				std::cerr<<"Bad output directory path \""<<outputdir<<"\"\n";
+				std::cerr<<"Bad output directory path "<<temp<<"\n";
 				launchoptionsvalid=false;
+				continue;
 			}
-			outputdir=argv[i]+(argv[i][3]=='"' ? 4 : 3);
-			if (outputdir.back()=='"') outputdir.pop_back();
+			outputdir=temp.string();
 		}
 		else if (strcmp(argv[i],"/?")==0) {
 			ShowHelp();
 			launchoptionhelp=true;
 		}
-		else if (strchr(argv[i],'-')!=0||strchr(argv[i],'-')!=(char*)1) {
+		else if (strchr(argv[i],'-')!=0 || strchr(argv[i],'-')!=(char*)1) {
 			if (launchoptionfilefound) {
 				std::cerr<<"One file at a time please!\n";
 				launchoptionsvalid=false;
@@ -51,10 +51,9 @@ bool EvaluateLaunchOptions(int argc, char** argv) {
 			launchoptionfilefound=true;
 			inputfilename=argv[i];
 			// Validate file's existence.
-			FileExists=fopen(inputfilename,"r");
+			FileExists=fopen(inputfilename.string().c_str(),"r");
 			if (FileExists==nullptr) {
-				std::cerr<<"Input path \""<<inputfilename<< "\" does not exist.\n";
-				fclose(FileExists);
+				std::cerr<<"Input path "<<inputfilename<< " does not exist.\n";
 				launchoptionsvalid=false;
 			}
 			fclose(FileExists);
