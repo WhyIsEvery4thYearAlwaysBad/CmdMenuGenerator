@@ -1,4 +1,3 @@
-#define	MAX_ALIAS_NAME 32
 #include <regex>
 #include <fstream>
 #include <iostream>
@@ -54,10 +53,12 @@ int main(int argc, char** argv) {
 	exec<<R"(closecaption 1
 cc_lang customvoicemenu
 alias _cvm.nullkeys "alias _cvm.1 ; alias _cvm.2 ; alias _cvm.3 ; alias _cvm.4 ; alias _cvm.5 ; alias _cvm.6 ; alias _cvm.7 ; alias _cvm.8 ; alias _cvm.9"
-alias cvm.exitmenu "cc_emit _#cvm.clear_screen; )"<<keymap["#cvm.resetkeys"]<<"; cc_linger_time "<<keymap["#cvm.linger_time"]<<"; cc_predisplay_time "<<keymap["#cvm.predisplay_time"]<<'\"';
+alias cvm.exitmenu "cc_emit _#cvm.clear_screen; )"<<keymap["#cvm.resetkeys"]<<"; cc_linger_time "<<keymap["#cvm.linger_time"]<<"; cc_predisplay_time "<<keymap["#cvm.predisplay_time"]<<"; cvm.on_exitmenu\"";
 	exec<<R"(
 alias _cvm.menusettings "cc_linger_time 10000; cc_predisplay_time 0; bind 1 _cvm.1; bind 2 _cvm.2; bind 3 _cvm.3; bind 4 _cvm.4; bind 5 _cvm.5; bind 6 _cvm.6; bind 7 _cvm.7; bind 8 _cvm.8; bind 9 _cvm.9"
 cvm.exitmenu
+alias cvm.on_exitmenu ;
+alias cvm.on_page_exit ;
 )";
 	for (std::size_t i=0u; i < pages.size(); i++) multimenu_fix<<"alias _cvm.mmenu_fix"<<i<<"\"alias +cvm.openmenu _cvm.cvmstate0\"\n";
 	// Conversion to UCS-2.
@@ -112,7 +113,7 @@ cvm.exitmenu
 					exec<<"alias _#cvm.toggle_"<<std::to_string(togglenumber)<<'_'<<std::to_string(sti)<<"\"cc_emit _#cvm.toggle_"<<std::to_string(togglenumber)<<'_'<<std::to_string(sti)<<"\"\n";
 					captionfile<<convert.from_bytes("\t\t\"_#cvm.toggle_"+std::to_string(togglenumber)+'_'+std::to_string(sti)+"\" \""+(keymap["#cvm.boldbydefault"].find("true")!=std::string::npos ? "<B>" : "")+(keymap["#cvm.italicizedbydefault"].find("true")!=std::string::npos ? "<I>" : "")+keymap["#cvm.defaultcolor"]+std::to_string(kbind->numberkey)+". "+kbind->name.at(sti)+"\"\n");
 				}
-				cfgfile<<"alias _cvm."<<std::to_string(kbind->numberkey)<<" \"_cvm.toggle_"<<std::to_string(togglenumber)<<"; cvm.exitmenu\"\n";
+				cfgfile<<"alias _cvm."<<std::to_string(kbind->numberkey)<<" \"_cvm.toggle_"<<std::to_string(togglenumber)<<"\"\n";
 				togglenumber++;
 			}
 			else {
