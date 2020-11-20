@@ -13,11 +13,9 @@ struct Page {
 	std::string formatted_title;
 	std::vector<Bind> binds;
 
-	Page() {}
-	Page(const std::string& p_title)
-	: title(p_title), formatted_title(Format(p_title)) {}
-	Page(const std::string& p_title, const std::string& p_ftitle)
-	: title(p_title), formatted_title(p_ftitle) {}
-	~Page() {}
+	Page();
+	Page(const std::string& p_title);
+	Page(const std::string& p_title, const std::string& p_ftitle);
+	~Page();
 };
 #endif

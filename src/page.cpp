@@ -15,3 +15,13 @@ std::size_t GetParentPage(const std::deque<std::pair<Page, unsigned char> >& con
 	}
 	return i;
 }
+
+Page::Page() {}
+
+Page::Page(const std::string& p_title)
+	: title(p_title), formatted_title(Format(p_title)) {}
+	
+Page::Page(const std::string& p_title, const std::string& p_ftitle)
+: title(p_title), formatted_title(p_ftitle) {}
+
+Page::~Page() {}
