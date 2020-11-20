@@ -7,7 +7,6 @@
 #include <deque>
 #include <map>
 #include <stack>
-#define MAX_ALIAS_NAME 32
 std::size_t linenumber=1u;
 std::size_t linecolumn=1u;
 extern std::map<std::string,std::string> keymap;
@@ -34,8 +33,6 @@ std::string Format(std::string str) {
 		}
 		if (isspace(str.at(i))) str.at(i)='_';
 		if (isupper(str.at(i))) str.at(i)=tolower(str.at(i)); 
-		// Aliases can only have 32 characters. oops
-		if (i>=MAX_ALIAS_NAME-1) str.erase(i,str.length()-i);
 	}
 	return str;
 }
@@ -252,12 +249,9 @@ namespace Parser {
 				t+=2;
 			}
 			else if (t->type==TokenType::IDENTIFIER) { // Check for set keymaps
-				if ((t+1)->type!=TokenType::EQUALS) 
-					Error("error: Expected '=' ("+(t+1)->GetFileLoc()+")");
-				if ((t+2)->type!=TokenType::STRING) 
-					Error("error: Expected string ("+(t+2)->GetFileLoc()+")");
-				if ((t+1)->type!=TokenType::EQUALS && (t+2)->type!=TokenType::STRING)
-					Error("error: Unknown identifier \'"+t->val+"\' ("+t->GetFileLoc()+')');
+				if ((t+1)->type!=TokenType::EQUALS) Error("error: Expected '=' ("+(t+1)->GetFileLoc()+")");
+				if ((t+2)->type!=TokenType::STRING) Error("error: Expected string ("+(t+2)->GetFileLoc()+")");
+				if ((t+1)->type!=TokenType::EQUALS && (t+2)->type!=TokenType::STRING) Error("error: Unknown identifier \'"+t->val+"\' ("+t->GetFileLoc()+')');
 				menutokens.push_back(new Parser::KVToken(t->val,(t+2)->val));
 				t+=3;
 			}
