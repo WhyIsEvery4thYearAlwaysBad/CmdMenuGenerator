@@ -24,8 +24,7 @@ bool EvaluateLaunchOptions(int argc, char** argv) {
 	bool launchoptionsvalid=true;
 	for (int i=1; i < argc; i++) {
 		if (strncmp(argv[i],"-o=",3)==0) {
-			// tf path cannot be blank.
-			if (strcmp(argv[i],"-o=")==0/* || strcmp(argv[i],"-o=\"\"")==0*/) {
+			if (strcmp(argv[i],"-o=")==0) {
 				std::cerr<<"Output path cannot be blank.\n";
 				launchoptionsvalid=false;
 				continue;
@@ -39,11 +38,8 @@ bool EvaluateLaunchOptions(int argc, char** argv) {
 			}
 			outputdir=temp.string();
 		}
-		else if (strcmp(argv[i],"/?")==0) {
-			ShowHelp();
-			launchoptionhelp=true;
-		}
-		else if (strchr(argv[i],'-')!=0 || strchr(argv[i],'-')!=(char*)1) {
+		else if (strcmp(argv[i],"/?")==0) launchoptionhelp=true;
+		else if (strchr(argv[i],'-')==nullptr) {
 			if (launchoptionfilefound) {
 				std::cerr<<"One file at a time please!\n";
 				launchoptionsvalid=false;
