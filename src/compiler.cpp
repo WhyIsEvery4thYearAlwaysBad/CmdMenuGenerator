@@ -164,7 +164,6 @@ bool Tokenize(const std::string& str) {
 			break;
 		case '}':
 			tokens.push_back(Token(linecolumn,linenumber,TokenType::RCBRACKET,"}"));
-			depthval--;
 			i++;
 			linecolumn++;
 			break;
