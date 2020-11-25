@@ -161,8 +161,7 @@ bool Tokenize(const std::string& str) {
 			linecolumn++;
 			break;
 		case '{':
-			tokens.push_back(Token(linecolumn,linenumber,TokenType::LCBRACKET,"|"));
-			depthval++;
+			tokens.push_back(Token(linecolumn,linenumber,TokenType::LCBRACKET,"{"));
 			i++;
 			linecolumn++;
 			break;
