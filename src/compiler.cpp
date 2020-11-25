@@ -241,7 +241,7 @@ namespace Parser {
 			}
 			else if (t->type==TokenType::STRING) { // Check for new page.
 				if ((t+1)->type!=TokenType::LCBRACKET) 
-					Error("error: Expected '{' ("+t->GetFileLoc()+")");
+					Error("error: Expected '{' ("+(t+1)->GetFileLoc()+")");
 				menutokens.push_back(new Parser::PageToken(t->val,depth));
 				depth++;
 				t+=2;
@@ -256,7 +256,7 @@ namespace Parser {
 			else if (t->type==TokenType::RCBRACKET) {
 				depth--;
 				if (depth==UINT32_MAX) {
-					Error("Stray '}' ("+t->GetFileLoc()+")");
+					Error("error: Stray '}' ("+t->GetFileLoc()+")");
 					depth++;
 				}
 				menutokens.push_back(new Parser::PageEndToken());
