@@ -67,8 +67,6 @@ bool Tokenize(const std::string& str) {
 				i++;
 				linecolumn++;
 			}
-			if (str.at(i)=='\n') linenumber++;
-			if (str.at(i)=='\t') linecolumn+=4;
 			// Check for terminals.
 			if (tokens.back().val=="TOGGLE") tokens.back().type=TokenType::TOGGLE;
 			if (tokens.back().val=="BIND") tokens.back().type=TokenType::BIND;
@@ -81,7 +79,7 @@ bool Tokenize(const std::string& str) {
 			// Line comments
 			if (str.at(i+1)=='/') {
 				for (auto t=str.begin()+i; t!=str.end(); t++, i++) {
-					if (*t=='\t') linecolumn+=4;
+					if (*t=='\t') linecolumn+=5-(linecolumn%4==0 ? 4 : linecolumn%4);
 					else linecolumn++;
 					if (*t=='\n') break;
 				}
@@ -92,7 +90,7 @@ bool Tokenize(const std::string& str) {
 				std::size_t templinecolumn=linecolumn;
 				std::size_t templinenumber=linenumber;
 				for (auto t=str.begin()+i; t!=str.end(); t++, tempi++) {
-					if (*t=='\t') templinecolumn+=4;
+					if (*t=='\t') templinecolumn+=5-(linecolumn%4==0 ? 4 : linecolumn%4);
 					else templinecolumn++;
 					if (*t=='\n') templinenumber++;
 					if (*t=='*' && *(t+1)=='/') {
@@ -142,7 +140,7 @@ bool Tokenize(const std::string& str) {
 					break;
 				}
 				else {
-					if (str.at(i)=='\t') linecolumn+=4;
+					if (str.at(i)=='\t') linecolumn+=5-(linecolumn%4==0 ? 4 : linecolumn%4);
 					strtemp+=str.at(i);
 				}
 			}
@@ -172,9 +170,12 @@ bool Tokenize(const std::string& str) {
 			linecolumn++;
 			break;
 		//spaces and colon
-		case '\n':
-			linenumber++;
-			linecolumn=1u;
+		case '\t':
+			linecolumn+=5-(linecolumn%4==0 ? 4 : linecolumn%4);
+			i++;
+			break;
+		case ' ':
+			linecolumn++;
 			i++;
 			break;
 		case '\t':
