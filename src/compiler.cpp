@@ -47,7 +47,6 @@ bool IsIdentChar(const char& c) {
 // Convert string to token stream
 bool Tokenize(const std::string& str) {
 	bool errorsfound=false;
-	unsigned char depthval=0u;
 	std::string strtemp;
 	for (std::size_t i=0; i < str.length(); )
 	{
