@@ -80,18 +80,23 @@ bool Tokenize(const std::string& str) {
 				for (auto t=str.begin()+i; t!=str.end(); t++, i++) {
 					if (*t=='\t') linecolumn+=5-(linecolumn%4==0 ? 4 : linecolumn%4);
 					else linecolumn++;
-					if (*t=='\n') break;
+					if (*t=='\n' || *t=='\r') break;
 				}
 			}
 			/* Block comments */
 			else if (str.at(i+1)=='*') { //
-				std::size_t tempi=i;
-				std::size_t templinecolumn=linecolumn;
-				std::size_t templinenumber=linenumber;
+				std::size_t tempi=i, templinecolumn=linecolumn, templinenumber=linenumber;
 				for (auto t=str.begin()+i; t!=str.end(); t++, tempi++) {
 					if (*t=='\t') templinecolumn+=5-(linecolumn%4==0 ? 4 : linecolumn%4);
 					else templinecolumn++;
-					if (*t=='\n') templinenumber++;
+					if (*t=='\n') {
+						if (*(t-1)!='\r') templinecolumn=1u;
+						templinenumber++;
+					}
+					else if (*t=='\r') {
+						templinecolumn=1u;
+						if (*(t+1)!='\n') templinenumber++;
+					}
 					if (*t=='*' && *(t+1)=='/') {
 						i=tempi+2;
 						linecolumn=templinecolumn+2;
@@ -113,9 +118,9 @@ bool Tokenize(const std::string& str) {
 			break;
 		// strings
 		case '\"':
-			// New lines cannot be in strings. (I don't mean the '\n' character.)
+			// New lines or carriage returns cannot be in strings. (I don't mean the '\r' or '\n' character.)
 			for (i++, linecolumn++; i < str.length(); i++, linecolumn++) {
-				if (str.at(i)=='\n') {
+				if (str.at(i)=='\r') {
 					Error("error: Missing a quote at (");
 					errors.back().linenumber=linenumber;
 					errors.back().location=linecolumn;
@@ -124,7 +129,25 @@ bool Tokenize(const std::string& str) {
 					tokens.push_back(Token(linecolumn,linenumber,TokenType::STRING,""));
 					strtemp="";
 					linecolumn=1u;
+					if (str.at(i+1)!='\n') {
+						linenumber++;
+						i++;
+					}
+					break;
+				}
+				else if (str.at(i)=='\n') {
+					Error("error: Missing a quote at (");
+					errors.back().linenumber=linenumber;
+					errors.back().location=linecolumn;
+					errors.back().val+=errors.back().GetFileLoc()+")";
+					// 
+					tokens.push_back(Token(linecolumn,linenumber,TokenType::STRING,""));
+					strtemp="";
 					linenumber++;
+					if (str.at(i-1)!='\r') {
+						linecolumn=1u;
+						i++;
+					}
 					break;
 				}
 				else if (i==str.length()-1){
@@ -176,16 +199,19 @@ bool Tokenize(const std::string& str) {
 			linecolumn++;
 			i++;
 			break;
-		case '\t':
-			linecolumn+=4;
+		case '\r':
+			linecolumn=1u;
+			if (i+1==str.length() || str.at(i+1)!='\n') linenumber++;
 			i++;
 			break;
-		case ' ':
 		case '\v':
-		case '\f':
-		case '\r':
 			i++;
-			linecolumn++;
+			linenumber++;
+			break;
+		case '\n':
+			linenumber++;
+			if (i>0 && str.at(i-1)!='\r') linecolumn=1u;
+			i++;
 			break;
 		default:
 			tokens.push_back(Token(linecolumn,linenumber,TokenType::UNDEFINED,""));
