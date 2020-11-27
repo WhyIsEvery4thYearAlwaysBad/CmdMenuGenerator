@@ -21,7 +21,6 @@ extern std::deque<std::pair<Page,unsigned char> > pages; // Made in main.cpp
 // Convert to a safer string format for file and caption names.
 std::string Format(std::string str) {
 	for (unsigned long long i=0; i < str.length(); i++) {
-		if (i>str.length()) break;
 		if (str.at(i)=='<' && str.find('>',i)!=std::string::npos) {
 			str.erase(i,(str.find('>',i+1)-i)+1);
 			if (i>0) i--;
