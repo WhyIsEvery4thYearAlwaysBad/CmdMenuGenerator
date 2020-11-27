@@ -25,10 +25,17 @@ std::string Format(std::string str) {
 			str.erase(i,(str.find('>',i+1)-i)+1);
 			if (i>0) i--;
 		}
-		// remove punctuation and non-ascii characters
-		if (ispunct(str.at(i)) || !isascii(str.at(i))) {
+		// remove punctuation
+		if (ispunct(str.at(i))) {
 			str.erase(i,1);
-			if (i>0) i--;
+			i--;
+			continue;
+		}
+		// and non-ascii characters
+		if (i<str.length()-1 && (!isascii(str.at(i)) || !isascii(str.at(i+1)))) {
+			str.erase(i,2);
+			i--; 
+			continue;
 		}
 		if (isspace(str.at(i))) str.at(i)='_';
 		if (isupper(str.at(i))) str.at(i)=tolower(str.at(i)); 
