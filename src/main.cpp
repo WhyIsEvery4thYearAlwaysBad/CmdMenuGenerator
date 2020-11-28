@@ -46,8 +46,6 @@ int main(int argc, char** argv) {
 	MenuCreate(bindcount);
 	// Directories
 	std::filesystem::create_directories(outputdir.string()+"/cfg");
-	// For a fix relating to multiple menus.
-	std::ofstream multimenu_fix(outputdir.string()+"/cfg/_cvm_multimenu_fix.cfg");
 	// Main exec.
 	std::ofstream exec(outputdir.string()+"/cfg/activate_cvm.cfg");
 	exec<<R"(closecaption 1
@@ -60,7 +58,6 @@ cvm.exitmenu
 alias cvm.on_exitmenu ;
 alias cvm.on_page_exit ;
 )";
-	for (std::size_t i=0u; i < pages.size(); i++) multimenu_fix<<"alias _cvm.mmenu_fix"<<i<<"\"alias +cvm.openmenu _cvm.cvmstate0\"\n";
 	// Conversion to UCS-2.
 	std::locale utf16(std::locale::classic(),new std::codecvt_utf16<wchar_t, 0xffff, std::little_endian>);
 	std::cout<<"Done. Creating caption file.\n";
@@ -77,7 +74,6 @@ alias cvm.on_page_exit ;
 	for (auto page=pages.begin(); page!=pages.end(); page++, pi++) {
 		unsigned long segmentnumber=0u;
 		cfgpath=outputdir.string()+"/cfg/$pageopen_"+page->first.formatted_title+".cfg";
-		// If a page exists with the same name, append a number to the end.
 		std::ofstream cfgfile(cfgpath);
 		// Write to cfg
 		cfgfile<<"_cvm.menusettings\ncc_emit _#cvm.clear_screen\ncc_emit _#cvm."+page->first.formatted_title+'\n';
@@ -127,16 +123,9 @@ alias cvm.on_page_exit ;
 				cfgfile<<"alias _cvm."<<std::to_string(kbind->numberkey)<<" \""<<kbind->cmdstr.at(0)<<"\"\n";
 			}
 		}
-		// FIX for pressing buttons
-		cfgfile<<"\nexec _cvm_multimenu_fix\nalias _cvm.mmenu_fix"<<page-pages.begin()<<" ;\n";
-		auto temp=pi;
-		if (pages.at(temp).second>0) {
-			temp=GetParentPage(pages,pi,0);
-			cfgfile<<"alias _cvm.mmenu_fix"<<temp<<" ;";
-		}
 	}
 	captionfile<<"\t}\n}";
-	exec.close(), multimenu_fix.close(), captionfile.close();
+	exec.close(), captionfile.close();
 	//Done!
 	std::cout<<"Done! Now just insert exec activate_cvm into autoexec, compile the captions, and preferably convert "<<std::filesystem::path(outputdir).filename()<<" to a vpk.\n";
 }
