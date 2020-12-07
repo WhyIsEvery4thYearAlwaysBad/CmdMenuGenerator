@@ -31,22 +31,24 @@ namespace Parser {
 		}
 	};
 	struct BindToken : public MenuToken {
+		bool noexit=false;
 		std::string name;
 		std::string cmdstr;
 		// pagebind - Whether a bind refers to a page bind.
 		BindToken() {}
-		BindToken(const std::string& p_name, const std::string& p_cmdstr)
-		: name(p_name), cmdstr(p_cmdstr) {
+		BindToken(const std::string& p_name, const std::string& p_cmdstr, const bool& p_noexit)
+		: name(p_name), cmdstr(p_cmdstr), noexit(p_noexit) {
 			type=MenuTokenType::MENU_BIND;
 		}
 	};
 	struct ToggleBindToken : public MenuToken {
+		bool noexit=false;
 		unsigned short states=0u;
 		std::string names[MAX_TOGGLE_STATES];
 		std::string cmdstrs[MAX_TOGGLE_STATES];
 		ToggleBindToken() {}
-		ToggleBindToken(const std::string p_names[MAX_TOGGLE_STATES], const std::string p_cmdstrs[MAX_TOGGLE_STATES], unsigned short p_states)
-		: states(p_states)
+		ToggleBindToken(const std::string p_names[MAX_TOGGLE_STATES], const std::string p_cmdstrs[MAX_TOGGLE_STATES], unsigned short p_states, const bool& p_noexit)
+		: states(p_states), noexit(p_noexit)
 		{
 			for (unsigned short i=0; i < MAX_TOGGLE_STATES; i++) {
 				names[i]=p_names[i];

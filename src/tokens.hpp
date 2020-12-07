@@ -10,6 +10,7 @@ enum TokenType {
 	VBAR, // |
 	BIND, // BIND
 	TOGGLE, // TOGGLE
+	NOEXIT, // NOEXIT
 	FILEEND, // the end!
 	ERR, // ah crepe!
 	UNDEFINED

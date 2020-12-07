@@ -74,7 +74,8 @@ bool Tokenize(const std::string& str) {
 			}
 			// Check for terminals.
 			if (tokens.back().val=="TOGGLE") tokens.back().type=TokenType::TOGGLE;
-			if (tokens.back().val=="BIND") tokens.back().type=TokenType::BIND;
+			else if (tokens.back().val=="BIND") tokens.back().type=TokenType::BIND;
+			else if (tokens.back().val=="NOEXIT") tokens.back().type=TokenType::NOEXIT;
 			continue;
 		}
 		switch (str.at(i))
@@ -235,8 +236,14 @@ namespace Parser {
 	bool eoffound=false;
 	bool errorsfound=false;
 	bool ParseTokens() {
+		bool noexit=false;
 		for (auto t=tokens.begin(); t!=tokens.end(); ) {
 			switch (t->type) {
+				case TokenType::NOEXIT:
+					if (noexit==true) Error("error: Duplicate modifier. ("+t->GetFileLoc()+')');
+					else noexit=true;
+					t++;
+					break;
 				case TokenType::TOGGLE: 
 					{ // Check for toggle bind.
 						std::string namelist[MAX_TOGGLE_STATES];
@@ -245,7 +252,7 @@ namespace Parser {
 							Error("error: Toggle bind must be set in a page. ("+t->GetFileLoc()+')');
 						if ((t+1)->type!=TokenType::BIND) 
 							Error("Expected \'BIND\' ("+(t+1)->GetFileLoc()+")");
-						unsigned int i=2;
+						unsigned short i=2;
 						while ((t+i)->type==TokenType::STRING)
 						{
 							if (i % 2 == 0) namelist[(i-2)/2]=(t+i)->val;
@@ -258,7 +265,8 @@ namespace Parser {
 							Error("error: Expected ≥2 strings. ("+(t+i)->GetFileLoc()+")");
 						if ((t+i)->type!=TokenType::VBAR) 
 							Error("error: Expected '|' ("+(t+i-1)->GetFileLoc()+")");
-						menutokens.push_back(new Parser::ToggleBindToken(namelist,cmdlist,(i-2)/2));
+						menutokens.push_back(new Parser::ToggleBindToken(namelist,cmdlist,static_cast<unsigned short>((i-2)/2),noexit));
+						if (noexit==true) noexit=false;
 						t+=i;
 					}
 					break;
@@ -271,12 +279,17 @@ namespace Parser {
 						Error("error: Expected command string. ("+(t+2)->GetFileLoc()+")");
 					if ((t+3)->type!=TokenType::VBAR) 
 						Error("error: Expected '|' ("+(t+3)->GetFileLoc()+")");
-					menutokens.push_back(new Parser::BindToken((t+1)->val, (t+2)->val));
+					menutokens.push_back(new Parser::BindToken((t+1)->val, (t+2)->val,noexit));
+					if (noexit==true) noexit=false;
 					t+=4;
 					break;
 				case TokenType::STRING: // Check for new page.
 					if ((t+1)->type!=TokenType::LCBRACKET) 
 						Error("error: Expected '{' ("+(t+1)->GetFileLoc()+")");
+					else if (noexit==true) {
+						Error("error: Expected a bind. ("+t->GetFileLoc()+')');
+						noexit=false;
+					}
 					menutokens.push_back(new Parser::PageToken(t->val,depth));
 					depth++;
 					t+=2;
