@@ -31,24 +31,24 @@ namespace Parser {
 		}
 	};
 	struct BindToken : public MenuToken {
-		bool noexit=false;
+		bool noexit=false, formatted=true;
 		std::string name;
 		std::string cmdstr;
 		// pagebind - Whether a bind refers to a page bind.
 		BindToken() {}
-		BindToken(const std::string& p_name, const std::string& p_cmdstr, const bool& p_noexit)
-		: name(p_name), cmdstr(p_cmdstr), noexit(p_noexit) {
+		BindToken(const std::string& p_name, const std::string& p_cmdstr, const bool& p_noexit, const bool& p_nofmt)
+		: name(p_name), cmdstr(p_cmdstr), noexit(p_noexit), formatted(p_nofmt) {
 			type=MenuTokenType::MENU_BIND;
 		}
 	};
 	struct ToggleBindToken : public MenuToken {
-		bool noexit=false;
+		bool noexit=false, formatted=true;
 		unsigned short states=0u;
 		std::string names[MAX_TOGGLE_STATES];
 		std::string cmdstrs[MAX_TOGGLE_STATES];
 		ToggleBindToken() {}
-		ToggleBindToken(const std::string p_names[MAX_TOGGLE_STATES], const std::string p_cmdstrs[MAX_TOGGLE_STATES], unsigned short p_states, const bool& p_noexit)
-		: states(p_states), noexit(p_noexit)
+		ToggleBindToken(const std::string p_names[MAX_TOGGLE_STATES], const std::string p_cmdstrs[MAX_TOGGLE_STATES], unsigned short p_states, const bool& p_noexit, const bool& p_nofmt)
+		: states(p_states), noexit(p_noexit), formatted(p_nofmt)
 		{
 			for (unsigned short i=0; i < MAX_TOGGLE_STATES; i++) {
 				names[i]=p_names[i];
@@ -64,9 +64,10 @@ namespace Parser {
 	struct PageToken : public MenuToken {
 		std::string Name;
 		unsigned char depth=0u;
+		bool formatted=true;
 		PageToken() {}
-		PageToken(const std::string& name, const unsigned char& p_depth)
-		: Name(name), depth(p_depth) {
+		PageToken(const std::string& name, const unsigned char& p_depth, const bool& p_fmt)
+		: Name(name), depth(p_depth), formatted(p_fmt) {
 			type=MenuTokenType::MENU_NEW_PAGE;
 		}
 	};

@@ -11,6 +11,7 @@ enum TokenType {
 	BIND, // BIND
 	TOGGLE, // TOGGLE
 	NOEXIT, // NOEXIT
+	NOFORMAT, // NOFMT
 	FILEEND, // the end!
 	ERR, // ah crepe!
 	UNDEFINED
