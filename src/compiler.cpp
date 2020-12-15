@@ -360,17 +360,17 @@ void MenuCreate(unsigned short& bindcount) {
 				// Form duplicates if formatted name is already taken.
 				for (auto& t : pagestack)
 				{
-					if (t.first.title==tpage.Name) i++;
+					if (t.first.formatted_title==Format(tpage.Name)) i++;
 				}
 				for (auto& t : pages)
 				{
-					if (t.first.title==tpage.Name) i++;
+					if (t.first.formatted_title==Format(tpage.Name)) i++;
 				}
 				pagestack.push_front({Page(tpage.Name),tpage.depth});	
 				if (i>0) pagestack.front().first.formatted_title+='_'+std::to_string(i);
 				if (pagestack.size()>1) {
-					if (i>0) (pagestack.begin()+1)->first.binds.push_back(Bind(nkeystack.top(),Parser::BindToken(tpage.Name,"exec $pageopen_"+Format(tpage.Name)+'_'+std::to_string(i),false,tpage.formatted)));
-					else (pagestack.begin()+1)->first.binds.push_back(Bind(nkeystack.top(),Parser::BindToken(tpage.Name,"exec $pageopen_"+Format(tpage.Name),false,tpage.formatted)));
+					if (i>0) (pagestack.begin()+1)->first.binds.push_back(Bind(nkeystack.top(),Parser::BindToken(tpage.Name,"exec $pageopen_"+Format(tpage.Name)+'_'+std::to_string(i),true,tpage.formatted)));
+					else (pagestack.begin()+1)->first.binds.push_back(Bind(nkeystack.top(),Parser::BindToken(tpage.Name,"exec $pageopen_"+Format(tpage.Name),true,tpage.formatted)));
 				}
 				nkeystack.push(1u);
 			}
