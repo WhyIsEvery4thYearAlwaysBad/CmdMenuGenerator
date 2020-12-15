@@ -1,3 +1,7 @@
 # Voicemenu Generator
-A generator for custom voicemenus focused on TF2, but may work for other source games (Untested!).  
-A custom voicemenu is a type of voicemenu that uses captions and scripting to emulate a voicemenu.
+A generator for custom voicemenus for games made in the Source Engine. Refer to the Introduction wiki for more information.
+
+This is the development branch, so the source code may be unstable. If you want a stable version, go to the master branch.
+
+This program is verified to work in:
+* Team Fortress 2
