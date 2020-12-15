@@ -16,7 +16,7 @@ extern std::deque<Token> tokens; // {Page, Depth}
 extern std::deque<Token> errors; // 
 const std::string badfpcharacters="|?\"\\:*<>";
 std::deque<std::pair<Page,unsigned char> > pages; // {Page, Depth}
-std::map<std::string,std::string> keymap={{"#cvm.linger_time","0"},{"#cvm.predisplay_time","0.25"},{"#cvm.defaultcolor",""},{"#cvm.boldbydefault","false"},{"#cvm.italicizebydefault","false"},{"#cvm.resetkeys","bind 1 slot1; bind 2 slot2; bind 3 slot3; bind 4 slot4; bind 5 slot5; bind 6 slot6; bind 7 slot7; bind 8 slot8; bind 9 slot9; bind 0 slot10"},{"#cvm.resetkeys.scout",""},{"#cvm.resetkeys.soldier",""},{"#cvm.resetkeys.pyro",""},{"#cvm.resetkeys.demoman",""},{"#cvm.resetkeys.heavy",""},{"#cvm.resetkeys.engineer",""},{"#cvm.resetkeys.medic",""},{"#cvm.resetkeys.sniper",""},{"#cvm.resetkeys.spy",""}};
+std::map<std::string,std::string> keymap={{"#cvm.linger_time","0"},{"#cvm.predisplay_time","0.25"},{"format","$(nkey). $(str)"},{"#cvm.resetkeys","bind 1 slot1; bind 2 slot2; bind 3 slot3; bind 4 slot4; bind 5 slot5; bind 6 slot6; bind 7 slot7; bind 8 slot8; bind 9 slot9; bind 0 slot10"},{"#cvm.resetkeys.scout",""},{"#cvm.resetkeys.soldier",""},{"#cvm.resetkeys.pyro",""},{"#cvm.resetkeys.demoman",""},{"#cvm.resetkeys.heavy",""},{"#cvm.resetkeys.engineer",""},{"#cvm.resetkeys.medic",""},{"#cvm.resetkeys.sniper",""},{"#cvm.resetkeys.spy",""}};
 std::wstring_convert<std::codecvt_utf8<wchar_t>,wchar_t> convert;
 // From launch options
 extern std::filesystem::path inputfilename;
@@ -60,7 +60,7 @@ alias cvm.on_page_exit ;
 )";
 	// Conversion to UCS-2.
 	std::locale utf16(std::locale::classic(),new std::codecvt_utf16<wchar_t, 0xffff, std::little_endian>);
-	std::cout<<"Done. Creating caption file.\n";
+	std::cout<<"Done. ("<<std::to_string(bindcount)<<" binds compiled.) Creating caption file.\n";
 	// Create the captions directory once.
 	if (!std::filesystem::exists(outputdir.string()+"captions")) std::filesystem::create_directories(outputdir.string()+"captions/resource");
 	std::wofstream captionfile(outputdir.string()+"captions/resource/closecaption_customvoicemenu.txt",std::ios_base::binary);
@@ -95,19 +95,15 @@ alias cvm.on_page_exit ;
 		cfgfile<<"_cvm.nullkeys\n";
 		// Write captions
 		for (auto kbind=page->first.binds.begin(); kbind!=page->first.binds.end(); kbind++) {
-			if (kbind==page->first.binds.begin() && kbind->istogglebind!=true) {
+			if (kbind==page->first.binds.begin() && kbind->istogglebind!=true)
 				captionfile<<convert.from_bytes("\t\t\"_#cvm."+page->first.formatted_title+"\" \"");
-				if (keymap["#cvm.boldbydefault"].find("true")!=std::string::npos) captionfile<<"<B>";
-				if (keymap["#cvm.italicizedbydefault"].find("true")!=std::string::npos) captionfile<<"<I>";
-				captionfile<<convert.from_bytes(keymap["#cvm.defaultcolor"]);
-			}
 			if (kbind->istogglebind==true) {
 				exec<<"alias _cvm.toggle_"<<std::to_string(togglenumber)<<" _cvm.toggle_"<<std::to_string(togglenumber)<<"_0\n";
 				exec<<"alias _#cvm.toggle_"<<std::to_string(togglenumber)<<" _#cvm.toggle_"<<std::to_string(togglenumber)<<"_0\n";
 				for (unsigned char sti=0u; sti < kbind->name.size(); sti++) {
 					exec<<"alias _cvm.toggle_"<<std::to_string(togglenumber)<<'_'<<std::to_string(sti)<<'\"'<<kbind->cmdstr.at(sti)<<"; alias _cvm.toggle_"<<std::to_string(togglenumber)<<" _cvm.toggle_"<<std::to_string(togglenumber)<<'_'<<std::to_string((sti+1)%kbind->name.size())<<"; alias _#cvm.toggle_"<<std::to_string(togglenumber)<<" _#cvm.toggle_"<<std::to_string(togglenumber)<<'_'<<std::to_string((sti+1)%kbind->name.size())<<"\"\n";
 					exec<<"alias _#cvm.toggle_"<<std::to_string(togglenumber)<<'_'<<std::to_string(sti)<<"\"cc_emit _#cvm.toggle_"<<std::to_string(togglenumber)<<'_'<<std::to_string(sti)<<"\"\n";
-					captionfile<<convert.from_bytes("\t\t\"_#cvm.toggle_"+std::to_string(togglenumber)+'_'+std::to_string(sti)+"\" \""+(keymap["#cvm.boldbydefault"].find("true")!=std::string::npos ? "<B>" : "")+(keymap["#cvm.italicizedbydefault"].find("true")!=std::string::npos ? "<I>" : "")+keymap["#cvm.defaultcolor"]+std::to_string(kbind->numberkey)+". "+kbind->name.at(sti)+"\"\n");
+					captionfile<<convert.from_bytes("\t\t\"_#cvm.toggle_"+std::to_string(togglenumber)+'_'+std::to_string(sti)+"\" \""+kbind->name.at(sti)+"\"\n");
 				}
 				cfgfile<<"alias _cvm."<<std::to_string(kbind->numberkey)<<" \"_cvm.toggle_"<<std::to_string(togglenumber)<<"\"\n";
 				togglenumber++;
@@ -117,7 +113,7 @@ alias cvm.on_page_exit ;
 					captionfile<<convert.from_bytes("\t\t\"_#cvm."+page->first.formatted_title+"_seg_"+std::to_string(segmentnumber)+"\" \"");
 					segmentnumber++;
 				}
-				captionfile<<convert.from_bytes(std::to_string(kbind->numberkey)+". "+kbind->name.at(0));
+				captionfile<<convert.from_bytes(kbind->name.front());
 				if (kbind==page->first.binds.end()-1 || (kbind+1)->istogglebind==true) captionfile<<L"\"\n";
 				else captionfile<<L"<cr>";
 				cfgfile<<"alias _cvm."<<std::to_string(kbind->numberkey)<<" \""<<kbind->cmdstr.at(0)<<"\"\n";

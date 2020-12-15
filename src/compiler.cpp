@@ -76,6 +76,7 @@ bool Tokenize(const std::string& str) {
 			if (tokens.back().val=="TOGGLE") tokens.back().type=TokenType::TOGGLE;
 			else if (tokens.back().val=="BIND") tokens.back().type=TokenType::BIND;
 			else if (tokens.back().val=="NOEXIT") tokens.back().type=TokenType::NOEXIT;
+			else if (tokens.back().val=="NOFORMAT") tokens.back().type=TokenType::NOFORMAT;
 			continue;
 		}
 		switch (str.at(i))
@@ -233,15 +234,19 @@ bool Tokenize(const std::string& str) {
 }
 namespace Parser {
 	unsigned int depth=0u;
-	bool eoffound=false;
-	bool errorsfound=false;
+	bool eoffound=false, errorsfound=false;
 	bool ParseTokens() {
-		bool noexit=false;
+		bool noexit=false, format=true;
 		for (auto t=tokens.begin(); t!=tokens.end(); ) {
 			switch (t->type) {
 				case TokenType::NOEXIT:
 					if (noexit==true) Error("error: Duplicate modifier. ("+t->GetFileLoc()+')');
 					else noexit=true;
+					t++;
+					break;
+				case TokenType::NOFORMAT:
+					if (format==false) Error("error: Duplicate modifier. ("+t->GetFileLoc()+')');
+					else format=false;
 					t++;
 					break;
 				case TokenType::TOGGLE: 
@@ -265,7 +270,7 @@ namespace Parser {
 							Error("error: Expected ≥2 strings. ("+(t+i)->GetFileLoc()+")");
 						if ((t+i)->type!=TokenType::VBAR) 
 							Error("error: Expected '|' ("+(t+i-1)->GetFileLoc()+")");
-						menutokens.push_back(new Parser::ToggleBindToken(namelist,cmdlist,static_cast<unsigned short>((i-2)/2),noexit));
+						menutokens.push_back(new Parser::ToggleBindToken(namelist,cmdlist,static_cast<unsigned short>((i-2)/2),noexit,format));
 						if (noexit==true) noexit=false;
 						t+=i;
 					}
@@ -279,8 +284,8 @@ namespace Parser {
 						Error("error: Expected command string. ("+(t+2)->GetFileLoc()+")");
 					if ((t+3)->type!=TokenType::VBAR) 
 						Error("error: Expected '|' ("+(t+3)->GetFileLoc()+")");
-					menutokens.push_back(new Parser::BindToken((t+1)->val, (t+2)->val,noexit));
-					if (noexit==true) noexit=false;
+					menutokens.push_back(new Parser::BindToken((t+1)->val, (t+2)->val,noexit,format));
+					noexit=false, format=true;
 					t+=4;
 					break;
 				case TokenType::STRING: // Check for new page.
@@ -290,7 +295,8 @@ namespace Parser {
 						Error("error: Expected a bind. ("+t->GetFileLoc()+')');
 						noexit=false;
 					}
-					menutokens.push_back(new Parser::PageToken(t->val,depth));
+					menutokens.push_back(new Parser::PageToken(t->val,depth,format));
+					format=true;
 					depth++;
 					t+=2;
 					break;
@@ -354,17 +360,17 @@ void MenuCreate(unsigned short& bindcount) {
 				// Form duplicates if formatted name is already taken.
 				for (auto& t : pagestack)
 				{
-					if (t.first.title==tpage.Name) i++;
+					if (t.first.formatted_title==Format(tpage.Name)) i++;
 				}
 				for (auto& t : pages)
 				{
-					if (t.first.title==tpage.Name) i++;
+					if (t.first.formatted_title==Format(tpage.Name)) i++;
 				}
 				pagestack.push_front({Page(tpage.Name),tpage.depth});	
 				if (i>0) pagestack.front().first.formatted_title+='_'+std::to_string(i);
 				if (pagestack.size()>1) {
-					if (i>0) (pagestack.begin()+1)->first.binds.push_back(Bind(nkeystack.top(),tpage.Name,"exec $pageopen_"+Format(tpage.Name)+'_'+std::to_string(i)));
-					else (pagestack.begin()+1)->first.binds.push_back(Bind(nkeystack.top(),tpage.Name,"exec $pageopen_"+Format(tpage.Name)));
+					if (i>0) (pagestack.begin()+1)->first.binds.push_back(Bind(nkeystack.top(),Parser::BindToken(tpage.Name,"exec $pageopen_"+Format(tpage.Name)+'_'+std::to_string(i),true,tpage.formatted)));
+					else (pagestack.begin()+1)->first.binds.push_back(Bind(nkeystack.top(),Parser::BindToken(tpage.Name,"exec $pageopen_"+Format(tpage.Name),true,tpage.formatted)));
 				}
 				nkeystack.push(1u);
 			}
