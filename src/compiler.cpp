@@ -358,13 +358,15 @@ void MenuCreate(unsigned short& bindcount) {
 				tpage=static_cast<Parser::PageToken&>(**t);
 				std::size_t i=0llu;
 				// Form duplicates if formatted name is already taken.
-				for (auto& t : pagestack)
+				for (auto t=pagestack.end(); t!=pagestack.begin(); t--)
 				{
-					if (t.first.formatted_title==Format(tpage.Name) || t.first.formatted_title==Format(tpage.Name)+'_'+std::to_string(i)) i++;
+					if (t->first.formatted_title==Format(tpage.Name)
+					 || t->first.formatted_title==(Format(tpage.Name)+'_'+std::to_string(i))) i++;
 				}
 				for (auto& t : pages)
 				{
-					if (t.first.formatted_title==Format(tpage.Name) || t.first.formatted_title==Format(tpage.Name)+'_'+std::to_string(i)) i++;
+					if (t.first.formatted_title==Format(tpage.Name)
+					|| t.first.formatted_title==(Format(tpage.Name)+'_'+std::to_string(i))) i++;
 				}
 				pagestack.push_front({Page(tpage.Name),tpage.depth});	
 				if (i>0) pagestack.front().first.formatted_title+='_'+std::to_string(i);
@@ -378,8 +380,7 @@ void MenuCreate(unsigned short& bindcount) {
 		case Parser::MenuTokenType::MENU_END_PAGE:
 			// Warning:
 			if (pagestack.front().first.binds.size()>9) std::cout<<"warning: More than nine binds in page \'"<<pagestack.front().first.title<<"\'\n";
-			if (pagestack.size()>0) pages.push_front(pagestack.front());
-			else pages.push_back(pagestack.front());
+			pages.push_back(pagestack.front());
 			pagestack.pop_front();
 			nkeystack.pop();
 			if (!nkeystack.empty()) {
