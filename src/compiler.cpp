@@ -360,11 +360,11 @@ void MenuCreate(unsigned short& bindcount) {
 				// Form duplicates if formatted name is already taken.
 				for (auto& t : pagestack)
 				{
-					if (t.first.formatted_title==Format(tpage.Name)) i++;
+					if (t.first.formatted_title==Format(tpage.Name) || t.first.formatted_title==Format(tpage.Name)+'_'+std::to_string(i)) i++;
 				}
 				for (auto& t : pages)
 				{
-					if (t.first.formatted_title==Format(tpage.Name)) i++;
+					if (t.first.formatted_title==Format(tpage.Name) || t.first.formatted_title==Format(tpage.Name)+'_'+std::to_string(i)) i++;
 				}
 				pagestack.push_front({Page(tpage.Name),tpage.depth});	
 				if (i>0) pagestack.front().first.formatted_title+='_'+std::to_string(i);
