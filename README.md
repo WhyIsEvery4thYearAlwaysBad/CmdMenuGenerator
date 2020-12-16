@@ -11,7 +11,7 @@ Original testing environment. Works flawlessly.
 
 ## Counter-Strike: Global Offensive
 
-Generated voicemenus themselves work, but only if you write them *directly* to the cfg folder. I am having issues with captions.
+Pages do not run properly and I am having issues with captions.
 
 ## Counter-Strike: Source
 
