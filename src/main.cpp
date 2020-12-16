@@ -16,7 +16,7 @@ extern std::deque<Token> tokens; // {Page, Depth}
 extern std::deque<Token> errors; // 
 const std::string badfpcharacters="|?\"\\:*<>";
 std::deque<std::pair<Page,unsigned char> > pages; // {Page, Depth}
-std::map<std::string,std::string> keymap={{"#cvm.linger_time","0"},{"#cvm.predisplay_time","0.25"},{"format","$(nkey). $(str)"},{"#cvm.resetkeys","bind 1 slot1; bind 2 slot2; bind 3 slot3; bind 4 slot4; bind 5 slot5; bind 6 slot6; bind 7 slot7; bind 8 slot8; bind 9 slot9; bind 0 slot10"},{"#cvm.resetkeys.scout",""},{"#cvm.resetkeys.soldier",""},{"#cvm.resetkeys.pyro",""},{"#cvm.resetkeys.demoman",""},{"#cvm.resetkeys.heavy",""},{"#cvm.resetkeys.engineer",""},{"#cvm.resetkeys.medic",""},{"#cvm.resetkeys.sniper",""},{"#cvm.resetkeys.spy",""}};
+std::map<std::string,std::string> keymap={{"linger_time","0"},{"predisplay_time","0.25"},{"format","$(nkey). $(str)"},{"resetkeys","bind 1 slot1; bind 2 slot2; bind 3 slot3; bind 4 slot4; bind 5 slot5; bind 6 slot6; bind 7 slot7; bind 8 slot8; bind 9 slot9; bind 0 slot10"}};
 std::wstring_convert<std::codecvt_utf8<wchar_t>,wchar_t> convert;
 // From launch options
 extern std::filesystem::path inputfilename;
