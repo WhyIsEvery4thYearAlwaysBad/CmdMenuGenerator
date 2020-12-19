@@ -3,7 +3,7 @@ A generator for custom voicemenus for TF2, but may work for other games made in 
 
 If you don't trust me, you can compile the source from master. Use the dev branch for in development features.
 
-If you are on a non-windows OS, use [Wine](https://wiki.winehq.org/Main_Page). Catalina-and-above users should use a Virtual Machine with Windows or Bootcamp.
+If you are on a non-windows OS, use [Wine](https://wiki.winehq.org/Main_Page). If your OS does not support 32-bit programs, you should use a Virtual Machine with Windows or Bootcamp.
 
 # Tested Games
 
