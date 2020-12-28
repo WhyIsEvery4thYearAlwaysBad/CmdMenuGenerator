@@ -253,21 +253,20 @@ namespace Parser {
 					{ // Check for toggle bind.
 						std::string namelist[MAX_TOGGLE_STATES];
 						std::string cmdlist[MAX_TOGGLE_STATES];
+						unsigned short i=1;
 						if (depth<=0) 
 							Error("error: Toggle bind must be set in a page. ("+t->GetFileLoc()+')');
-						if ((t+1)->type!=TokenType::BIND) 
-							Error("Expected \'BIND\' ("+(t+1)->GetFileLoc()+")");
-						unsigned short i=2;
+						if ((t+i)->type!=TokenType::BIND) 
+							Error("Expected \'BIND\' ("+(t+i)->GetFileLoc()+")");
+						else i++;
 						while ((t+i)->type==TokenType::STRING)
 						{
 							if (i % 2 == 0) namelist[(i-2)/2]=(t+i)->val;
 							else if (i % 2 == 1) cmdlist[(i-2)/2]=(t+i)->val;
 							i++;
 						}
-						if (i % 2!=0)  // Even amount of strings indicate that the toggle bind has names and cmdstrs
-							Error("error: Uneven amount of strings! ("+(t+i)->GetFileLoc()+")");
-						if (i<=1) 
-							Error("error: Expected ≥2 strings. ("+(t+i)->GetFileLoc()+")");
+						if (i-1<=1 || i % 2!=0)  // Even amount of strings indicate that the toggle bind has names and cmdstrs
+							Error("error: Expected String! ("+(t+i)->GetFileLoc()+")");
 						if ((t+i)->type!=TokenType::VBAR) 
 							Error("error: Expected '|' ("+(t+i-1)->GetFileLoc()+")");
 						menutokens.push_back(new Parser::ToggleBindToken(namelist,cmdlist,static_cast<unsigned short>((i-2)/2),noexit,format));
