@@ -269,7 +269,7 @@ namespace Parser {
 							i++;
 						}
 						if (i-1<=1 || i % 2!=0)  // Even amount of strings indicate that the toggle bind has names and cmdstrs
-							Error("error: Expected String! ("+(t+i)->GetFileLoc()+")");
+							Error("error: Expected string! ("+(t+i)->GetFileLoc()+")");
 						if ((t+i)->type!=TokenType::VBAR) 
 							Error("error: Expected '|' ("+(t+i-1)->GetFileLoc()+")");
 						menutokens.push_back(new Parser::ToggleBindToken(namelist,cmdlist,static_cast<unsigned short>((i-2)/2),noexit,format));
@@ -291,8 +291,10 @@ namespace Parser {
 					t+=4;
 					break;
 				case TokenType::STRING: // Check for new page.
-					if ((t+1)->type!=TokenType::LCBRACKET) 
-						Error("error: Expected '{' ("+(t+1)->GetFileLoc()+")");
+				{
+					unsigned short i=1u;
+					if ((t+i)->type!=TokenType::LCBRACKET) 
+						Error("error: Expected '{' ("+(t+i)->GetFileLoc()+")");
 					else if (noexit==true) {
 						Error("error: Expected a bind. ("+t->GetFileLoc()+')');
 						noexit=false;
@@ -300,15 +302,37 @@ namespace Parser {
 					menutokens.push_back(new Parser::PageToken(t->val,depth,format));
 					format=true;
 					depth++;
-					t+=2;
-					break;
+					t+=i;
+				}
+				break;
 				case TokenType::IDENTIFIER: // Check for set keymaps
-					if ((t+1)->type!=TokenType::EQUALS) Error("error: Expected '=' ("+(t+1)->GetFileLoc()+")");
-					if ((t+2)->type!=TokenType::STRING) Error("error: Expected string ("+(t+2)->GetFileLoc()+")");
-					if ((t+1)->type!=TokenType::EQUALS && (t+2)->type!=TokenType::STRING) Error("error: Unknown identifier \'"+t->val+"\' ("+t->GetFileLoc()+')');
+				{
+					unsigned short i=1u;
+					// Maybe they were trying to make a page…
+					if ((t+i)->type==TokenType::LCBRACKET) {
+						t++;
+						break;
+					};
+					
+					if ((t+i)->type!=TokenType::EQUALS) {
+						Error("error: Expected '='! ("+(t+i)->GetFileLoc()+")");
+						tokens.insert(t+i,Token((t+i)->location,(t+i)->linenumber,TokenType::EQUALS,"="));
+					}
+					if ((t+i+1)->type!=TokenType::LCBRACKET) i++;
+					if ((t+i)->type!=TokenType::STRING || (t+i+1)->type==TokenType::LCBRACKET) {
+						Error("error: Expected string! ("+(t+i)->GetFileLoc()+")");
+						tokens.insert(t+i,Token((t+i)->location,(t+i)->linenumber,TokenType::STRING,""));
+					}
+					if ((t+i+1)->type!=TokenType::LCBRACKET) i++;
 					menutokens.push_back(new Parser::KVToken(t->val,(t+2)->val));
-					t+=3;
-					break;
+					t+=i;
+				}
+				break;
+				case TokenType::LCBRACKET:
+					depth++;
+					if (t>tokens.begin() && (t-1)->type!=TokenType::STRING) Error("error: Expected string! ("+(t-1)->GetFileLoc()+")");
+					t++;
+				break;
 				case TokenType::RCBRACKET:
 					depth--;
 					if (depth==UINT32_MAX) {
