@@ -332,7 +332,6 @@ namespace Parser {
 		}
 		}
 		if (eoffound==false) std::cout<<"warning: EOF not found!\n";
-		if (depth!=0) Error("error: You are missing a '}'!");
 		if (errors.size()>=1) errorsfound=true;
 		return !errorsfound;
 	}
