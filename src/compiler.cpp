@@ -126,6 +126,8 @@ bool Tokenize(const std::string& str) {
 			break;
 		// strings
 		case '\"':
+			{
+			std::size_t tempcol=linecolumn,templn=linenumber;
 			// New lines or carriage returns cannot be in strings. (I don't mean the '\r' or '\n' character.)
 			for (i++, linecolumn++; i < str.length(); i++, linecolumn++) {
 				if (str.at(i)=='\r') {
@@ -165,7 +167,7 @@ bool Tokenize(const std::string& str) {
 					break;
 				}
 				else if (str.at(i)=='\"') {
-					tokens.push_back(Token(linecolumn,linenumber,TokenType::STRING,strtemp));
+					tokens.push_back(Token(tempcol,templn,TokenType::STRING,strtemp));
 					strtemp="";
 					break;
 				}
@@ -176,6 +178,7 @@ bool Tokenize(const std::string& str) {
 			}
 			i++; // Starts at the ending quote if this doesn't exist.
 			linecolumn++;
+			}
 			break;
 		//terminals
 		case '=':
