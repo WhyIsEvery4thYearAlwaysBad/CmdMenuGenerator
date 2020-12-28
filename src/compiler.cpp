@@ -240,12 +240,12 @@ namespace Parser {
 		for (auto t=tokens.begin(); t!=tokens.end(); ) {
 			switch (t->type) {
 				case TokenType::NOEXIT:
-					if (noexit==true) Error("error: Duplicate modifier. ("+t->GetFileLoc()+')');
+					if (noexit==true) Error("error: Duplicate modifier \"NOEXIT\". ("+t->GetFileLoc()+')');
 					else noexit=true;
 					t++;
 					break;
 				case TokenType::NOFORMAT:
-					if (format==false) Error("error: Duplicate modifier. ("+t->GetFileLoc()+')');
+					if (format==false) Error("error: Duplicate modifier \"NOFORMAT\". ("+t->GetFileLoc()+')');
 					else format=false;
 					t++;
 					break;
