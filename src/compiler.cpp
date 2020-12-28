@@ -380,7 +380,7 @@ void MenuCreate(unsigned short& bindcount) {
 			break;
 		case Parser::MenuTokenType::MENU_END_PAGE:
 			// Warning:
-			if (pagestack.front().first.binds.size()>9) std::cout<<"warning: More than nine binds in page \'"<<pagestack.front().first.title<<"\'\n";
+			if (pagestack.front().first.binds.size()>9) std::cout<<"warning: More than nine binds in page \'"<<pagestack.front().first.title<<"\'!\n";
 			pages.push_back(pagestack.front());
 			pagestack.pop_front();
 			nkeystack.pop();
