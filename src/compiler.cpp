@@ -278,17 +278,25 @@ namespace Parser {
 					}
 					break;
 				case TokenType::BIND: // Check for bind.
+				{
+					unsigned short i=1u;
 					if (depth<=0) 
 						Error("error: Bind must be set in a page. ("+t->GetFileLoc()+')');
-					if ((t+1)->type!=TokenType::STRING) 
-						Error("error: Expected name string. ("+(t+1)->GetFileLoc()+")");
-					if ((t+2)->type!=TokenType::STRING) 
-						Error("error: Expected command string. ("+(t+2)->GetFileLoc()+")");
-					if ((t+3)->type!=TokenType::VBAR) 
-						Error("error: Expected '|' ("+(t+3)->GetFileLoc()+")");
+					if ((t+i)->type!=TokenType::STRING) 
+						Error("error: Expected string. ("+(t+i)->GetFileLoc()+")");
+					else {
+						i++;
+						if ((t+i)->type!=TokenType::STRING) 
+							Error("error: Expected string. ("+(t+i)->GetFileLoc()+")");
+						else i++;
+					}
+					if ((t+i)->type!=TokenType::VBAR) 
+						Error("error: Expected '|' ("+(t+i)->GetFileLoc()+")");
+					else i++;
 					menutokens.push_back(new Parser::BindToken((t+1)->val, (t+2)->val,noexit,format));
 					noexit=false, format=true;
-					t+=4;
+					t+=i;
+				}
 					break;
 				case TokenType::STRING: // Check for new page.
 				{
