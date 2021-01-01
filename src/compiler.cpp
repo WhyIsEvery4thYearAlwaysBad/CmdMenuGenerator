@@ -126,6 +126,8 @@ bool Tokenize(const std::string& str) {
 			break;
 		// strings
 		case '\"':
+			{
+			std::size_t tempcol=linecolumn,templn=linenumber;
 			// New lines or carriage returns cannot be in strings. (I don't mean the '\r' or '\n' character.)
 			for (i++, linecolumn++; i < str.length(); i++, linecolumn++) {
 				if (str.at(i)=='\r') {
@@ -165,7 +167,7 @@ bool Tokenize(const std::string& str) {
 					break;
 				}
 				else if (str.at(i)=='\"') {
-					tokens.push_back(Token(linecolumn,linenumber,TokenType::STRING,strtemp));
+					tokens.push_back(Token(tempcol,templn,TokenType::STRING,strtemp));
 					strtemp="";
 					break;
 				}
@@ -176,6 +178,7 @@ bool Tokenize(const std::string& str) {
 			}
 			i++; // Starts at the ending quote if this doesn't exist.
 			linecolumn++;
+			}
 			break;
 		//terminals
 		case '=':
@@ -240,12 +243,12 @@ namespace Parser {
 		for (auto t=tokens.begin(); t!=tokens.end(); ) {
 			switch (t->type) {
 				case TokenType::NOEXIT:
-					if (noexit==true) Error("error: Duplicate modifier. ("+t->GetFileLoc()+')');
+					if (noexit==true) Error("error: Duplicate modifier \"NOEXIT\". ("+t->GetFileLoc()+')');
 					else noexit=true;
 					t++;
 					break;
 				case TokenType::NOFORMAT:
-					if (format==false) Error("error: Duplicate modifier. ("+t->GetFileLoc()+')');
+					if (format==false) Error("error: Duplicate modifier \"NOFORMAT\". ("+t->GetFileLoc()+')');
 					else format=false;
 					t++;
 					break;
@@ -253,21 +256,20 @@ namespace Parser {
 					{ // Check for toggle bind.
 						std::string namelist[MAX_TOGGLE_STATES];
 						std::string cmdlist[MAX_TOGGLE_STATES];
+						unsigned short i=1;
 						if (depth<=0) 
 							Error("error: Toggle bind must be set in a page. ("+t->GetFileLoc()+')');
-						if ((t+1)->type!=TokenType::BIND) 
-							Error("Expected \'BIND\' ("+(t+1)->GetFileLoc()+")");
-						unsigned short i=2;
+						if ((t+i)->type!=TokenType::BIND) 
+							Error("Expected \'BIND\' ("+(t+i)->GetFileLoc()+")");
+						else i++;
 						while ((t+i)->type==TokenType::STRING)
 						{
 							if (i % 2 == 0) namelist[(i-2)/2]=(t+i)->val;
 							else if (i % 2 == 1) cmdlist[(i-2)/2]=(t+i)->val;
 							i++;
 						}
-						if (i % 2!=0)  // Even amount of strings indicate that the toggle bind has names and cmdstrs
-							Error("error: Uneven amount of strings! ("+(t+i)->GetFileLoc()+")");
-						if (i<=1) 
-							Error("error: Expected ≥2 strings. ("+(t+i)->GetFileLoc()+")");
+						if (i-1<=1 || i % 2!=0)  // Even amount of strings indicate that the toggle bind has names and cmdstrs
+							Error("error: Expected string! ("+(t+i)->GetFileLoc()+")");
 						if ((t+i)->type!=TokenType::VBAR) 
 							Error("error: Expected '|' ("+(t+i-1)->GetFileLoc()+")");
 						menutokens.push_back(new Parser::ToggleBindToken(namelist,cmdlist,static_cast<unsigned short>((i-2)/2),noexit,format));
@@ -276,21 +278,31 @@ namespace Parser {
 					}
 					break;
 				case TokenType::BIND: // Check for bind.
+				{
+					unsigned short i=1u;
 					if (depth<=0) 
 						Error("error: Bind must be set in a page. ("+t->GetFileLoc()+')');
-					if ((t+1)->type!=TokenType::STRING) 
-						Error("error: Expected name string. ("+(t+1)->GetFileLoc()+")");
-					if ((t+2)->type!=TokenType::STRING) 
-						Error("error: Expected command string. ("+(t+2)->GetFileLoc()+")");
-					if ((t+3)->type!=TokenType::VBAR) 
-						Error("error: Expected '|' ("+(t+3)->GetFileLoc()+")");
+					if ((t+i)->type!=TokenType::STRING) 
+						Error("error: Expected string. ("+(t+i)->GetFileLoc()+")");
+					else {
+						i++;
+						if ((t+i)->type!=TokenType::STRING) 
+							Error("error: Expected string. ("+(t+i)->GetFileLoc()+")");
+						else i++;
+					}
+					if ((t+i)->type!=TokenType::VBAR) 
+						Error("error: Expected '|' ("+(t+i)->GetFileLoc()+")");
+					else i++;
 					menutokens.push_back(new Parser::BindToken((t+1)->val, (t+2)->val,noexit,format));
 					noexit=false, format=true;
-					t+=4;
+					t+=i;
+				}
 					break;
 				case TokenType::STRING: // Check for new page.
-					if ((t+1)->type!=TokenType::LCBRACKET) 
-						Error("error: Expected '{' ("+(t+1)->GetFileLoc()+")");
+				{
+					unsigned short i=1u;
+					if ((t+i)->type!=TokenType::LCBRACKET) 
+						Error("error: Expected '{' ("+(t+i)->GetFileLoc()+")");
 					else if (noexit==true) {
 						Error("error: Expected a bind. ("+t->GetFileLoc()+')');
 						noexit=false;
@@ -298,15 +310,37 @@ namespace Parser {
 					menutokens.push_back(new Parser::PageToken(t->val,depth,format));
 					format=true;
 					depth++;
-					t+=2;
-					break;
+					t+=i;
+				}
+				break;
 				case TokenType::IDENTIFIER: // Check for set keymaps
-					if ((t+1)->type!=TokenType::EQUALS) Error("error: Expected '=' ("+(t+1)->GetFileLoc()+")");
-					if ((t+2)->type!=TokenType::STRING) Error("error: Expected string ("+(t+2)->GetFileLoc()+")");
-					if ((t+1)->type!=TokenType::EQUALS && (t+2)->type!=TokenType::STRING) Error("error: Unknown identifier \'"+t->val+"\' ("+t->GetFileLoc()+')');
+				{
+					unsigned short i=1u;
+					// Maybe they were trying to make a page…
+					if ((t+i)->type==TokenType::LCBRACKET) {
+						t++;
+						break;
+					};
+					
+					if ((t+i)->type!=TokenType::EQUALS) {
+						Error("error: Expected '='! ("+(t+i)->GetFileLoc()+")");
+						tokens.insert(t+i,Token((t+i)->location,(t+i)->linenumber,TokenType::EQUALS,"="));
+					}
+					if ((t+i+1)->type!=TokenType::LCBRACKET) i++;
+					if ((t+i)->type!=TokenType::STRING || (t+i+1)->type==TokenType::LCBRACKET) {
+						Error("error: Expected string! ("+(t+i)->GetFileLoc()+")");
+						tokens.insert(t+i,Token((t+i)->location,(t+i)->linenumber,TokenType::STRING,""));
+					}
+					if ((t+i+1)->type!=TokenType::LCBRACKET) i++;
 					menutokens.push_back(new Parser::KVToken(t->val,(t+2)->val));
-					t+=3;
-					break;
+					t+=i;
+				}
+				break;
+				case TokenType::LCBRACKET:
+					depth++;
+					if (t>tokens.begin() && (t-1)->type!=TokenType::STRING) Error("error: Expected string! ("+(t-1)->GetFileLoc()+")");
+					t++;
+				break;
 				case TokenType::RCBRACKET:
 					depth--;
 					if (depth==UINT32_MAX) {
@@ -330,7 +364,6 @@ namespace Parser {
 		}
 		}
 		if (eoffound==false) std::cout<<"warning: EOF not found!\n";
-		if (depth!=0) Error("error: You are missing a '}'!");
 		if (errors.size()>=1) errorsfound=true;
 		return !errorsfound;
 	}
@@ -379,7 +412,7 @@ void MenuCreate(unsigned short& bindcount) {
 			break;
 		case Parser::MenuTokenType::MENU_END_PAGE:
 			// Warning:
-			if (pagestack.front().first.binds.size()>9) std::cout<<"warning: More than nine binds in page \'"<<pagestack.front().first.title<<"\'\n";
+			if (pagestack.front().first.binds.size()>9) std::cout<<"warning: More than nine binds in page \'"<<pagestack.front().first.title<<"\'!\n";
 			pages.push_back(pagestack.front());
 			pagestack.pop_front();
 			nkeystack.pop();
