@@ -1,3 +1,5 @@
 @echo off
 cls
-g++ src/binds.cpp src/page.cpp src/launchoptions.cpp src/compiler.cpp src/tokens.cpp src/main.cpp -o cvm_generate.exe -std=c++2a -Wall
+pushd src
+g++ binds.cpp page.cpp launchoptions.cpp compiler.cpp tokens.cpp main.cpp -o ../cvm_generate.exe -std=c++2a -Wall
+popd
