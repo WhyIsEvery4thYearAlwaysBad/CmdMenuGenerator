@@ -394,12 +394,12 @@ void MenuCreate(unsigned short& bindcount) {
 				for (auto t=pagestack.end(); t!=pagestack.begin(); t--)
 				{
 					if (t->first.formatted_title==Format(tpage.Name)
-					 || t->first.formatted_title==(Format(tpage.Name)+'_'+std::to_string(i))) i++;
+					 || t->first.formatted_title==(Format(tpage.Name)+'_'+std::to_string(i+1))) i++;
 				}
 				for (auto& t : pages)
 				{
 					if (t.first.formatted_title==Format(tpage.Name)
-					|| t.first.formatted_title==(Format(tpage.Name)+'_'+std::to_string(i))) i++;
+					|| t.first.formatted_title==(Format(tpage.Name)+'_'+std::to_string(i+1))) i++;
 				}
 				pagestack.push_front({Page(tpage.Name),tpage.depth});	
 				if (i>0) pagestack.front().first.formatted_title+='_'+std::to_string(i);
