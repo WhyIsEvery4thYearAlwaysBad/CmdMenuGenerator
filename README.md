@@ -15,22 +15,4 @@ Original testing environment. Works flawlessly.
 
 Pages do not run properly and I am having issues with captions.
 
-## Counter-Strike: Source
-
-Untested.
-
-## Left 4 Dead
-
-Untested.
-
-## Left 4 Dead 2
-
-Untested.
-
-## Portal
-
-Untested.
-
-## Portal 2
-
-Untested.
+Any source games that I left out are untested. If you encounter issues while using this program on a specific page, make an issue!
