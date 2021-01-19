@@ -147,7 +147,7 @@ alias cvm.on_page_exit ;
 				exec<<"alias _cvm.toggle_"<<std::to_string(togglenumber)<<" _cvm.toggle_"<<std::to_string(togglenumber)<<"_0\n";
 				exec<<"alias _#cvm.toggle_"<<std::to_string(togglenumber)<<" _#cvm.toggle_"<<std::to_string(togglenumber)<<"_0\n";
 				for (unsigned char sti=0u; sti < kbind->name.size(); sti++) {
-					exec<<"alias _cvm.toggle_"<<std::to_string(togglenumber)<<'_'<<std::to_string(sti)<<'\"'<<kbind->cmdstr.at(sti)<<"; alias _cvm.toggle_"<<std::to_string(togglenumber)<<" _cvm.toggle_"<<std::to_string(togglenumber)<<'_'<<std::to_string((sti+1)%kbind->name.size())<<"; alias _#cvm.toggle_"<<std::to_string(togglenumber)<<" _#cvm.toggle_"<<std::to_string(togglenumber)<<'_'<<std::to_string((sti+1)%kbind->name.size())<<"\"\n";
+					exec<<"alias _cvm.toggle_"<<std::to_string(togglenumber)<<'_'<<std::to_string(sti)<<"\"alias _#cvm.toggle_"<<std::to_string(togglenumber)<<" _#cvm.toggle_"<<std::to_string(togglenumber)<<'_'<<std::to_string((sti+1)%kbind->name.size())<<';'<<kbind->cmdstr.at(sti)<<"; alias _cvm.toggle_"<<std::to_string(togglenumber)<<" _cvm.toggle_"<<std::to_string(togglenumber)<<'_'<<std::to_string((sti+1)%kbind->name.size())<<"\"\n";
 					exec<<"alias _#cvm.toggle_"<<std::to_string(togglenumber)<<'_'<<std::to_string(sti)<<"\"cc_emit _#cvm.toggle_"<<std::to_string(togglenumber)<<'_'<<std::to_string(sti)<<"\"\n";
 					captionfile<<convert.from_bytes("\t\t\"_#cvm.toggle_"+std::to_string(togglenumber)+'_'+std::to_string(sti)+"\" \""+kbind->name.at(sti)+"\"\n");
 				}
