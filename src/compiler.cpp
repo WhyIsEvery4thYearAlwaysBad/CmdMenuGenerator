@@ -37,7 +37,7 @@ std::string Format(std::string str) {
 			i--; 
 			continue;
 		}
-		if (isspace(str.at(i))) str.at(i)='_';
+		if (isspace(str.at(i)) && str.at(i)!='\0') str.at(i)='_';
 		if (isupper(str.at(i))) str.at(i)=tolower(str.at(i)); 
 	}
 	return str;
@@ -374,7 +374,7 @@ void MenuCreate(unsigned short& bindcount) {
 	std::deque<std::pair<Page, unsigned char> > pagestack;
 	std::stack<Bind> unusedbindstack;
 	std::stack<unsigned char> nkeystack;
-	// Variable is here to reduce the amount of goddamn downcasts I have to do.
+	// Variable is here to reduce the amount of goddamn downcasts I would have to do.
 	Parser::PageToken tpage;
 	for (auto t = menutokens.begin(); t != menutokens.end(); t++) {
 		switch ((*t)->type)
@@ -391,11 +391,11 @@ void MenuCreate(unsigned short& bindcount) {
 				tpage=static_cast<Parser::PageToken&>(**t);
 				std::size_t i=0llu;
 				// Form duplicates if formatted name is already taken.
-				if (pagestack.size()>1) for (auto p=pagestack.end()-1; p!=pagestack.begin(); p--)
+				if (pagestack.size()>0) for (auto p=pagestack.end(); p!=pagestack.begin();)
 				{
+					p--; // This has to be here instead of in the for declaration, otherwise if there is one page in the stack, it would not be checked for duplication.
 					if (Format(p->first.title)==Format(tpage.Name)) i++;
 				}
-				else if (pagestack.size()==1) if (Format(tpage.Name)==Format(pagestack.front().first.title)) i++;
 				for (auto& p : pages)
 				{
 					if (Format(p.first.title)==Format(tpage.Name)) i++;
