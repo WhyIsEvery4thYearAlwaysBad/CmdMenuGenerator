@@ -400,7 +400,7 @@ void MenuCreate(unsigned short& bindcount) {
 					if (Format(p.first.title)==Format(tpage.Name)) i++;
 				}
 				pagestack.push_front({Page(tpage.Name),tpage.depth});
-				if (i>0) pagestack.front().first.formatted_title+='_'+std::to_string(i);
+				if (i>1) pagestack.front().first.formatted_title+='_'+std::to_string(i);
 				if (pagestack.size()>1) {
 					if (i>0) (pagestack.begin()+1)->first.binds.push_back(Bind(nkeystack.top(),Parser::BindToken(tpage.Name,"exec $pageopen_"+Format(tpage.Name)+'_'+std::to_string(i),true,tpage.formatted)));
 					else (pagestack.begin()+1)->first.binds.push_back(Bind(nkeystack.top(),Parser::BindToken(tpage.Name,"exec $pageopen_"+Format(tpage.Name),true,tpage.formatted)));
