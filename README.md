@@ -15,4 +15,4 @@ Original testing environment. Works flawlessly.
 
 Pages do not run properly and I am having issues with captions.
 
-Any source games that I left out are untested. If you encounter issues while using this program on a specific page, then make an issue on what issues you encountered and if it is possible to fix.s]
+Any source games that I left out are untested. If you encounter issues while using this program on a specific page, then make an issue on what issues you encountered and if it is possible to fix.
