@@ -391,7 +391,7 @@ void MenuCreate(unsigned short& bindcount) {
 				tpage=static_cast<Parser::PageToken&>(**t);
 				std::size_t i=0llu;
 				// Form duplicates if formatted name is already taken.
-				if (pagestack.size()>0) for (auto p=pagestack.end(); p!=pagestack.begin(); p--)
+				if (pagestack.size()>1) for (auto p=pagestack.end(); p!=pagestack.begin(); p--)
 				{
 					if (Format(p->first.title)==Format(tpage.Name)) i++;
 				}
