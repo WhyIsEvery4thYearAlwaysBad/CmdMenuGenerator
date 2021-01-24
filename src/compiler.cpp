@@ -395,6 +395,7 @@ void MenuCreate(unsigned short& bindcount) {
 				{
 					if (Format(p->first.title)==Format(tpage.Name)) i++;
 				}
+				else if (pagestack.size()==1) if (Format(tpage.Name)==Format(pagestack.front().first.title)) i++;
 				for (auto& p : pages)
 				{
 					if (Format(p.first.title)==Format(tpage.Name)) i++;
