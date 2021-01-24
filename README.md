@@ -1,5 +1,5 @@
 # Voicemenu Generator
-A generator for custom voicemenus for TF2, but may work for other games made in the Source Engine. Refer to the Introduction wiki for more information.
+A generator made for custom voicemenus for TF2, but may work for other games made in the Source Engine. Refer to the Introduction wiki for more information.
 
 This is the development branch. It has unstable versions of the source code, but if you want new features as soon as possible, or want to help out with fixing bugs, this is where to go.
 
@@ -15,4 +15,4 @@ Original testing environment. Works flawlessly.
 
 Pages do not run properly and I am having issues with captions.
 
-Any source games that I left out are untested. If you encounter issues while using this program on a specific page, make an issue!
+Any source games that I left out are untested. If you encounter issues while using this program on a specific page, then make an issue on what issues you encountered and if it is possible to fix.s]
