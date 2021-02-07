@@ -411,25 +411,22 @@ void MenuCreate(unsigned short& bindcount) {
 			break;
 		case Parser::MenuTokenType::MENU_END_PAGE:
 			// Warning:
-			if (pagestack.front().first.binds.size()>9) std::cout<<"warning: More than nine binds in page \'"<<pagestack.front().first.title<<"\'!\n";
+			if (pagestack.front().first.binds.size()>10) std::cout<<"warning: More than ten binds in page \'"<<pagestack.front().first.title<<"\'!\n";
 			pages.push_back(pagestack.front());
 			pagestack.pop_front();
 			nkeystack.pop();
 			if (!nkeystack.empty()) {
-				nkeystack.top()%=9;
-			 	nkeystack.top()++;
+				nkeystack.top()=(nkeystack.top()+1)%10;
 			}
 			break;
 		case Parser::MenuTokenType::MENU_BIND:
 			pagestack.front().first.binds.push_back(Bind(nkeystack.top(),static_cast<Parser::BindToken&>(**t)));
-			nkeystack.top()%=9;
-			nkeystack.top()++;
+			nkeystack.top()=(nkeystack.top()+1)%10;
 			bindcount++;
 			break;
 		case Parser::MenuTokenType::MENU_TOGGLE_BIND:
 			pagestack.front().first.binds.push_back(Bind(nkeystack.top(),static_cast<Parser::ToggleBindToken&>(**t)));
-			nkeystack.top()%=9;
-			nkeystack.top()++;
+			nkeystack.top()=(nkeystack.top()+1)%10;
 			bindcount++;
 			break;
 		default:
