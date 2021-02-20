@@ -14,7 +14,6 @@
 extern std::deque<Parser::MenuToken*> menutokens;
 extern std::deque<Token> tokens; // {Page, Depth}
 extern std::deque<Token> errors; // 
-const std::string badfpcharacters="|?\"\\:*<>";
 std::deque<std::pair<Page,unsigned char> > pages; // {Page, Depth}
 std::map<std::string,std::string> keymap={
 	{"linger_time","0"},
