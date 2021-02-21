@@ -43,7 +43,7 @@ bool EvaluateLaunchOptions(int argc, char** argv) {
 			// Validate file's existence.
 			FileExists=fopen(inputfilename.string().c_str(),"r");
 			if (FileExists==nullptr) {
-				std::cerr<<"Input path "<<inputfilename<< " does not exist.\n";
+				std::cerr<<"error: Filepath "<<inputfilename.string()<<" is invalid.\n";
 				launchoptionsvalid=false;
 			}
 			fclose(FileExists);
