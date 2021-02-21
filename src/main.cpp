@@ -25,15 +25,10 @@ std::map<std::string,std::string> keymap={
 std::wstring_convert<std::codecvt_utf8<wchar_t>,wchar_t> convert;
 // From launch options
 extern std::filesystem::path inputfilename;
-extern bool launchoptionfilefound, launchoptionhelp;
 extern std::filesystem::path outputdir;
 int main(int argc, char** argv) {
 	unsigned short bindcount=0u;
 	if (!EvaluateLaunchOptions(argc,argv)) return -1;
-	if (argc<=1 || launchoptionhelp==true || launchoptionfilefound==false) {
-		ShowHelp();
-		return -1;
-	}
 	std::string Line, InFileContent; 
 	std::ifstream inputf(inputfilename,std::ios_base::binary);
 	while (std::getline(inputf,Line)) {
