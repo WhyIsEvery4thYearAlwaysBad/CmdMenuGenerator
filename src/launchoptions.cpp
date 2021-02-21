@@ -20,7 +20,7 @@ std::filesystem::path outputdir="./customvoicemenu";
 // -h, --help - Display this text.
 bool EvaluateLaunchOptions(int argc, char** argv) {
 	FILE* FileExists;
-	bool launchoptionsvalid=true;
+	bool launchoptionsvalid=(argc<=1 ? false : true);
 	bool helpran=false;
 	for (int i=1; i < argc; i++) {
 		if (!strcmp(argv[i],"-o") || !strcmp(argv[i],"--output-dir")) {
@@ -52,6 +52,10 @@ bool EvaluateLaunchOptions(int argc, char** argv) {
 			}
 			fclose(FileExists);
 		}
+	}
+	if (launchoptionfilefound!=true) {
+		std::cerr<<"error: No input file found.\n";
+		launchoptionsvalid=false;
 	}
 	return launchoptionsvalid;
 }
