@@ -37,11 +37,7 @@ bool EvaluateLaunchOptions(int argc, char** argv) {
 			launchoptionsvalid=false;
 			helpran=true;
 		}
-		else if (strchr(argv[i],'-')==nullptr) {
-			if (launchoptionfilefound) {
-				std::cerr<<"One file at a time please!\n";
-				launchoptionsvalid=false;
-			}
+		else if (!launchoptionfilefound) {
 			launchoptionfilefound=true;
 			inputfilename=argv[i];
 			// Validate file's existence.
