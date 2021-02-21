@@ -77,5 +77,5 @@ namespace Parser {
 		}
 	};
 	bool ParseTokens();
-};
+}
 #endif
