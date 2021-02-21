@@ -5,7 +5,7 @@
 void ShowHelp() {
 	std::cout<<R"(Usage: <cvm_generate executable> <file> <args>
 Arguments:
-	-o= - Output directory. (Default path is "./customvoicemenu")
+	-o, --output-dir	Output directory for the main files; Default path is "./customvoicemenu"
 	/? - Help)";
 }
 std::filesystem::path inputfilename="";
@@ -17,26 +17,20 @@ std::filesystem::path outputdir="./customvoicemenu";
 // Also validates that they actually work with a returned boolean.
 // Launch Options:
 // -config - Defines your config path. Removed for the time being until it becomes necessary.
-// -o=<path> - Output path for folder.
+// -o, --output-dir <path> - Output path for folder with CFGs and Captions.
 // /? - Help
 bool EvaluateLaunchOptions(int argc, char** argv) {
 	FILE* FileExists;
 	bool launchoptionsvalid=true;
 	for (int i=1; i < argc; i++) {
-		if (strncmp(argv[i],"-o=",3)==0) {
-			if (strcmp(argv[i],"-o=")==0) {
-				std::cerr<<"Output path cannot be blank.\n";
+		if (!strcmp(argv[i],"-o") || !strcmp(argv[i],"--output-dir")) {
+			if ((i+1) < argc) outputdir=argv[i+1];
+			else {
+				printf("error: Missing output path. [%s]\n",argv[i]);
 				launchoptionsvalid=false;
 				continue;
 			}
-			std::filesystem::path temp=argv[i]+3;
-			const std::string invalidfilenames=". .. / // \\ \\\\";
-			if (invalidfilenames.find(temp.filename().string())!=std::string::npos) {
-				std::cerr<<"Bad output directory path "<<temp<<"\n";
-				launchoptionsvalid=false;
-				continue;
-			}
-			outputdir=temp.string();
+			i++;
 		}
 		else if (strcmp(argv[i],"/?")==0) launchoptionhelp=true;
 		else if (strchr(argv[i],'-')==nullptr) {
