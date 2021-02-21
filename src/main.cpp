@@ -98,8 +98,8 @@ alias cvm.on_page_exit ;
 	// Conversion to UCS-2.
 	std::locale utf16(std::locale::classic(),new std::codecvt_utf16<wchar_t, 0xffff, std::little_endian>);
 	// Create the captions directory once.
-	if (!std::filesystem::exists(outputdir.string()+"captions")) std::filesystem::create_directories(outputdir.string()+"captions/resource");
-	std::wofstream captionfile(outputdir.string()+"captions/resource/closecaption_customvoicemenu.txt",std::ios_base::binary);
+	if (!std::filesystem::exists(outputdir.string()+"/resource")) std::filesystem::create_directories(outputdir.string()+"/resource");
+	std::wofstream captionfile(outputdir.string()+"/resource/closecaption_customvoicemenu.txt",std::ios_base::binary);
 	captionfile.imbue(utf16);
 	captionfile<<(wchar_t)0xFEFF; // BOM.
 	captionfile<<convert.from_bytes("\"lang\"\n{\n\t\"Language\" \"customvoicemenu\"\n\t\"Tokens\"\n\t{\n\t\t\"_#cvm.clear_screen\" \"<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	\"\n");
