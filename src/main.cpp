@@ -34,14 +34,12 @@ int main(int argc, char** argv) {
 	while (std::getline(inputf,Line)) {
 		InFileContent+=Line+'\n';
 	}
-	std::cout<<"Compiling.\n";
 	if (!Tokenize(InFileContent) || !Parser::ParseTokens()) {
 		for (auto& e : errors) {
 			std::cout<<e.val<<'\n';
 		}
 		return -1;
 	}
-	std::cout<<"Done. Creating Menus.\n";
 	// Creating parts from Menu tokens.
 	MenuCreate(bindcount);
 	// Directories
@@ -60,7 +58,6 @@ alias cvm.on_exitmenu ;
 alias cvm.on_page_exit ;
 )";
 	std::string cfgpath="";
-	std::cout<<"Done. Creating CFGs.\n";
 	std::size_t pi=0u;
 	unsigned long togglenumber=0u;
 	for (auto page=pages.begin(); page!=pages.end(); page++, pi++) {
@@ -100,7 +97,6 @@ alias cvm.on_page_exit ;
 )";
 	// Conversion to UCS-2.
 	std::locale utf16(std::locale::classic(),new std::codecvt_utf16<wchar_t, 0xffff, std::little_endian>);
-	std::cout<<"Done. ("<<std::to_string(bindcount)<<" binds compiled.) Creating caption file.\n";
 	// Create the captions directory once.
 	if (!std::filesystem::exists(outputdir.string()+"captions")) std::filesystem::create_directories(outputdir.string()+"captions/resource");
 	std::wofstream captionfile(outputdir.string()+"captions/resource/closecaption_customvoicemenu.txt",std::ios_base::binary);
@@ -108,7 +104,6 @@ alias cvm.on_page_exit ;
 	captionfile<<(wchar_t)0xFEFF; // BOM.
 	captionfile<<convert.from_bytes("\"lang\"\n{\n\t\"Language\" \"customvoicemenu\"\n\t\"Tokens\"\n\t{\n\t\t\"_#cvm.clear_screen\" \"<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	\"\n");
 	std::string cfgpath;
-	std::cout<<"Done. Creating CFGs and Captions.\n";
 	std::size_t pi=0u;
 	unsigned long togglenumber=0u;
 	for (auto page=pages.begin(); page!=pages.end(); page++, pi++) {
@@ -165,5 +160,5 @@ alias cvm.on_page_exit ;
 	}
 	exec.close();
 	//Done!
-	std::cout<<"Done! Now just insert exec activate_cvm into autoexec.\n";
+	std::cout<<std::to_string(bindcount)<<" binds compiled.\n";
 }
