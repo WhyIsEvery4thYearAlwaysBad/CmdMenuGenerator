@@ -14,40 +14,32 @@
 extern std::deque<Parser::MenuToken*> menutokens;
 extern std::deque<Token> tokens; // {Page, Depth}
 extern std::deque<Token> errors; // 
-const std::string badfpcharacters="|?\"\\:*<>";
 std::deque<std::pair<Page,unsigned char> > pages; // {Page, Depth}
 std::map<std::string,std::string> keymap={
 	{"linger_time","0"},
 	{"predisplay_time","0.25"},
-	{"format","$(nkey). $(str)"},
+	{"format","$(nkey). $(str)<cr>"},
 	{"consolemode","false"},
 	{"resetkeys","bind 1 slot1; bind 2 slot2; bind 3 slot3; bind 4 slot4; bind 5 slot5; bind 6 slot6; bind 7 slot7; bind 8 slot8; bind 9 slot9; bind 0 slot10"}
 };
 std::wstring_convert<std::codecvt_utf8<wchar_t>,wchar_t> convert;
 // From launch options
 extern std::filesystem::path inputfilename;
-extern bool launchoptionfilefound, launchoptionhelp;
 extern std::filesystem::path outputdir;
 int main(int argc, char** argv) {
 	unsigned short bindcount=0u;
 	if (!EvaluateLaunchOptions(argc,argv)) return -1;
-	if (argc<=1 || launchoptionhelp==true || launchoptionfilefound==false) {
-		ShowHelp();
-		return -1;
-	}
 	std::string Line, InFileContent; 
 	std::ifstream inputf(inputfilename,std::ios_base::binary);
 	while (std::getline(inputf,Line)) {
 		InFileContent+=Line+'\n';
 	}
-	std::cout<<"Compiling.\n";
 	if (!Tokenize(InFileContent) || !Parser::ParseTokens()) {
 		for (auto& e : errors) {
 			std::cout<<e.val<<'\n';
 		}
 		return -1;
 	}
-	std::cout<<"Done. Creating Menus.\n";
 	// Creating parts from Menu tokens.
 	MenuCreate(bindcount);
 	// Directories
@@ -66,7 +58,6 @@ alias cvm.on_exitmenu ;
 alias cvm.on_page_exit ;
 )";
 	std::string cfgpath="";
-	std::cout<<"Done. Creating CFGs.\n";
 	std::size_t pi=0u;
 	unsigned long togglenumber=0u;
 	for (auto page=pages.begin(); page!=pages.end(); page++, pi++) {
@@ -106,15 +97,13 @@ alias cvm.on_page_exit ;
 )";
 	// Conversion to UCS-2.
 	std::locale utf16(std::locale::classic(),new std::codecvt_utf16<wchar_t, 0xffff, std::little_endian>);
-	std::cout<<"Done. ("<<std::to_string(bindcount)<<" binds compiled.) Creating caption file.\n";
 	// Create the captions directory once.
-	if (!std::filesystem::exists(outputdir.string()+"captions")) std::filesystem::create_directories(outputdir.string()+"captions/resource");
-	std::wofstream captionfile(outputdir.string()+"captions/resource/closecaption_customvoicemenu.txt",std::ios_base::binary);
+	if (!std::filesystem::exists(outputdir.string()+"/resource")) std::filesystem::create_directories(outputdir.string()+"/resource");
+	std::wofstream captionfile(outputdir.string()+"/resource/closecaption_customvoicemenu.txt",std::ios_base::binary);
 	captionfile.imbue(utf16);
 	captionfile<<(wchar_t)0xFEFF; // BOM.
-	captionfile<<convert.from_bytes("\"lang\"\n{\n\t\"Language\" \"customvoicemenu\"\n\t\"Tokens\"\n\t{\n\t\t\"_#cvm.clear_screen\" \"<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	\"\n");
+	captionfile<<convert.from_bytes("\"lang\"\n{\n\t\"Language\" \"customvoicemenu\"\n\t\"Tokens\"\n\t{\n\t\t\"_#cvm.clear_screen\" \"<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	\"\n");
 	std::string cfgpath;
-	std::cout<<"Done. Creating CFGs and Captions.\n";
 	std::size_t pi=0u;
 	unsigned long togglenumber=0u;
 	for (auto page=pages.begin(); page!=pages.end(); page++, pi++) {
@@ -161,7 +150,6 @@ alias cvm.on_page_exit ;
 				}
 				captionfile<<convert.from_bytes(kbind->name.front());
 				if (kbind==page->first.binds.end()-1 || (kbind+1)->istogglebind==true) captionfile<<L"\"\n";
-				else captionfile<<L"<cr>";
 				cfgfile<<"alias _cvm."<<std::to_string(kbind->numberkey)<<" \""<<kbind->cmdstr.at(0)<<"\"\n";
 			}
 		}
@@ -171,5 +159,5 @@ alias cvm.on_page_exit ;
 	}
 	exec.close();
 	//Done!
-	std::cout<<"Done! Now just insert exec activate_cvm into autoexec.\n";
+	std::cout<<std::to_string(bindcount)<<" binds compiled.\n";
 }
