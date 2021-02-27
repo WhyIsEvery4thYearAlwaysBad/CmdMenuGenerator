@@ -102,7 +102,7 @@ alias cvm.on_page_exit ;
 	std::wofstream captionfile(outputdir.string()+"/resource/closecaption_customvoicemenu.txt",std::ios_base::binary);
 	captionfile.imbue(utf16);
 	captionfile<<(wchar_t)0xFEFF; // BOM.
-	captionfile<<convert.from_bytes("\"lang\"\n{\n\t\"Language\" \"customvoicemenu\"\n\t\"Tokens\"\n\t{\n\t\t\"_#cvm.clear_screen\" \"<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	\"\n");
+	captionfile<<convert.from_bytes("\"lang\"\n{\n\t\"Language\" \"customvoicemenu\"\n\t\"Tokens\"\n\t{\n\t\t\"_#cvm.clear_screen\" \"<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	\"\n");
 	std::string cfgpath;
 	std::size_t pi=0u;
 	unsigned long togglenumber=0u;
