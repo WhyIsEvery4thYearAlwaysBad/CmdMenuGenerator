@@ -18,7 +18,7 @@ std::deque<std::pair<Page,unsigned char> > pages; // {Page, Depth}
 std::map<std::string,std::string> keymap={
 	{"linger_time","0"},
 	{"predisplay_time","0.25"},
-	{"format","$(nkey). $(str)"},
+	{"format","$(nkey). $(str)<cr>"},
 	{"consolemode","false"},
 	{"resetkeys","bind 1 slot1; bind 2 slot2; bind 3 slot3; bind 4 slot4; bind 5 slot5; bind 6 slot6; bind 7 slot7; bind 8 slot8; bind 9 slot9; bind 0 slot10"}
 };
@@ -150,7 +150,6 @@ alias cvm.on_page_exit ;
 				}
 				captionfile<<convert.from_bytes(kbind->name.front());
 				if (kbind==page->first.binds.end()-1 || (kbind+1)->istogglebind==true) captionfile<<L"\"\n";
-				else captionfile<<L"<cr>";
 				cfgfile<<"alias _cvm."<<std::to_string(kbind->numberkey)<<" \""<<kbind->cmdstr.at(0)<<"\"\n";
 			}
 		}
