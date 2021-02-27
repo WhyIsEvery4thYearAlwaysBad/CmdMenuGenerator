@@ -150,7 +150,6 @@ alias cvm.on_page_exit ;
 				}
 				captionfile<<convert.from_bytes(kbind->name.front());
 				if (kbind==page->first.binds.end()-1 || (kbind+1)->istogglebind==true) captionfile<<L"\"\n";
-				else captionfile<<L"<cr>";
 				cfgfile<<"alias _cvm."<<std::to_string(kbind->numberkey)<<" \""<<kbind->cmdstr.at(0)<<"\"\n";
 			}
 		}
