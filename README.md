@@ -13,6 +13,7 @@ Team Fortress 2 | Flawless | Flawless | Flawless
 Counter-Strike: Global Offensive | Ok<sup>[1]</sup> | Broken | Good<sup>[2]</sup>
 
 <sup>[1]</sup> - Compiled voicemenus must be written directly to the csgo/cfg folder to function. (Do this by compiling to the csgo folder.)
+
 <sup>[2]</sup> - The page will not display if a page was not already opened.
 
 Any source games that I left out are untested. If you encounter issues while using this program, then make an issue on what issues you encountered and if it is possible to fix.
