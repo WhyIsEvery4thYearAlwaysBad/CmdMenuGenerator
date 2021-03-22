@@ -1,0 +1,14 @@
+# Text files
+*.txt text eol=lf
+*.md text eol=lf working-tree-encoding=UTF-8
+## C++ source files
+*.cpp text eol=lf
+*.hpp text eol=lf
+## Scripts
+*.cmd text eol=crlf
+*.sh text eol=lf
+.git* text eol=lf
+# Binaries
+*.exe -text
+*.jpg -text
+*.png -text

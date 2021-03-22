@@ -1,6 +1,6 @@
 #include "tokens.hpp"
 #include "binds.hpp"
-#include "page.hpp"
+#include "commandmenu.hpp"
 #include "compiler.hpp"
 #include <iostream>
 #include <string>
@@ -16,7 +16,7 @@ extern std::map<std::string,std::string> keymap;
 std::deque<Token> tokens;
 std::deque<Token> errors;
 std::deque<Parser::MenuToken*> menutokens;
-extern std::deque<std::pair<Page,unsigned char> > pages; // Made in main.cpp
+extern std::deque<std::pair<CommandMenu, unsigned char> > cmenus; // Made in main.cpp
 
 // Convert to a safer string format for file and caption names.
 std::string Format(std::string str) {
@@ -258,7 +258,7 @@ namespace Parser {
 						std::string cmdlist[MAX_TOGGLE_STATES];
 						unsigned short i=1;
 						if (depth<=0) 
-							Error("error: Toggle bind must be set in a page. ("+t->GetFileLoc()+')');
+							Error("error: Toggle bind must be set in a commandmenu. ("+t->GetFileLoc()+')');
 						if ((t+i)->type!=TokenType::BIND) 
 							Error("Expected \'BIND\' ("+(t+i)->GetFileLoc()+")");
 						else i++;
@@ -281,7 +281,7 @@ namespace Parser {
 				{
 					unsigned short i=1u;
 					if (depth<=0) 
-						Error("error: Bind must be set in a page. ("+t->GetFileLoc()+')');
+						Error("error: Bind must be set in a commandmenu. ("+t->GetFileLoc()+')');
 					if ((t+i)->type!=TokenType::STRING) 
 						Error("error: Expected string. ("+(t+i)->GetFileLoc()+")");
 					else {
@@ -298,7 +298,7 @@ namespace Parser {
 					t+=i;
 				}
 					break;
-				case TokenType::STRING: // Check for new page.
+				case TokenType::STRING: // Check for new commandmenu.
 				{
 					unsigned short i=1u;
 					if ((t+i)->type!=TokenType::LCBRACKET) 
@@ -316,7 +316,7 @@ namespace Parser {
 				case TokenType::IDENTIFIER: // Check for set keymaps
 				{
 					unsigned short i=1u;
-					// Maybe they were trying to make a page…
+					// Maybe they were trying to make a commandmenu…
 					if ((t+i)->type==TokenType::LCBRACKET) {
 						t++;
 						break;
@@ -371,7 +371,7 @@ namespace Parser {
 
 // Convert menu tokens into something useful.
 void MenuCreate(unsigned short& bindcount) {
-	std::deque<std::pair<Page, unsigned char> > pagestack;
+	std::deque<std::pair<CommandMenu, unsigned char> > pagestack;
 	std::stack<Bind> unusedbindstack;
 	std::stack<unsigned char> nkeystack;
 	// Variable is here to reduce the amount of goddamn downcasts I would have to do.
@@ -387,32 +387,32 @@ void MenuCreate(unsigned short& bindcount) {
 			break;
 		case Parser::MenuTokenType::MENU_NEW_PAGE:
 			{
-				//For binds to pages.
+				//For binds to cmenus.
 				tpage=static_cast<Parser::PageToken&>(**t);
 				std::size_t i=0llu;
 				// Form duplicates if formatted name is already taken.
 				if (pagestack.size()>0) for (auto p=pagestack.end(); p!=pagestack.begin();)
 				{
-					p--; // This has to be here instead of in the for declaration, otherwise if there is one page in the stack, it would not be checked for duplication.
+					p--; // This has to be here instead of in the for declaration, otherwise if there is one commandmenu in the stack, it would not be checked for duplication.
 					if (Format(p->first.title)==Format(tpage.Name)) i++;
 				}
-				for (auto& p : pages)
+				for (auto& p : cmenus)
 				{
 					if (Format(p.first.title)==Format(tpage.Name)) i++;
 				}
-				pagestack.push_front({Page(tpage.Name),tpage.depth});
+				pagestack.push_front({CommandMenu(tpage.Name),tpage.depth});
 				if (i>0) pagestack.front().first.formatted_title+='_'+std::to_string(i);
 				if (pagestack.size()>1) {
-					if (i>0) (pagestack.begin()+1)->first.binds.push_back(Bind(nkeystack.top(),Parser::BindToken(tpage.Name,"exec $pageopen_"+Format(tpage.Name)+'_'+std::to_string(i),true,tpage.formatted)));
-					else (pagestack.begin()+1)->first.binds.push_back(Bind(nkeystack.top(),Parser::BindToken(tpage.Name,"exec $pageopen_"+Format(tpage.Name),true,tpage.formatted)));
+					if (i>0) (pagestack.begin()+1)->first.binds.push_back(Bind(nkeystack.top(),Parser::BindToken(tpage.Name,"exec $cmenu_"+Format(tpage.Name)+'_'+std::to_string(i),true,tpage.formatted)));
+					else (pagestack.begin()+1)->first.binds.push_back(Bind(nkeystack.top(),Parser::BindToken(tpage.Name,"exec $cmenu_"+Format(tpage.Name),true,tpage.formatted)));
 				}
 				nkeystack.push(1u);
 			}
 			break;
 		case Parser::MenuTokenType::MENU_END_PAGE:
 			// Warning:
-			if (pagestack.front().first.binds.size()>10) std::cout<<"warning: More than ten binds in page \'"<<pagestack.front().first.title<<"\'!\n";
-			pages.push_back(pagestack.front());
+			if (pagestack.front().first.binds.size()>10) std::cout<<"Warning: More than ten binds in commandmenu \'"<<pagestack.front().first.title<<"\'!\n";
+			cmenus.push_back(pagestack.front());
 			pagestack.pop_front();
 			nkeystack.pop();
 			if (!nkeystack.empty()) {

@@ -26,7 +26,7 @@ Bind::Bind(const unsigned char& p_nkey, const Parser::BindToken& t)
 	else name.push_back(t.name);
 	formatted_name.push_back(Format(t.name));
 	if (t.noexit==true) cmdstr.push_back(t.cmdstr);
-	else cmdstr.push_back("cvm.exitmenu; cvm.on_page_exit; "+t.cmdstr);
+	else cmdstr.push_back("cmenu.exitmenu; cmenu.on_cmenu_exit; "+t.cmdstr);
 }
 Bind::Bind(const unsigned char& p_nkey, const Parser::ToggleBindToken& t)
 : istogglebind(true), numberkey(p_nkey) {
@@ -52,7 +52,7 @@ Bind::Bind(const unsigned char& p_nkey, const Parser::ToggleBindToken& t)
 		else name.push_back(t.names[i]);
 		formatted_name.push_back(Format(t.names[i]));
 		if (t.noexit==true) cmdstr.push_back(t.cmdstrs[i]);
-		else cmdstr.push_back("cvm.exitmenu; cvm.on_page_exit; "+t.cmdstrs[i]);
+		else cmdstr.push_back("cmenu.exitmenu; cmenu.on_page_exit; "+t.cmdstrs[i]);
 	}
 }
 Bind::Bind(const unsigned char& p_nkey, const std::string& p_name, const std::string& p_cmdstr)

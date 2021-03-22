@@ -34,7 +34,7 @@ namespace Parser {
 		bool noexit=false, formatted=true;
 		std::string name;
 		std::string cmdstr;
-		// pagebind - Whether a bind refers to a page bind.
+		// pagebind - Whether a bind refers to a command menu bind.
 		BindToken() {}
 		BindToken(const std::string& p_name, const std::string& p_cmdstr, const bool& p_noexit, const bool& p_nofmt)
 		: name(p_name), cmdstr(p_cmdstr), noexit(p_noexit), formatted(p_nofmt) {
