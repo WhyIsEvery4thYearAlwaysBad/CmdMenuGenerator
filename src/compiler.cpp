@@ -258,7 +258,7 @@ namespace Parser {
 						std::string cmdlist[MAX_TOGGLE_STATES];
 						unsigned short i=1;
 						if (depth<=0) 
-							Error("error: Toggle bind must be set in a commandmenu. ("+t->GetFileLoc()+')');
+							Error("error: Toggle bind must be set in a command menu. ("+t->GetFileLoc()+')');
 						if ((t+i)->type!=TokenType::BIND) 
 							Error("Expected \'BIND\' ("+(t+i)->GetFileLoc()+")");
 						else i++;
