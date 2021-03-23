@@ -1,5 +1,5 @@
 # Command Menu Generator
-A generator made for custom voice menus for TF2, but may work for other games made in the Source Engine. Refer to the Introduction wiki for more information.
+A generator made for custom command menus for TF2, but may work for other games made in the Source Engine. Refer to the Introduction wiki for more information.
 
 If you are on a non-WinNT OS then use the [Wine](https://www.winehq.org/) program to run the generator. If [Wine](https://www.winehq.org/) is not supported (like MacOS Catalina), then use a Virtual Machine with Windows (or the Bootcamp software that comes with MacOS). Alternatively you can just compile from the source code as this program does not use any Operating System specific code.
 
