@@ -52,7 +52,7 @@ Bind::Bind(const unsigned char& p_cKey, const Parser::ToggleBindToken& p_Token)
 		else NameContainer.push_back(p_Token.NameContainer[i]);
 		RawNameContainer.push_back(formatRaw(p_Token.NameContainer[i]));
 		if (p_Token.bNoExit==true) CmdStrContainer.push_back(p_Token.CmdStrContainer[i]);
-		else CmdStrContainer.push_back("cmenu.exitmenu; cmenu.on_page_exit; "+p_Token.CmdStrContainer[i]);
+		else CmdStrContainer.push_back("cmenu.exitmenu; cmenu.on_cmenu_exit; "+p_Token.CmdStrContainer[i]);
 	}
 }
 Bind::Bind(const unsigned char& p_cKey, const std::string& p_sName, const std::string& p_sCmdStr)
