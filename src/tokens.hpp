@@ -11,24 +11,24 @@ enum TokenType {
 	BIND, // BIND
 	TOGGLE, // TOGGLE
 	NOEXIT, // NOEXIT
-	NOFORMAT, // NOFMT
-	FILEEND, // the end!
-	ERR, // ah crepe!
+	NOFORMAT, // NOFORMAT
+	END_OF_FILE, // the end!
+	COMPILER_ERROR, // ah crepe!
 	UNDEFINED
 };
 class Token {
 	public:
-	unsigned char type=TokenType::UNDEFINED;
-	std::size_t location=1u; // Location
-	std::size_t linenumber=1u; // Location from newline
-	std::string val;
+	unsigned char Type=TokenType::UNDEFINED;
+	std::size_t iLineColumn=1u; // Location
+	std::size_t iLineNum=1u; // Location from newline
+	std::string sValue;
 	
 	Token();
-	Token(const std::size_t& loc, const std::size_t& ln, const unsigned char t, const std::string& v);
+	Token(const std::size_t& p_iLineNum, const std::size_t& p_iColumn, const unsigned char p_TokenType, const std::string& p_sVal);
 	~Token();
 	
 	std::string inline GetFileLoc() {
-		return std::to_string(linenumber) + ":" + std::to_string(location);
+		return std::to_string(iLineNum) + ":" + std::to_string(iLineColumn);
 	}
 };
 #endif
