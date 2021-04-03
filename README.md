@@ -3,7 +3,7 @@ A generator made for custom command menus for TF2, but may work for other games 
 
 If you are on a non-WinNT OS then use the [Wine](https://www.winehq.org/) program to run the generator. If [Wine](https://www.winehq.org/) is not supported (like MacOS Catalina), then use a Virtual Machine with Windows (or the Bootcamp software that comes with MacOS). Alternatively you can just compile from the source code as this program does not use any Operating System specific code.
 
-# What is this?
+## "What is this?"
 
 A voice command is a pre-defined call that makes the player say a voice line. They are organized in voice menus, which are lists of voice commands.
 
@@ -11,7 +11,30 @@ Voice menus can be replicated with binds to run *any* command rather than just v
 
 This program aims to automate the process of creating command menus, as they can take a long time to make if you have a lot of binds (like ≥20 binds) to make and want a display as well, so that you can focus most of your time on desiging a good command menu.
 
-# Performance in Source Games
+## "How do I use it?"
+
+1. Download the generator through the "releases" tab. (You may have to scroll down to see it.)
+
+2. Create a file with the contents being your choice. [You can use an example from this wiki.](https://github.com/WhyIsEvery4thYearAlwaysBad/CmdMenuGenerator/wiki/Examples) (If you're the section of text withCMenu code.)
+
+3. Drag the file you created onto the generator. The folder "customvoicemenu" should appear. 
+	* You can also just run the generator command line if you want more customization.
+
+4. Drag the folder "customvoicemenu" into the folder path `<base source game directory>/<mod directory>/custom` (e.g `Team Fortress 2/tf/custom`). 
+	
+	* If there is no custom folder, then go into "customvoicemenu" folder and move the cfg folder in it into `<base source game directory>/<mod directory>/cfg` (e.g `Team Fortress 2/tf/cfg`) and move the `customvoicemenu/resource/cap` into `<base source game directory>/<mod directory>/resource`.
+	
+	* If there is no "resource" folder, then prepend "consolemode=\"true\"" in the CMenu code.
+
+5. Now create a CFG file in `<base source game directory>/<mod directory>/cfg` or `<base source game directory>/<mod directory>/custom/<name of choice>/cfg` and choose the file contents of your choosing.
+
+	* If you're using an [example](https://github.com/WhyIsEvery4thYearAlwaysBad/CmdMenuGenerator/wiki/Examples) then use the section of text with "CFG script code" above it.
+	
+6. Run the CFG script code and press the key you replaced "\<KEY\>" with. You should see some amount of text pop up. If you do see that, then you're done.
+
+[More information in the wiki.](https://github.com/WhyIsEvery4thYearAlwaysBad/CmdMenuGenerator/wiki/Compiletime-and-Runtime)
+
+## Performance in Source Games
 
 Game | Functionality | Caption Display | Console Display
 -----|---------------|----------|-------------

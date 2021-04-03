@@ -3,21 +3,17 @@
 #define MAX_TOGGLE_STATES 512
 #include <string>
 #include <iostream>
-#include "tokens.hpp"
-class Token;
-bool StreamIsBind(const Token* t);
-bool StreamIsKeymap(const std::size_t& iterator);
-bool StreamIsToggleBind(const std::size_t& iterator);
-bool StreamIsNewPage(const std::size_t& iterator);
+#include "Tokens.hpp"
+// Convert to a safer string format for file and caption names. (Yes the duplicate input string is intentional.)
+std::string formatRaw(std::string p_sInStr);
+// Tokenize any string into needed Tokens for parsing.
 bool Tokenize(const std::string& str);
-void MenuCreate(unsigned short& bindcount);
-// Convert to a safer string format for file and caption names.
-std::string Format(std::string str);
+void ParseMenuTokens(unsigned short& p_iBindCount);
 namespace Parser {
-	// For handling multi tokens.
-	enum MenuTokenType {MENU_BIND=0, MENU_TOGGLE_BIND, MENU_NEW_PAGE, MENU_END_PAGE, KV_SET};
+	// For handling multi Tokens.
+	enum CMenuTokenType {MENU_BIND=0, MENU_TOGGLE_BIND, DECLARE_CMENU, END_CMENU, KV_SET};
 	struct MenuToken {
-		MenuTokenType type;
+		CMenuTokenType Type;
 		MenuToken() {}
 		virtual ~MenuToken() {}
 	};
@@ -27,53 +23,52 @@ namespace Parser {
 		KVToken() {}
 		KVToken(const std::string& ident, const std::string& value)
 		: Key(ident), Value(value) {
-			type=MenuTokenType::KV_SET;
+			Type=CMenuTokenType::KV_SET;
 		}
 	};
 	struct BindToken : public MenuToken {
-		bool noexit=false, formatted=true;
-		std::string name;
-		std::string cmdstr;
+		bool bNoExit=false, bFormatted=true;
+		std::string sName;
+		std::string sCmdStr;
 		// pagebind - Whether a bind refers to a command menu bind.
 		BindToken() {}
-		BindToken(const std::string& p_name, const std::string& p_cmdstr, const bool& p_noexit, const bool& p_nofmt)
-		: name(p_name), cmdstr(p_cmdstr), noexit(p_noexit), formatted(p_nofmt) {
-			type=MenuTokenType::MENU_BIND;
+		BindToken(const std::string& p_sName, const std::string& p_sCmdStr, const bool& p_bNoExit, const bool& p_bFormatted)
+		: sName(p_sName), sCmdStr(p_sCmdStr), bNoExit(p_bNoExit), bFormatted(p_bFormatted) {
+			Type=CMenuTokenType::MENU_BIND;
 		}
 	};
 	struct ToggleBindToken : public MenuToken {
-		bool noexit=false, formatted=true;
-		unsigned short states=0u;
-		std::string names[MAX_TOGGLE_STATES];
-		std::string cmdstrs[MAX_TOGGLE_STATES];
+		bool bNoExit=false, bFormatted=true;
+		unsigned short ToggleStates=0u;
+		std::string NameContainer[MAX_TOGGLE_STATES];
+		std::string CmdStrContainer[MAX_TOGGLE_STATES];
 		ToggleBindToken() {}
-		ToggleBindToken(const std::string p_names[MAX_TOGGLE_STATES], const std::string p_cmdstrs[MAX_TOGGLE_STATES], unsigned short p_states, const bool& p_noexit, const bool& p_nofmt)
-		: states(p_states), noexit(p_noexit), formatted(p_nofmt)
+		ToggleBindToken(const std::string p_names[MAX_TOGGLE_STATES], const std::string p_CmdStrContainer[MAX_TOGGLE_STATES], unsigned short p_iToggleStates, const bool& p_bNoExit, const bool& p_bFormatted)
+		: ToggleStates(p_iToggleStates), bNoExit(p_bNoExit), bFormatted(p_bFormatted)
 		{
 			for (unsigned short i=0; i < MAX_TOGGLE_STATES; i++) {
-				names[i]=p_names[i];
-				names[i].shrink_to_fit();
+				NameContainer[i]=p_names[i];
+				NameContainer[i].shrink_to_fit();
 			}
 			for (unsigned short i=0; i < MAX_TOGGLE_STATES; i++) {
-				cmdstrs[i]=p_cmdstrs[i];
-				cmdstrs[i].shrink_to_fit();
+				CmdStrContainer[i]=p_CmdStrContainer[i];
+				CmdStrContainer[i].shrink_to_fit();
 			}
-			type=MenuTokenType::MENU_TOGGLE_BIND;
+			Type=CMenuTokenType::MENU_TOGGLE_BIND;
 		}
 	};
-	struct PageToken : public MenuToken {
-		std::string Name;
-		unsigned char depth=0u;
-		bool formatted=true;
-		PageToken() {}
-		PageToken(const std::string& name, const unsigned char& p_depth, const bool& p_fmt)
-		: Name(name), depth(p_depth), formatted(p_fmt) {
-			type=MenuTokenType::MENU_NEW_PAGE;
+	struct CMenuToken : public MenuToken {
+		std::string sName;
+		bool bFormatted=true;
+		CMenuToken() {}
+		CMenuToken(const std::string& sName, const bool& p_bFormatted)
+		: sName(sName), bFormatted(p_bFormatted) {
+			Type=CMenuTokenType::DECLARE_CMENU;
 		}
 	};
 	struct PageEndToken : public MenuToken {
 		PageEndToken() {
-			type=MenuTokenType::MENU_END_PAGE;
+			Type=CMenuTokenType::END_CMENU;
 		}
 	};
 	bool ParseTokens();

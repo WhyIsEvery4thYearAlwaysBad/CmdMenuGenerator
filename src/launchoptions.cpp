@@ -8,48 +8,47 @@ Arguments:
 	-o, --output-dir	Output directory for the main files; Default path is "./customvoicemenu"
 	-h, --help  		Display this menu.)";
 }
-std::filesystem::path inputfilename="";
-bool usingconfig=false;
-bool launchoptionfilefound=false;
-std::filesystem::path outputdir="./customvoicemenu";
+std::filesystem::path InputFilePath="";
+bool bInputFileSet=false;
+std::filesystem::path sOutputDir="./customvoicemenu";
 // Gets Information from launch options.
 // Also validates that they actually work with a returned boolean.
 // Launch Options:
 // -config - Defines your config path. Removed for the time being until it becomes necessary.
 // -o, --output-dir <path> - Output path for folder with CFGs and Captions.
 // -h, --help - Display this text.
-bool EvaluateLaunchOptions(int argc, char** argv) {
+bool EvaluateLaunchOptions(int p_iArgc, char** p_szArgv) {
 	FILE* FileExists;
-	bool launchoptionsvalid=(argc<=1 ? false : true);
+	bool launchoptionsvalid=(p_iArgc<=1 ? false : true);
 	bool helpran=false;
-	for (int i=1; i < argc; i++) {
-		if (!strcmp(argv[i],"-o") || !strcmp(argv[i],"--output-dir")) {
-			if ((i+1) < argc) outputdir=argv[i+1];
+	for (int i=1; i < p_iArgc; i++) {
+		if (!strcmp(p_szArgv[i],"-o") || !strcmp(p_szArgv[i],"--output-dir")) {
+			if ((i+1) < p_iArgc) sOutputDir=p_szArgv[i+1];
 			else {
-				printf("error: Missing output path. [%s]\n",argv[i]);
+				printf("error: Missing output path. [%s]\n",p_szArgv[i]);
 				launchoptionsvalid=false;
 				continue;
 			}
 			i++;
 		}
-		else if ((!strcmp(argv[i],"-h") || !strcmp(argv[i],"--help")) && !helpran) {
+		else if ((!strcmp(p_szArgv[i],"-h") || !strcmp(p_szArgv[i],"--help")) && !helpran) {
 			ShowHelp();
 			launchoptionsvalid=false;
 			helpran=true;
 		}
-		else if (!launchoptionfilefound) {
-			launchoptionfilefound=true;
-			inputfilename=argv[i];
+		else if (!bInputFileSet) {
+			bInputFileSet=true;
+			InputFilePath=p_szArgv[i];
 			// Validate file's existence.
-			FileExists=fopen(inputfilename.string().c_str(),"r");
+			FileExists=fopen(InputFilePath.string().c_str(),"r");
 			if (FileExists==nullptr) {
-				std::cerr<<"error: Filepath "<<inputfilename.string()<<" is invalid.\n";
+				std::cerr<<"error: Filepath "<<InputFilePath.string()<<" is invalid.\n";
 				launchoptionsvalid=false;
 			}
 			fclose(FileExists);
 		}
 	}
-	if (launchoptionfilefound!=true) {
+	if (bInputFileSet!=true) {
 		std::cerr<<"error: No input file found.\n";
 		launchoptionsvalid=false;
 	}
