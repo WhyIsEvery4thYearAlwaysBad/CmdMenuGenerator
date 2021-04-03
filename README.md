@@ -18,7 +18,7 @@ This program aims to automate the process of creating command menus, as they can
 2. Create a file with the contents being your choice. [You can use an example from this wiki.](https://github.com/WhyIsEvery4thYearAlwaysBad/CmdMenuGenerator/wiki/Examples) (If you're the section of text withCMenu code.)
 
 3. Drag the file you created onto the generator. The folder "customvoicemenu" should appear. 
-	* You can also just run the generator command line if you want more customization.
+	* You can also just run the generator from command line (like cmd.exe or any BASH terminal) if you want more customization.
 
 4. Drag the folder "customvoicemenu" into the folder path `<base source game directory>/<mod directory>/custom` (e.g `Team Fortress 2/tf/custom`). 
 	
