@@ -1,10 +1,10 @@
-#ifndef PAGE_HPP
-#define PAGE_HPP
+#ifndef COMMANDMENU_HPP
+#define COMMANDMENU_HPP
 #include <string>
 #include <vector>
 #include <deque>
-#include "binds.hpp"
 #include "compiler.hpp"
+#include "bind.hpp"
 
 struct CommandMenu {
 	std::string sRawName, sName;
