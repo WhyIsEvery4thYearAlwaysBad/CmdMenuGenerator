@@ -3,11 +3,7 @@
 #define MAX_TOGGLE_STATES 512
 #include <string>
 #include <iostream>
-#include "Tokens.hpp"
-// Convert to a safer string format for file and caption names. (Yes the duplicate input string is intentional.)
-std::string formatRaw(std::string p_sInStr);
-// Tokenize any string into needed Tokens for parsing.
-bool Tokenize(const std::string& str);
+#include "token.hpp"
 void ParseMenuTokens(unsigned short& p_iBindCount);
 namespace Parser {
 	// For handling multi Tokens.
@@ -66,8 +62,8 @@ namespace Parser {
 			Type=CMenuTokenType::DECLARE_CMENU;
 		}
 	};
-	struct PageEndToken : public MenuToken {
-		PageEndToken() {
+	struct CMenuEndToken : public MenuToken {
+		CMenuEndToken() {
 			Type=CMenuTokenType::END_CMENU;
 		}
 	};

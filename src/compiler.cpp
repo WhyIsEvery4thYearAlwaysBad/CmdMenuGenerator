@@ -1,238 +1,21 @@
-#include "Tokens.hpp"
-#include "binds.hpp"
-#include "commandmenu.hpp"
-#include "compiler.hpp"
 #include <iostream>
 #include <string>
 #include <deque>
 #include <map>
 #include <stack>
-std::size_t iLineNum=1u;
-std::size_t iLineColumn=1u;
+#include "compiler.hpp"
+#include "lex.hpp"
+#include "token.hpp"
+#include "bind.hpp"
+#include "commandmenu.hpp"
+
 extern std::map<std::string,std::string> KVMap;
-#define Error(error) ErrorTokens.push_back(Token(0u,0u,TokenType::COMPILER_ERROR,error))
 std::deque<Token> TokenContainer;
 std::deque<Token> ErrorTokens;
 std::deque<Parser::MenuToken*> CMenuTokens;
 extern std::deque<CommandMenu> CMenuContainer; // Made in main.cpp
 
-// Convert to a safer string format for file and caption names.
-std::string formatRaw(std::string p_sInStr) {
-	for (unsigned long long i=0; i < p_sInStr.length(); i++) {
-		if (p_sInStr.at(i)=='<' && p_sInStr.find('>',i)!=std::string::npos) {
-			p_sInStr.erase(i,(p_sInStr.find('>',i+1)-i)+1);
-			if (i>0) i--;
-		}
-		// remove punctuation
-		if (ispunct(p_sInStr.at(i))) {
-			p_sInStr.erase(i,1);
-			i--;
-			continue;
-		}
-		// and non-ascii characters
-		if (i<p_sInStr.length()-1 && (!isascii(p_sInStr.at(i)) || !isascii(p_sInStr.at(i+1)))) {
-			p_sInStr.erase(i,2);
-			i--; 
-			continue;
-		}
-		if (isspace(p_sInStr.at(i)) && p_sInStr.at(i)!='\0') p_sInStr.at(i)='_';
-		if (isupper(p_sInStr.at(i))) p_sInStr.at(i)=tolower(p_sInStr.at(i)); 
-	}
-	return p_sInStr;
-}
-// Checks if character is usable in a nonterminal.
-bool IsIdentChar(const char& c) {
-	if (isalnum(c)
-	|| c=='#' 
-	|| c=='.'
-	|| c=='_') return true;
-	else return false;
-}
-// Convert string to token stream
-bool Tokenize(const std::string& p_sInStr) {
-	bool bErrorsFound=false;
-	std::string t_sStrTemp;
-	for (std::size_t i=0; i < p_sInStr.length(); )
-	{
-		if (TokenContainer.size()>0) TokenContainer.back().sValue.shrink_to_fit();
-		// EOF Token
-		if (i==p_sInStr.length()-1) {
-			TokenContainer.push_back(Token(p_sInStr.length()-1,iLineNum,TokenType::END_OF_FILE,""));
-			TokenContainer.back().sValue.shrink_to_fit();
-			break;
-		}
-		// Nonterminal
-		if (IsIdentChar(p_sInStr.at(i))) {
-			TokenContainer.push_back(Token(iLineColumn,iLineNum,TokenType::IDENTIFIER,""));
-			while (IsIdentChar(p_sInStr.at(i)))
-			{
-				TokenContainer.back().sValue.push_back(p_sInStr.at(i));
-				i++;
-				iLineColumn++;
-			}
-			// Check for terminals.
-			if (TokenContainer.back().sValue=="TOGGLE") TokenContainer.back().Type=TokenType::TOGGLE;
-			else if (TokenContainer.back().sValue=="BIND") TokenContainer.back().Type=TokenType::BIND;
-			else if (TokenContainer.back().sValue=="NOEXIT") TokenContainer.back().Type=TokenType::NOEXIT;
-			else if (TokenContainer.back().sValue=="NOFORMAT") TokenContainer.back().Type=TokenType::NOFORMAT;
-			continue;
-		}
-		switch (p_sInStr.at(i))
-		{
-		// comments
-		case '/':
-			// Line comments
-			if (p_sInStr.at(i+1)=='/') {
-				for (auto t=p_sInStr.begin()+i; t!=p_sInStr.end(); t++, i++) {
-					if (*t=='\t') iLineColumn+=5-(iLineColumn%4==0 ? 4 : iLineColumn%4);
-					else iLineColumn++;
-					if (*t=='\n' || *t=='\r') break;
-				}
-			}
-			/* Block comments */
-			else if (p_sInStr.at(i+1)=='*') { //
-				std::size_t tempi=i, templinecolumn=iLineColumn, templinenumber=iLineNum;
-				for (auto t=p_sInStr.begin()+i; t!=p_sInStr.end(); t++, tempi++) {
-					if (*t=='\t') templinecolumn+=5-(iLineColumn%4==0 ? 4 : iLineColumn%4);
-					else templinecolumn++;
-					if (*t=='\n') {
-						if (*(t-1)!='\r') templinecolumn=1u;
-						templinenumber++;
-					}
-					else if (*t=='\r') {
-						templinecolumn=1u;
-						if (*(t+1)!='\n') templinenumber++;
-					}
-					if (*t=='*' && *(t+1)=='/') {
-						i=tempi+2;
-						iLineColumn=templinecolumn+2;
-						iLineNum=templinenumber+2;
-						break;
-					}
-					if (t==p_sInStr.end()-1) {
-						Error("error: Unclosed comment. ("+std::to_string(iLineNum)+':'+std::to_string(iLineColumn)+')');
-						i=tempi;
-						break;
-					}
-				}
-			}
-			else {
-				TokenContainer.push_back(Token(iLineColumn,iLineNum,TokenType::UNDEFINED,"/"));
-				iLineColumn++;
-				i++;
-			}
-			break;
-		// strings
-		case '\"':
-			{
-			std::size_t tempcol=iLineColumn,templn=iLineNum;
-			// New lines or carriage returns cannot be in strings. (I don't mean the '\r' or '\n' character.)
-			for (i++, iLineColumn++; i < p_sInStr.length(); i++, iLineColumn++) {
-				if (p_sInStr.at(i)=='\r') {
-					Error("error: Missing a quote at (");
-					ErrorTokens.back().iLineNum=iLineNum;
-					ErrorTokens.back().iLineColumn=iLineColumn;
-					ErrorTokens.back().sValue+=ErrorTokens.back().GetFileLoc()+")";
-					// 
-					TokenContainer.push_back(Token(iLineColumn,iLineNum,TokenType::STRING,""));
-					t_sStrTemp="";
-					iLineColumn=1u;
-					if (p_sInStr.at(i+1)!='\n') {
-						iLineNum++;
-						i++;
-					}
-					break;
-				}
-				else if (p_sInStr.at(i)=='\n') {
-					Error("error: Missing a quote at (");
-					ErrorTokens.back().iLineNum=iLineNum;
-					ErrorTokens.back().iLineColumn=iLineColumn;
-					ErrorTokens.back().sValue+=ErrorTokens.back().GetFileLoc()+")";
-					// 
-					TokenContainer.push_back(Token(iLineColumn,iLineNum,TokenType::STRING,""));
-					t_sStrTemp="";
-					iLineNum++;
-					if (p_sInStr.at(i-1)!='\r') {
-						iLineColumn=1u;
-						i++;
-					}
-					break;
-				}
-				else if (i==p_sInStr.length()-1){
-					Error("error: Missing a quote at (");
-					ErrorTokens.back().sValue+=ErrorTokens.back().GetFileLoc()+")";
-					t_sStrTemp="";
-					break;
-				}
-				else if (p_sInStr.at(i)=='\"') {
-					TokenContainer.push_back(Token(tempcol,templn,TokenType::STRING,t_sStrTemp));
-					t_sStrTemp="";
-					break;
-				}
-				else {
-					if (p_sInStr.at(i)=='\t') iLineColumn+=5-(iLineColumn%4==0 ? 4 : iLineColumn%4);
-					t_sStrTemp+=p_sInStr.at(i);
-				}
-			}
-			i++; // Starts at the ending quote if this doesn't exist.
-			iLineColumn++;
-			}
-			break;
-		//terminals
-		case '=':
-			TokenContainer.push_back(Token(iLineColumn,iLineNum,TokenType::EQUALS,"="));
-			i++;
-			iLineColumn++;
-			break;
-		case '|':
-			TokenContainer.push_back(Token(iLineColumn,iLineNum,TokenType::VBAR,"|"));
-			i++;
-			iLineColumn++;
-			break;
-		case '{':
-			TokenContainer.push_back(Token(iLineColumn,iLineNum,TokenType::LCBRACKET,"{"));
-			i++;
-			iLineColumn++;
-			break;
-		case '}':
-			TokenContainer.push_back(Token(iLineColumn,iLineNum,TokenType::RCBRACKET,"}"));
-			i++;
-			iLineColumn++;
-			break;
-		//spaces and colon
-		case '\t':
-			iLineColumn+=5-(iLineColumn%4==0 ? 4 : iLineColumn%4);
-			i++;
-			break;
-		case ' ':
-			iLineColumn++;
-			i++;
-			break;
-		case '\r':
-			iLineColumn=1u;
-			if (i+1==p_sInStr.length() || p_sInStr.at(i+1)!='\n') iLineNum++;
-			i++;
-			break;
-		case '\v':
-			i++;
-			iLineNum++;
-			break;
-		case '\n':
-			iLineNum++;
-			if (i>0 && p_sInStr.at(i-1)!='\r') iLineColumn=1u;
-			i++;
-			break;
-		default:
-			TokenContainer.push_back(Token(iLineColumn,iLineNum,TokenType::UNDEFINED,""));
-			TokenContainer.back().sValue.push_back(p_sInStr.at(i));
-			iLineColumn++;
-			i++;
-			break;
-		}
-	}
-	if (ErrorTokens.size()>=1) bErrorsFound=true;
-	return !bErrorsFound;
-}
+
 namespace Parser {
 	unsigned int depth=0u;
 	bool bEOFFound=false, bErrorsFound=false;
@@ -241,12 +24,12 @@ namespace Parser {
 		for (auto token=TokenContainer.begin(); token!=TokenContainer.end(); ) {
 			switch (token->Type) {
 				case TokenType::NOEXIT:
-					if (bNoExit==true) Error("error: Duplicate modifier \"NOEXIT\". ("+token->GetFileLoc()+')');
+					if (bNoExit==true) TokenContainer.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,token->GetFileLoc()+": error: Duplicate modifier \"NOEXIT\"."));
 					else bNoExit=true;
 					token++;
 					break;
 				case TokenType::NOFORMAT:
-					if (bFormatted==false) Error("error: Duplicate modifier \"NOFORMAT\". ("+token->GetFileLoc()+')');
+					if (bFormatted==false) TokenContainer.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,token->GetFileLoc()+": error: Duplicate modifier \"NOFORMAT\"."));
 					else bFormatted=false;
 					token++;
 					break;
@@ -256,9 +39,9 @@ namespace Parser {
 						std::string cmdlist[MAX_TOGGLE_STATES];
 						unsigned short i=1;
 						if (depth<=0) 
-							Error("error: Toggle bind must be set in a command menu. ("+token->GetFileLoc()+')');
+							TokenContainer.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,token->GetFileLoc()+": error: Toggle bind must be set in a command menu."));
 						if ((token+i)->Type!=TokenType::BIND) 
-							Error("Expected \'BIND\' ("+(token+i)->GetFileLoc()+")");
+							TokenContainer.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,token->GetFileLoc()+": error: Expected \'BIND\' keyword here."));
 						else i++;
 						while ((token+i)->Type==TokenType::STRING)
 						{
@@ -267,9 +50,9 @@ namespace Parser {
 							i++;
 						}
 						if (i-1<=1 || i % 2!=0)  // Even amount of strings indicate that the toggle bind has names and cmdstrs
-							Error("error: Expected string! ("+(token+i)->GetFileLoc()+")");
+							TokenContainer.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,token->GetFileLoc()+": error: Expected string here."));
 						if ((token+i)->Type!=TokenType::VBAR) 
-							Error("error: Expected '|' ("+(token+i-1)->GetFileLoc()+")");
+							TokenContainer.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,(token+i)->GetFileLoc()+"error: Expected '|'."));
 						CMenuTokens.push_back(new Parser::ToggleBindToken(namelist,cmdlist,static_cast<unsigned short>((i-2)/2),bNoExit,bFormatted));
 						if (bNoExit==true) bNoExit=false;
 						token+=i;
@@ -279,17 +62,17 @@ namespace Parser {
 				{
 					unsigned short i=1u;
 					if (depth<=0) 
-						Error("error: Bind must be set in a commandmenu. ("+token->GetFileLoc()+')');
+						TokenContainer.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,token->GetFileLoc()+": error: Bind must be set in a command menu."));
 					if ((token+i)->Type!=TokenType::STRING) 
-						Error("error: Expected string. ("+(token+i)->GetFileLoc()+")");
+						TokenContainer.push_back(Token((token+i)->iLineNum,(token+i)->iLineColumn,TokenType::COMPILER_ERROR,(token+i)->GetFileLoc()+": error: Expected string."));
 					else {
 						i++;
 						if ((token+i)->Type!=TokenType::STRING) 
-							Error("error: Expected string. ("+(token+i)->GetFileLoc()+")");
+							TokenContainer.push_back(Token((token+i)->iLineNum,(token+i)->iLineColumn,TokenType::COMPILER_ERROR,(token+i)->GetFileLoc()+": error: Expected string."));
 						else i++;
 					}
 					if ((token+i)->Type!=TokenType::VBAR) 
-						Error("error: Expected '|' ("+(token+i)->GetFileLoc()+")");
+						TokenContainer.push_back(Token((token+i)->iLineNum,(token+i)->iLineColumn,TokenType::COMPILER_ERROR,(token+i)->GetFileLoc()+": error: Expected '|'."));
 					else i++;
 					CMenuTokens.push_back(new Parser::BindToken((token+1)->sValue, (token+2)->sValue,bNoExit,bFormatted));
 					bNoExit=false, bFormatted=true;
@@ -300,9 +83,9 @@ namespace Parser {
 				{
 					unsigned short i=1u;
 					if ((token+i)->Type!=TokenType::LCBRACKET) 
-						Error("error: Expected '{' ("+(token+i)->GetFileLoc()+")");
+						TokenContainer.push_back(Token((token+i)->iLineNum,(token+i)->iLineColumn,TokenType::COMPILER_ERROR,(token+i)->GetFileLoc()+": error: Expected '{' here."));
 					else if (bNoExit==true) {
-						Error("error: Expected a bind. ("+token->GetFileLoc()+')');
+						TokenContainer.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,token->GetFileLoc()+": error: Expected a bind."));
 						bNoExit=false;
 					}
 					CMenuTokens.push_back(new Parser::CMenuToken(token->sValue,bFormatted));
@@ -314,19 +97,13 @@ namespace Parser {
 				case TokenType::IDENTIFIER: // Check for set keymaps
 				{
 					unsigned short i=1u;
-					// Maybe they were trying to make a commandmenu…
-					if ((token+i)->Type==TokenType::LCBRACKET) {
-						token++;
-						break;
-					};
-					
 					if ((token+i)->Type!=TokenType::EQUALS) {
-						Error("error: Expected '='! ("+(token+i)->GetFileLoc()+")");
+						TokenContainer.push_back(Token((token+i)->iLineNum,(token+i)->iLineColumn,TokenType::COMPILER_ERROR,(token+i)->GetFileLoc()+": error: Expected a '=' here."));
 						TokenContainer.insert(token+i,Token((token+i)->iLineColumn,(token+i)->iLineNum,TokenType::EQUALS,"="));
 					}
 					if ((token+i+1)->Type!=TokenType::LCBRACKET) i++;
 					if ((token+i)->Type!=TokenType::STRING || (token+i+1)->Type==TokenType::LCBRACKET) {
-						Error("error: Expected string! ("+(token+i)->GetFileLoc()+")");
+						TokenContainer.push_back(Token((token+i)->iLineNum,(token+i)->iLineColumn,TokenType::COMPILER_ERROR,(token+i)->GetFileLoc()+": error: Expected a string here."));
 						TokenContainer.insert(token+i,Token((token+i)->iLineColumn,(token+i)->iLineNum,TokenType::STRING,""));
 					}
 					if ((token+i+1)->Type!=TokenType::LCBRACKET) i++;
@@ -337,7 +114,7 @@ namespace Parser {
 				case TokenType::LCBRACKET:
 					depth++;
 					if (token>TokenContainer.begin() && (token-1)->Type!=TokenType::STRING) {
-						Error("error: Expected string! ("+(token-1)->GetFileLoc()+")");
+						TokenContainer.push_back(Token((token-1)->iLineNum,(token-1)->iLineColumn,TokenType::COMPILER_ERROR,(token-1)->GetFileLoc()+": error: Expected a string here."));
 						depth--;
 					}
 					token++;
@@ -345,10 +122,10 @@ namespace Parser {
 				case TokenType::RCBRACKET:
 					depth--;
 					if (depth==UINT32_MAX) {
-						Error("error: Stray '}' ("+token->GetFileLoc()+")");
+						TokenContainer.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,token->GetFileLoc()+": error: Stray '}'"));
 						depth++;
 					}
-					CMenuTokens.push_back(new Parser::PageEndToken());
+					CMenuTokens.push_back(new Parser::CMenuEndToken());
 					token++;
 					break;
 				case TokenType::END_OF_FILE:
@@ -356,16 +133,18 @@ namespace Parser {
 					token=TokenContainer.end();
 					break;
 				case TokenType::UNDEFINED: 
-					Error("error: Unrecognized token '"+token->sValue+"' ("+token->GetFileLoc()+")");
+					TokenContainer.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,token->GetFileLoc()+": error: Unrecognized character '"+token->sValue+"'."));
 					token++;
 					break;
+				case TokenType::COMPILER_ERROR:
+					std::cout<<token->sValue<<'\n';
+				break;
 				default:
 					token++;
-					break;
-		}
+				break;
+			}
 		}
 		if (bEOFFound==false) std::cout<<"warning: EOF not found!\n";
-		if (ErrorTokens.size()>=1) bErrorsFound=true;
 		return !bErrorsFound;
 	}
 }

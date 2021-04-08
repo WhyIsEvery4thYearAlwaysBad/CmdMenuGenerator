@@ -1,5 +1,6 @@
 #include "commandmenu.hpp"
 #include "compiler.hpp"
+#include "lex.hpp"
 
 CommandMenu::CommandMenu() {}
 

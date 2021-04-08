@@ -7,7 +7,8 @@
 #include <cstdio>
 #include <windows.h>
 #include <locale>
-#include "Tokens.hpp"
+#include "lex.hpp"
+#include "token.hpp"
 #include "commandmenu.hpp"
 #include "compiler.hpp"
 #include "launchoptions.hpp"
@@ -35,10 +36,8 @@ int main(int argc, char** argv) {
 		InFileContent+=Line+'\n';
 	}
 	// If tokenization and parsing process failed, then error out and return.
-	if (!Tokenize(InFileContent) || !Parser::ParseTokens()) {
-		for (auto& e : ErrorTokens) {
-			std::cout<<e.sValue<<'\n';
-		}
+	if (!Lexer::Tokenize(InFileContent) 
+		|| !Parser::ParseTokens()) {
 		return -1;
 	}
 	// Use the parsed tokens to form CMenus.
