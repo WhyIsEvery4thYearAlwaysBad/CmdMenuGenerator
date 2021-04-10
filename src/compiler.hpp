@@ -4,7 +4,7 @@
 #include <string>
 #include <iostream>
 #include "token.hpp"
-void ParseMenuTokens(unsigned short& p_iBindCount);
+void ParseMenuTokens(unsigned short& p_iBindCount, unsigned char& p_bUsedDisplayFlags);
 namespace Parser {
 	// For handling multi Tokens.
 	enum CMenuTokenType {MENU_BIND=0, MENU_TOGGLE_BIND, DECLARE_CMENU, END_CMENU, KV_SET};
