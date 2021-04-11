@@ -82,12 +82,12 @@ namespace Parser {
 				case TokenType::STRING: // Check for new commandmenu.
 				{
 					unsigned short i=1u;
+					if (bNoExit==true) {
+						ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,token->GetFileLoc()+": error: 'NOEXIT' modifier cannot be used with CMenus."));
+						bNoExit = false;
+					}
 					if ((token+i)->Type!=TokenType::LCBRACKET) 
 						ErrorTokens.push_back(Token((token+i)->iLineNum,(token+i)->iLineColumn,TokenType::COMPILER_ERROR,(token+i)->GetFileLoc()+": error: Expected '{' here."));
-					else if (bNoExit==true) {
-						ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,token->GetFileLoc()+": error: Expected a bind."));
-						bNoExit=false;
-					}
 					if (!bErrorsFound) CMenuTokens.push_back(new Parser::CMenuToken(token->sValue,bFormatted));
 					bFormatted=true;
 					token+=i;
