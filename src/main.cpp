@@ -36,19 +36,19 @@ int main(int argc, char** argv) {
 	while (std::getline(inputf,Line)) {
 		InFileContent+=Line+'\n';
 	}
-	// If tokenization and parsing process failed then error out and return.
+	// If tokenization and parsing process failed then error out and return. Also get the compiled bind count.
+	unsigned short iBindCount=0u;
+	unsigned char bUsedDisplayFlags=0; // Flag used to mark if and what display types were used.
 	if (Lexer::Tokenize(InFileContent) 
-		|| Parser::ParseTokens()) {
+		|| Parser::ParseTokens()
+		|| ParseMenuTokens(iBindCount,bUsedDisplayFlags)) {
 		
 		for (auto& e : ErrorTokens) {
 			std::cout << e.sValue << '\n';
 		}
 		return -1;
 	}
-	// Use the parsed tokens to form CMenus. Also get the compiled bind count.
-	unsigned short iBindCount=0u;
-	unsigned char bUsedDisplayFlags=0; // Flag used to mark if and what display types were used.
-	ParseMenuTokens(iBindCount,bUsedDisplayFlags);
+	
 	/*
 	display="caption" - Makes cmenus use the caption for bind displays
 	display="console" - Makes cmenus use the console for bind displys

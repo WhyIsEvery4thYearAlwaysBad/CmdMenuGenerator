@@ -152,7 +152,7 @@ namespace Parser {
 		- 1st bit: Is the "captions" display method used?
 */
 
-void ParseMenuTokens(unsigned short& p_iBindCount, unsigned char& p_bUsedDisplayFlags) {
+bool ParseMenuTokens(unsigned short& p_iBindCount, unsigned char& p_bUsedDisplayFlags) {
 	std::deque<CommandMenu> CMenuStack;
 	std::stack<unsigned char> NumKeyStack;
 	// Variable is here to reduce the amount of goddamn downcasts I would have to do.
@@ -196,27 +196,56 @@ void ParseMenuTokens(unsigned short& p_iBindCount, unsigned char& p_bUsedDisplay
 			}
 			break;
 		case Parser::CMenuTokenType::END_CMENU:
-			// Warning:
-			if (CMenuStack.front().binds.size()>10) std::cout<<"Warning: More than ten binds in CMenu \'"<<CMenuStack.front().sName<<"\'!\n";
-			CMenuContainer.push_back(CMenuStack.front());
-			CMenuStack.pop_front();
-			NumKeyStack.pop();
-			if (!NumKeyStack.empty()) {
-				NumKeyStack.top()=(NumKeyStack.top()+1)%10;
+			if (CMenuStack.size() > 0) {
+				// Warning:
+				if (CMenuStack.front().binds.size()>10) std::cout<<"Warning: More than ten binds in CMenu \'"<<CMenuStack.front().sName<<"\'!\n";
+				CMenuContainer.push_back(CMenuStack.front());
+				CMenuStack.pop_front();
+				if (!NumKeyStack.empty()) {
+					NumKeyStack.pop();
+					if (!NumKeyStack.empty()) NumKeyStack.top()=(NumKeyStack.top()+1)%10;
+				}
+				else {
+					std::cerr<<"ParseMenuTokens():CMenuTokens+"<<std::distance(CMenuTokens.begin(),token)<<":case Parser::CMenuTokenType::END_CMENU:fatal error: Tried to access nonexistent element in number key stack.\n";
+					return true;					
+				}
+			}
+			else {
+				std::cerr<<"ParseMenuTokens():CMenuTokens+"<<std::distance(CMenuTokens.begin(),token)<<":case Parser::CMenuTokenType::END_CMENU:fatal error: Tried to access nonexistent CMenu in CMenu stack.\n";
+				return true;
 			}
 			break;
 		case Parser::CMenuTokenType::MENU_BIND:
-			CMenuStack.front().binds.push_back(Bind(NumKeyStack.top(),static_cast<Parser::BindToken&>(**token)));
-			NumKeyStack.top()=(NumKeyStack.top()+1)%10;
-			p_iBindCount++;
+			if (CMenuStack.size() > 0) {
+				CMenuStack.front().binds.push_back(Bind(NumKeyStack.top(),static_cast<Parser::BindToken&>(**token)));
+				NumKeyStack.top()=(NumKeyStack.top()+1)%10;
+				p_iBindCount++;
+			}
+			else {
+				std::cerr<<"ParseMenuTokens():CMenuTokens+"<<std::distance(CMenuTokens.begin(),token)<<":case Parser::CMenuTokenType::MENU_BIND:fatal error: Tried to access nonexistent CMenu in CMenu stack.\n";
+				return true;
+			}
 			break;
 		case Parser::CMenuTokenType::MENU_TOGGLE_BIND:
-			CMenuStack.front().binds.push_back(Bind(NumKeyStack.top(),static_cast<Parser::ToggleBindToken&>(**token)));
-			NumKeyStack.top()=(NumKeyStack.top()+1)%10;
-			p_iBindCount++;
-			break;
+			if (CMenuStack.size() > 0) {
+				CMenuStack.front().binds.push_back(Bind(NumKeyStack.top(),static_cast<Parser::ToggleBindToken&>(**token)));
+				if (!NumKeyStack.empty()) {
+					NumKeyStack.top()=(NumKeyStack.top()+1)%10;
+				}
+				else {
+					std::cerr<<"ParseMenuTokens():CMenuTokens+"<<std::distance(CMenuTokens.begin(),token)<<":case Parser::CMenuTokenType::MENU_TOGGLE_BIND:fatal error: Tried to access nonexistent CMenu in number key stack.\n";
+					return true;
+				}
+				p_iBindCount++;
+				break;
+			}
+			else {
+				std::cerr<<"ParseMenuTokens():CMenuTokens+"<<std::distance(CMenuTokens.begin(),token)<<":case Parser::CMenuTokenType::MENU_TOGGLE_BIND:fatal error: Tried to access nonexistent CMenu in CMenu stack.\n";
+				return true;
+			}
 		default:
 			break;
 		}
 	}
+	return false;
 }
