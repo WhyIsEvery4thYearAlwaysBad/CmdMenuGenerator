@@ -21,7 +21,7 @@ class Token {
 	unsigned char Type=TokenType::UNDEFINED;
 	std::size_t iLineColumn=1u; // Location
 	std::size_t iLineNum=1u; // Location from newline
-	std::string sValue;
+	std::string sValue="";
 	
 	Token();
 	Token(const std::size_t& p_iLineNum, const std::size_t& p_iColumn, const unsigned char p_TokenType, const std::string& p_sVal);

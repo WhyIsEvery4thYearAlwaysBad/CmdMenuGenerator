@@ -7,7 +7,8 @@
 #include <cstdio>
 #include <windows.h>
 #include <locale>
-#include "Tokens.hpp"
+#include "lex.hpp"
+#include "token.hpp"
 #include "commandmenu.hpp"
 #include "compiler.hpp"
 #include "launchoptions.hpp"
@@ -19,7 +20,7 @@ std::map<std::string,std::string> KVMap={
 	{"linger_time","0"},
 	{"predisplay_time","0.25"},
 	{"format","$(nkey). $(str)<cr>"},
-	{"consolemode","false"},
+	{"display","caption"},
 	{"resetkeys","bind 1 slot1; bind 2 slot2; bind 3 slot3; bind 4 slot4; bind 5 slot5; bind 6 slot6; bind 7 slot7; bind 8 slot8; bind 9 slot9; bind 0 slot10"}
 };
 std::wstring_convert<std::codecvt_utf8<wchar_t>,wchar_t> convert;
@@ -27,70 +28,54 @@ std::wstring_convert<std::codecvt_utf8<wchar_t>,wchar_t> convert;
 extern std::filesystem::path InputFilePath;
 extern std::filesystem::path sOutputDir;
 int main(int argc, char** argv) {
-	unsigned short iBindCount=0u;
+	// Evaluate launch options.
 	if (!EvaluateLaunchOptions(argc,argv)) return -1;
+	// Get content from input file.
 	std::string Line, InFileContent; 
 	std::ifstream inputf(InputFilePath,std::ios_base::binary);
 	while (std::getline(inputf,Line)) {
 		InFileContent+=Line+'\n';
 	}
-	// If tokenization and parsing process failed, then error out and return.
-	if (!Tokenize(InFileContent) || !Parser::ParseTokens()) {
+	// If tokenization and parsing process failed then error out and return. Also get the compiled bind count.
+	unsigned short iBindCount=0u;
+	unsigned char bUsedDisplayFlags=0; // Flag used to mark if and what display types were used.
+	if (Lexer::Tokenize(InFileContent) 
+		|| Parser::ParseTokens()
+		|| ParseMenuTokens(iBindCount,bUsedDisplayFlags)) {
+		
 		for (auto& e : ErrorTokens) {
-			std::cout<<e.sValue<<'\n';
+			std::cout << e.sValue << '\n';
 		}
 		return -1;
 	}
-	// Use the parsed tokens to form CMenus.
-	ParseMenuTokens(iBindCount);
-	// Directories
-	std::filesystem::create_directories(sOutputDir.string()+"/cfg/cmenu");
-	// Main CFG file that initializes our CMenus.
-	std::ofstream InitRoutineFile(sOutputDir.string()+"/cfg/cmenu_initialize.cfg");
-	// Console mode makes the Voicemenu use the console for displaying binds, instead of captions.
-	bool bConsoleModeTrue=(KVMap["bConsoleModeTrue"].find("true")!=std::string::npos);
-	if (bConsoleModeTrue) {
-		InitRoutineFile<<R"(alias _cmenu.nullkeys "alias _cmenu.1 ; alias _cmenu.2 ; alias _cmenu.3 ; alias _cmenu.4 ; alias _cmenu.5 ; alias _cmenu.6 ; alias _cmenu.7 ; alias _cmenu.8 ; alias _cmenu.9 ; alias _cmenu.0"
-alias cmenu.exitmenu "developer 0; )"<<KVMap["resetkeys"]<<"; cmenu.on_exitmenu\"";
-		InitRoutineFile<<R"(
-alias _cmenu.menusettings "developer 1; clear; bind 1 _cmenu.1; bind 2 _cmenu.2; bind 3 _cmenu.3; bind 4 _cmenu.4; bind 5 _cmenu.5; bind 6 _cmenu.6; bind 7 _cmenu.7; bind 8 _cmenu.8; bind 9 _cmenu.9; bind 0 _cmenu.0"
-alias cmenu.on_exitmenu ;
-alias cmenu.on_page_exit ;
-cmenu.exitmenu
-)";
-	std::string CMenuCFGPath="";
-	unsigned long iToggleNumber=0u;
-	for (auto CMenu=CMenuContainer.begin(); CMenu!=CMenuContainer.end(); CMenu++) {
-			unsigned long segmentnumber=0u;
-			CMenuCFGPath=sOutputDir.string()+"/cfg/$cmenu_"+CMenu->sRawName+".cfg";
-			std::ofstream CMenuCFG(CMenuCFGPath);
-			// Write to cfg
-			CMenuCFG<<"_cmenu.menusettings\n_cvm.nullkeys\n";
-			for (auto& kbind : CMenu->binds) {
-				if (kbind.bToggleBind) {
-					InitRoutineFile<<"alias _cmenu.toggle_"<<std::to_string(iToggleNumber)<<" _cmenu.toggle_"<<std::to_string(iToggleNumber)<<"_0\n";
-					InitRoutineFile<<"alias _#cmenu.toggle_"<<std::to_string(iToggleNumber)<<" _#cmenu.toggle_"<<std::to_string(iToggleNumber)<<"_0\n";
-					for (unsigned char sti=0u; sti < kbind.NameContainer.size(); sti++) {
-						InitRoutineFile<<"alias _cmenu.toggle_"<<std::to_string(iToggleNumber)<<'_'<<std::to_string(sti)<<'\"'<<kbind.CmdStrContainer.at(sti)<<"; alias _cmenu.toggle_"<<std::to_string(iToggleNumber)<<" _cmenu.toggle_"<<std::to_string(iToggleNumber)<<'_'<<std::to_string((sti+1)%kbind.NameContainer.size())<<"; alias _#cmenu.toggle_"<<std::to_string(iToggleNumber)<<" _#cmenu.toggle_"<<std::to_string(iToggleNumber)<<'_'<<std::to_string((sti+1)%kbind.NameContainer.size())<<"\"\n";
-						InitRoutineFile<<"alias _#cmenu.toggle_"<<std::to_string(iToggleNumber)<<'_'<<std::to_string(sti)<<"\"echo "<<kbind.NameContainer.at(sti)<<"\"\n";
-					}
-					CMenuCFG<<"_#cmenu.toggle_"<<std::to_string(iToggleNumber)<<'\n';
-					CMenuCFG<<"alias _cmenu."<<std::to_string(kbind.cKey)<<" \"_cmenu.toggle_"<<std::to_string(iToggleNumber)<<"\"\n";
-					iToggleNumber++;
-				}
-				else {
-					CMenuCFG<<"echo "<<kbind.NameContainer.front()<<'\n'<<"alias _cmenu."<<std::to_string(kbind.cKey)<<" \""<<kbind.CmdStrContainer.front()<<"\"\n";;
-				}
-			}
+	
+	/*
+	display="caption" - Makes cmenus use the caption for bind displays
+	display="console" - Makes cmenus use the console for bind displys
+	display="none" - Disables bind display for future CMenus. 
+	First trim the display KV to remove spaces and make the value lowercase.
+	*/
+	if (KVMap["display"] != "caption" && KVMap["display"] != "console" && KVMap["display"]!="none") 
+		for (unsigned long long i=0; i < KVMap["display"].length(); i++) {
+			if (isspace(KVMap["display"].at(i))==true) KVMap["display"].erase(i,1);
+			KVMap["display"].at(i)=tolower(KVMap["display"].at(i));
 		}
+	
+	// Then if the display KV isn't one of the three specified values, force it to default ("caption").
+	if (KVMap["display"] != "caption" && KVMap["display"] != "console" && KVMap["display"]!="none") {
+		std::cout<<"warning: Unknown display type \""<<KVMap["display"]<<"\". Falling back to caption display!\n";
+		KVMap["display"]="caption";
 	}
-	else {
+	// Now start creating the neccessary CFG and Captions files for CMenus.
+		// Directories
+		std::filesystem::create_directories(sOutputDir.string()+"/cfg/cmenu");
+	// Main CFG file that initializes our CMenus.
+	std::ofstream InitRoutineFile(sOutputDir.string()+"/cfg/cmenu_initialize.cfg");	
 	InitRoutineFile<<R"(closecaption 1
 cc_lang commandmenu
-alias _cmenu.nullkeys "alias _cmenu.1 ; alias _cmenu.2 ; alias _cmenu.3 ; alias _cmenu.4 ; alias _cmenu.5 ; alias _cmenu.6 ; alias _cmenu.7 ; alias _cmenu.8 ; alias _cmenu.9; alias _cmenu.0"
-alias cmenu.exitmenu "cc_emit _#cmenu.clear_screen; )"<<KVMap["resetkeys"]<<"; cc_linger_time "<<KVMap["linger_time"]<<"; cc_predisplay_time "<<KVMap["predisplay_time"]<<"; cmenu.on_exitmenu\"";
+alias _cmenu.nullkeys"alias _cmenu.1 ; alias _cmenu.2 ; alias _cmenu.3 ; alias _cmenu.4 ; alias _cmenu.5 ; alias _cmenu.6 ; alias _cmenu.7 ; alias _cmenu.8 ; alias _cmenu.9; alias _cmenu.0"
+alias cmenu.exitmenu"cc_emit _#cmenu.clear_screen;)"<<"cc_linger_time "<<KVMap["linger_time"]<<";cc_predisplay_time "<<KVMap["predisplay_time"]<<';'<<KVMap["resetkeys"]<<"; cmenu.on_exitmenu\"";
 	InitRoutineFile<<R"(
-alias _cmenu.menusettings "cc_linger_time 10000; cc_predisplay_time 0; bind 1 _cmenu.1; bind 2 _cmenu.2; bind 3 _cmenu.3; bind 4 _cmenu.4; bind 5 _cmenu.5; bind 6 _cmenu.6; bind 7 _cmenu.7; bind 8 _cmenu.8; bind 9 _cmenu.9; bind 0 _cmenu.0"
 alias cmenu.on_exitmenu ;
 alias cmenu.on_page_exit ;
 cmenu.exitmenu
@@ -110,17 +95,26 @@ cmenu.exitmenu
 		unsigned int iTBindSegmentNum=0u;
 		CMenuCFGPath=sOutputDir.string()+"/cfg/$cmenu_"+CMenu->sRawName+".cfg";
 		std::ofstream CMenuCFG(CMenuCFGPath);
+		/* Disable other displays if this CMenu isnt using it and there are other CMenus that use it.*/
+		
+		if (CMenu->Display!=CMenuDisplayType::CONSOLE && (bUsedDisplayFlags & 2))
+			CMenuCFG<<"developer 0\n";
+		if (CMenu->Display!=CMenuDisplayType::CAPTIONS && (bUsedDisplayFlags & 4))
+			CMenuCFG<<"cc_emit _#cmenu.clear_screen\n";
+		
 		/* Create the actual binds needed for the declared binds. */
-		CMenuCFG<<"_cmenu.menusettings\ncc_emit _#cmenu.clear_screen\ncc_emit _#cmenu."+CMenu->sRawName+'\n';
+		if (CMenu->Display==CMenuDisplayType::CAPTIONS) CMenuCFG<<"cc_linger_time 10000\ncc_predisplay_time 0\ncc_emit _#cmenu.clear_screen\ncc_emit _#cmenu."+CMenu->sRawName+'\n';
+		else if (CMenu->Display==CMenuDisplayType::CONSOLE) CMenuCFG<<"developer 1\nclear\n";
+		CMenuCFG<<"bind 1 _cmenu.1\nbind 2 _cmenu.2\nbind 3 _cmenu.3\nbind 4 _cmenu.4\nbind 5 _cmenu.5\nbind 6 _cmenu.6\nbind 7 _cmenu.7\nbind 8 _cmenu.8\nbind 9 _cmenu.9\nbind 0 _cmenu.0\n";
 		{
 			unsigned int t_ToggleNum=iToggleNumber;
-			for (auto kbind=CMenu->binds.begin(); kbind!=CMenu->binds.end(); kbind++) {
-				if (kbind->bToggleBind==true) {
+			for (auto kTBind=CMenu->binds.begin(); kTBind!=CMenu->binds.end(); kTBind++) {
+				if (CMenu->Display != CMenuDisplayType::NONE && kTBind->bToggleBind==true) {
 					CMenuCFG<<"_#cmenu.toggle_"+std::to_string(t_ToggleNum)<<'\n';
 					t_ToggleNum++;
 				}
 				
-				if (kbind!=CMenu->binds.begin() && kbind->bToggleBind==false && (kbind-1)->bToggleBind==true) {
+				if (CMenu->Display == CMenuDisplayType::CAPTIONS && kTBind!=CMenu->binds.begin() && kTBind->bToggleBind==false && (kTBind-1)->bToggleBind==true) {
 					CMenuCFG<<"cc_emit _#cmenu."<<CMenu->sRawName<<"_seg_"<<std::to_string(iTBindSegmentNum)<<'\n';
 					iTBindSegmentNum++;
 				}
@@ -129,34 +123,65 @@ cmenu.exitmenu
 		}
 		CMenuCFG<<"_cmenu.nullkeys\n";
 		/* Write captions for our binds. */
-		for (auto kbind=CMenu->binds.begin(); kbind!=CMenu->binds.end(); kbind++) {
-			if (kbind==CMenu->binds.begin() && kbind->bToggleBind!=true)
-				CMenuCaptionFile<<convert.from_bytes("\t\t\"_#cmenu."+CMenu->sRawName+"\" \"");
-			if (kbind->bToggleBind==true) {
-				InitRoutineFile<<"alias _cmenu.toggle_"<<std::to_string(iToggleNumber)<<" _cmenu.toggle_"<<std::to_string(iToggleNumber)<<"_0\n";
-				InitRoutineFile<<"alias _#cmenu.toggle_"<<std::to_string(iToggleNumber)<<" _#cmenu.toggle_"<<std::to_string(iToggleNumber)<<"_0\n";
-				for (unsigned char sti=0u; sti < kbind->NameContainer.size(); sti++) {
-					InitRoutineFile<<"alias _cmenu.toggle_"<<std::to_string(iToggleNumber)<<'_'<<std::to_string(sti)<<"\"alias _#cmenu.toggle_"<<std::to_string(iToggleNumber)<<" _#cmenu.toggle_"<<std::to_string(iToggleNumber)<<'_'<<std::to_string((sti+1)%kbind->NameContainer.size())<<';'<<kbind->CmdStrContainer.at(sti)<<"; alias _cmenu.toggle_"<<std::to_string(iToggleNumber)<<" _cmenu.toggle_"<<std::to_string(iToggleNumber)<<'_'<<std::to_string((sti+1)%kbind->NameContainer.size())<<"\"\n";
-					InitRoutineFile<<"alias _#cmenu.toggle_"<<std::to_string(iToggleNumber)<<'_'<<std::to_string(sti)<<"\"cc_emit _#cmenu.toggle_"<<std::to_string(iToggleNumber)<<'_'<<std::to_string(sti)<<"\"\n";
-					CMenuCaptionFile<<convert.from_bytes("\t\t\"_#cmenu.toggle_"+std::to_string(iToggleNumber)+'_'+std::to_string(sti)+"\" \""+kbind->NameContainer.at(sti)+"\"\n");
+		for (auto kBind = CMenu->binds.begin(); kBind != CMenu->binds.end(); kBind++) {
+			if (CMenu->Display==CMenuDisplayType::CAPTIONS) {
+				if (kBind==CMenu->binds.begin() && kBind->bToggleBind!=true) 
+					CMenuCaptionFile<<convert.from_bytes("\t\t\"_#cmenu."+CMenu->sRawName+"\" \"");
+				if (kBind->bToggleBind==true) {
+					InitRoutineFile<<"alias _cmenu.toggle_"<<std::to_string(iToggleNumber)<<" _cmenu.toggle_"<<std::to_string(iToggleNumber)<<"_0\n";
+					InitRoutineFile<<"alias _#cmenu.toggle_"<<std::to_string(iToggleNumber)<<" _#cmenu.toggle_"<<std::to_string(iToggleNumber)<<"_0\n";
+					for (unsigned char sti=0u; sti < kBind->NameContainer.size(); sti++) {
+						InitRoutineFile<<"alias _cmenu.toggle_"<<std::to_string(iToggleNumber)<<'_'<<std::to_string(sti)<<"\"alias _#cmenu.toggle_"<<std::to_string(iToggleNumber)<<" _#cmenu.toggle_"<<std::to_string(iToggleNumber)<<'_'<<std::to_string((sti+1)%kBind->NameContainer.size())<<';'<<kBind->CmdStrContainer.at(sti)<<"; alias _cmenu.toggle_"<<std::to_string(iToggleNumber)<<" _cmenu.toggle_"<<std::to_string(iToggleNumber)<<'_'<<std::to_string((sti+1)%kBind->NameContainer.size())<<"\"\n";
+						InitRoutineFile<<"alias _#cmenu.toggle_"<<std::to_string(iToggleNumber)<<'_'<<std::to_string(sti)<<"\"cc_emit _#cmenu.toggle_"<<std::to_string(iToggleNumber)<<'_'<<std::to_string(sti)<<"\"\n";
+						CMenuCaptionFile<<convert.from_bytes("\t\t\"_#cmenu.toggle_"+std::to_string(iToggleNumber)+'_'+std::to_string(sti)+"\" \""+kBind->NameContainer.at(sti)+"\"\n");
+					}
+					CMenuCFG<<"alias _cmenu."<<std::to_string(kBind->cKey)<<"\"_cmenu.toggle_"<<std::to_string(iToggleNumber)<<"\"\n";
+					iToggleNumber++;
 				}
-				CMenuCFG<<"alias _cmenu."<<std::to_string(kbind->cKey)<<" \"_cmenu.toggle_"<<std::to_string(iToggleNumber)<<"\"\n";
-				iToggleNumber++;
+				else {
+					if (kBind!=CMenu->binds.begin() && (kBind-1)->bToggleBind==true) {
+						CMenuCaptionFile<<convert.from_bytes("\t\t\"_#cmenu."+CMenu->sRawName+"_seg_"+std::to_string(iTBindSegmentNum)+"\" \"");
+						iTBindSegmentNum++;
+					}
+					CMenuCaptionFile<<convert.from_bytes(kBind->NameContainer.front());
+					if (kBind==CMenu->binds.end()-1 || (kBind+1)->bToggleBind==true) CMenuCaptionFile<<L"\"\n";
+					CMenuCFG<<"alias _cmenu."<<std::to_string(kBind->cKey)<<"\""<<kBind->CmdStrContainer.at(0)<<"\"\n";
+				}
 			}
-			else {
-				if (kbind!=CMenu->binds.begin() && (kbind-1)->bToggleBind==true) {
-					CMenuCaptionFile<<convert.from_bytes("\t\t\"_#cmenu."+CMenu->sRawName+"_seg_"+std::to_string(iTBindSegmentNum)+"\" \"");
-					iTBindSegmentNum++;
+			else if (CMenu->Display==CMenuDisplayType::CONSOLE) {
+				if (kBind->bToggleBind) {
+					InitRoutineFile<<"alias _cmenu.toggle_"<<std::to_string(iToggleNumber)<<" _cmenu.toggle_"<<std::to_string(iToggleNumber)<<"_0\n";
+					InitRoutineFile<<"alias _#cmenu.toggle_"<<std::to_string(iToggleNumber)<<" _#cmenu.toggle_"<<std::to_string(iToggleNumber)<<"_0\n";
+					for (unsigned char sti=0u; sti < kBind->NameContainer.size(); sti++) {
+						InitRoutineFile<<"alias _cmenu.toggle_"<<std::to_string(iToggleNumber)<<'_'<<std::to_string(sti)<<'\"'<<kBind->CmdStrContainer.at(sti)<<"; alias _cmenu.toggle_"<<std::to_string(iToggleNumber)<<" _cmenu.toggle_"<<std::to_string(iToggleNumber)<<'_'<<std::to_string((sti+1)%kBind->NameContainer.size())<<"; alias _#cmenu.toggle_"<<std::to_string(iToggleNumber)<<" _#cmenu.toggle_"<<std::to_string(iToggleNumber)<<'_'<<std::to_string((sti+1)%kBind->NameContainer.size())<<"\"\n";
+						InitRoutineFile<<"alias _#cmenu.toggle_"<<std::to_string(iToggleNumber)<<'_'<<std::to_string(sti)<<"\"echo "<<kBind->NameContainer.at(sti)<<"\"\n";
+					}
+					CMenuCFG<<"_#cmenu.toggle_"<<std::to_string(iToggleNumber)<<'\n';
+					CMenuCFG<<"alias _cmenu."<<std::to_string(kBind->cKey)<<" \"_cmenu.toggle_"<<std::to_string(iToggleNumber)<<"\"\n";
+					iToggleNumber++;
 				}
-				CMenuCaptionFile<<convert.from_bytes(kbind->NameContainer.front());
-				if (kbind==CMenu->binds.end()-1 || (kbind+1)->bToggleBind==true) CMenuCaptionFile<<L"\"\n";
-				CMenuCFG<<"alias _cmenu."<<std::to_string(kbind->cKey)<<" \""<<kbind->CmdStrContainer.at(0)<<"\"\n";
+				else {
+					CMenuCFG<<"echo "<<kBind->NameContainer.front()<<'\n'<<"alias _cmenu."<<std::to_string(kBind->cKey)<<" \""<<kBind->CmdStrContainer.front()<<"\"\n";;
+				}
+			}
+			else if (CMenu->Display==CMenuDisplayType::NONE) {
+				if (kBind->bToggleBind) {
+					InitRoutineFile<<"alias _cmenu.toggle_"<<std::to_string(iToggleNumber)<<" _cmenu.toggle_"<<std::to_string(iToggleNumber)<<"_0\n";
+					for (unsigned char sti=0u; sti < kBind->NameContainer.size(); sti++) {
+						InitRoutineFile<<"alias _cmenu.toggle_"<<std::to_string(iToggleNumber)<<'_'<<std::to_string(sti)<<'\"'<<kBind->CmdStrContainer.at(sti)<<"; alias _cmenu.toggle_"<<std::to_string(iToggleNumber)<<" _cmenu.toggle_"<<std::to_string(iToggleNumber)<<'_'<<std::to_string((sti+1)%kBind->NameContainer.size())<<"\n";
+					}
+					CMenuCFG<<"alias _cmenu."<<std::to_string(kBind->cKey)<<" \"_cmenu.toggle_"<<std::to_string(iToggleNumber)<<"\"\n";
+					iToggleNumber++;
+				}
+				else {
+					CMenuCFG<<"alias _cmenu."<<std::to_string(kBind->cKey)<<" \""<<kBind->CmdStrContainer.front()<<"\"\n";;
+				}
 			}
 		}
 	}
+	// We're done compiling so close the file streams.
 	CMenuCaptionFile<<"\t}\n}";
 	CMenuCaptionFile.close();
-	}
 	InitRoutineFile<<"\necho [Command Menu Generator] Initialized command menus!";
 	InitRoutineFile.close();
 	//Done!

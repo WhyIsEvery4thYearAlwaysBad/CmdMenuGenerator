@@ -1,5 +1,6 @@
-#include "binds.hpp"
+#include "bind.hpp"
 #include "compiler.hpp"
+#include "lex.hpp"
 #include <map>
 extern std::map<std::string,std::string> KVMap;
 Bind::Bind() {}
@@ -28,6 +29,7 @@ Bind::Bind(const unsigned char& p_cKey, const Parser::BindToken& p_Token)
 	if (p_Token.bNoExit==true) CmdStrContainer.push_back(p_Token.sCmdStr);
 	else CmdStrContainer.push_back("cmenu.exitmenu; cmenu.on_cmenu_exit; "+p_Token.sCmdStr);
 }
+
 Bind::Bind(const unsigned char& p_cKey, const Parser::ToggleBindToken& p_Token)
 : bToggleBind(true), cKey(p_cKey) {
 	for (unsigned short i=0; i < p_Token.ToggleStates; i++) {
