@@ -76,7 +76,7 @@ namespace Lexer {
 					break;
 					case '\r':
 						iLineColumn=1u;
-						if (i+1==p_sInStr.length() || p_sInStr.at(i+1)!='\n') iLineNum++;
+						if ((i+1)<p_sInStr.length() && p_sInStr.at(i+1)!='\n') iLineNum++;
 						i++;
 					break;
 					case '\v':
