@@ -145,7 +145,6 @@ namespace Lexer {
 				// strings
 				case '\"':
 					{
-					std::size_t tempcol=iLineColumn,templn=iLineNum;
 					// New lines or carriage returns cannot be in strings. (I don't mean the '\r' or '\n' character.)
 					for (i++, iLineColumn++; i < p_sInStr.length(); i++, iLineColumn++) {
 						if (p_sInStr.at(i)=='\r') {
@@ -179,7 +178,7 @@ namespace Lexer {
 							break;
 						}
 						else if (p_sInStr.at(i)=='\"') {
-							TokenContainer.push_back(Token(tempcol,templn,TokenType::STRING,t_sStrTemp));
+							TokenContainer.push_back(Token(iLineNum,iLineColumn,TokenType::STRING,t_sStrTemp));
 							t_sStrTemp="";
 							break;
 						}
