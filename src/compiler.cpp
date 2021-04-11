@@ -54,7 +54,7 @@ namespace Parser {
 						if ((token+i)->Type!=TokenType::VBAR) 
 							ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,(token+i)->GetFileLoc()+"error: Expected '|'."));
 						if (!bErrorsFound) CMenuTokens.push_back(new Parser::ToggleBindToken(NameList,CmdList,static_cast<unsigned short>((i-2)/2),bNoExit,bFormatted));
-						if (bNoExit==true) bNoExit=false;
+						bNoExit=false, bFormatted=true;
 						token+=i;
 					}
 					break;
