@@ -78,7 +78,7 @@ namespace Parser {
 					bNoExit=false, bFormatted=true;
 					token+=i;
 				}
-					break;
+				break;
 				case TokenType::STRING: // Check for new commandmenu.
 				{
 					unsigned short i=1u;
