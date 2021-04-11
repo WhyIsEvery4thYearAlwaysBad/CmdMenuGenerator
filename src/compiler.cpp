@@ -17,7 +17,7 @@ extern std::deque<CommandMenu> CMenuContainer; // Made in main.cpp
 
 
 namespace Parser {
-	unsigned int depth=0u;
+	int iCMenuDepth=0; // Records how nested is a CMenu.
 	bool bEOFFound=false, bErrorsFound=false;
 	bool ParseTokens() {
 		bool bNoExit=false, bFormatted=true;
@@ -38,7 +38,7 @@ namespace Parser {
 						std::string NameList[MAX_TOGGLE_STATES];
 						std::string CmdList[MAX_TOGGLE_STATES];
 						unsigned short i=1;
-						if (depth<=0) 
+						if (iCMenuDepth<=0) 
 							ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,token->GetFileLoc()+": error: Toggle bind must be set in a command menu."));
 						if ((token+i)->Type!=TokenType::BIND) 
 							ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,token->GetFileLoc()+": error: Expected \'BIND\' keyword here."));
@@ -61,7 +61,7 @@ namespace Parser {
 				case TokenType::BIND: // Check for bind.
 				{
 					unsigned short i=1u;
-					if (depth<=0) 
+					if (iCMenuDepth<=0) 
 						ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,token->GetFileLoc()+": error: Bind must be set in a command menu."));
 					if ((token+i)->Type!=TokenType::STRING) 
 						ErrorTokens.push_back(Token((token+i)->iLineNum,(token+i)->iLineColumn,TokenType::COMPILER_ERROR,(token+i)->GetFileLoc()+": error: Expected a string."));
@@ -109,18 +109,18 @@ namespace Parser {
 				}
 				break;
 				case TokenType::LCBRACKET:
-					depth++;
+					iCMenuDepth++;
 					if (token>TokenContainer.begin() && (token-1)->Type!=TokenType::STRING) {
 						ErrorTokens.push_back(Token((token-1)->iLineNum,(token-1)->iLineColumn,TokenType::COMPILER_ERROR,(token-1)->GetFileLoc()+": error: Expected a string here."));
-						depth--;
+						iCMenuDepth--;
 					}
 					token++;
 				break;
 				case TokenType::RCBRACKET:
-					depth--;
-					if (depth==UINT32_MAX) {
+					iCMenuDepth--;
+					if (iCMenuDepth<0) {
 						ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,token->GetFileLoc()+": error: Stray '}'"));
-						depth++;
+						iCMenuDepth++;
 					}
 					if (!bErrorsFound) CMenuTokens.push_back(new Parser::CMenuEndToken());
 					token++;
