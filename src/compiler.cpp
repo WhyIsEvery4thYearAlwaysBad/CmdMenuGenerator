@@ -91,7 +91,6 @@ namespace Parser {
 					if (!bErrorsFound) CMenuTokens.push_back(new Parser::CMenuToken(token->sValue,bFormatted));
 					bFormatted=true;
 					token+=i;
-					depth++;
 				}
 				break;
 				case TokenType::IDENTIFIER: // Check for set keymaps
