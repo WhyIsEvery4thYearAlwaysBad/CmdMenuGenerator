@@ -244,7 +244,7 @@ namespace Parser {
 				case TokenType::STRING: // Check for new command menu.
 				{
 					unsigned short i=1u;
-					// CMenus will never run cmenu.exit, so NOEXIT is redundant.
+					// CMenus will never run cmenu.exitmenu so NOEXIT is redundant.
 					if (fParserStateFlag & PARSER_STATE_NOEXIT) {
 						ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,token->GetFileLoc()+": error: 'NOEXIT' modifier cannot be used with CMenus."));
 						fParserStateFlag &= ~CMTOKATTRIB_NOEXIT;
@@ -273,6 +273,7 @@ namespace Parser {
 				break;
 				case TokenType::IDENTIFIER: // Check for set keymaps
 				{
+					// Key Values should never have modifiers.
 					if (!(fParserStateFlag & PARSER_STATE_FORMATTED) || (fParserStateFlag & PARSER_STATE_NOEXIT) || (fParserStateFlag & PARSER_STATE_BIND_KEYSET)) {
 						ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,token->GetFileLoc()+": error: Modifiers can only be applied to CMenus, binds, or toggle binds."));
 					}
