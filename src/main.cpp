@@ -71,6 +71,7 @@ int main(int argc, char** argv) {
 		KVMap["display"]="caption";
 	}
 	// Now start creating the neccessary CFG and Captions files for CMenus.
+	std::filesystem::create_directories(sOutputDir.string()+"/cfg");
 	// Main CFG file that initializes our CMenus.
 	std::ofstream InitRoutineFile(sOutputDir.string()+"/cfg/cmenu_initialize.cfg");	
 	InitRoutineFile<<R"(closecaption 1
