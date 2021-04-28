@@ -4,68 +4,68 @@
 #include <string>
 #include <iostream>
 #include "token.hpp"
+
+/* Parser state flags*/
+
+#define PARSER_STATE_FORMATTED (1<<0)
+#define PARSER_STATE_NOEXIT (1<<1) // Have we parsed the NOEXIT modifier?
+#define PARSER_STATE_BIND_KEYSET (1<<2) // Have we parsed a KEY= modifier but not used it yet?
+#define PARSER_STATE_EOF_FOUND (1<<6) // Found the EOF?
+#define PARSER_STATE_ERRORS_FOUND (1<<7) // Found any errors?
+
+/* Attribute flags */
+#define CMTOKATTRIB_FORMATTED (1<<0)
+#define CMTOKATTRIB_NOEXIT (1<<1)
+#define CMTOKATTRIB_BIND_KEYSET (1<<2)
+
 bool ParseMenuTokens(unsigned short& p_iBindCount, unsigned char& p_bUsedDisplayFlags);
 namespace Parser {
 	// For handling multi Tokens.
 	enum CMenuTokenType {MENU_BIND=0, MENU_TOGGLE_BIND, DECLARE_CMENU, END_CMENU, KV_SET};
 	struct MenuToken {
 		CMenuTokenType Type;
-		MenuToken() {}
-		virtual ~MenuToken() {}
+		char fAttribs=0; // Attribute flag.
+		MenuToken();
+		virtual ~MenuToken();
 	};
+	// Key Values
 	struct KVToken : public MenuToken {
-		std::string Key;
-		std::string Value;
-		KVToken() {}
-		KVToken(const std::string& ident, const std::string& value)
-		: Key(ident), Value(value) {
-			Type=CMenuTokenType::KV_SET;
-		}
+		std::string Key, Value;
+		KVToken();
+		KVToken(const std::string& ident, const std::string& value);
 	};
+	// Bind
 	struct BindToken : public MenuToken {
-		bool bNoExit=false, bFormatted=true;
-		std::string sName;
-		std::string sCmdStr;
-		// pagebind - Whether a bind refers to a command menu bind.
-		BindToken() {}
-		BindToken(const std::string& p_sName, const std::string& p_sCmdStr, const bool& p_bNoExit, const bool& p_bFormatted)
-		: sName(p_sName), sCmdStr(p_sCmdStr), bNoExit(p_bNoExit), bFormatted(p_bFormatted) {
-			Type=CMenuTokenType::MENU_BIND;
-		}
+		std::string sName, sCmdStr, /* Should only be set if a KEY="" is located. ---> */ sKey=""; 
+		BindToken();
+		BindToken(const std::string& p_sName, const std::string& p_sCmdStr, const char& p_fAttributeFlag);
+		BindToken(const std::string& p_sKey, const std::string& p_sName, const std::string& p_sCmdStr, const char& p_fAttributeFlag);
+		~BindToken();
 	};
+	// Toggle Bind
 	struct ToggleBindToken : public MenuToken {
-		bool bNoExit=false, bFormatted=true;
 		unsigned short ToggleStates=0u;
 		std::string NameContainer[MAX_TOGGLE_STATES];
 		std::string CmdStrContainer[MAX_TOGGLE_STATES];
-		ToggleBindToken() {}
-		ToggleBindToken(const std::string p_names[MAX_TOGGLE_STATES], const std::string p_CmdStrContainer[MAX_TOGGLE_STATES], unsigned short p_iToggleStates, const bool& p_bNoExit, const bool& p_bFormatted)
-		: ToggleStates(p_iToggleStates), bNoExit(p_bNoExit), bFormatted(p_bFormatted)
-		{
-			for (unsigned short i=0; i < MAX_TOGGLE_STATES; i++) {
-				NameContainer[i]=p_names[i];
-				NameContainer[i].shrink_to_fit();
-			}
-			for (unsigned short i=0; i < MAX_TOGGLE_STATES; i++) {
-				CmdStrContainer[i]=p_CmdStrContainer[i];
-				CmdStrContainer[i].shrink_to_fit();
-			}
-			Type=CMenuTokenType::MENU_TOGGLE_BIND;
-		}
+		std::string sKey=""; // Key to bind this bind to.
+		ToggleBindToken();
+		ToggleBindToken(const std::string p_names[MAX_TOGGLE_STATES], const std::string p_CmdStrContainer[MAX_TOGGLE_STATES], unsigned short p_iToggleStates, const char& p_fAttributeFlag);
+		ToggleBindToken(const std::string& p_sKey, const std::string p_names[MAX_TOGGLE_STATES], const std::string p_CmdStrContainer[MAX_TOGGLE_STATES], unsigned short p_iToggleStates, const char& p_fAttributeFlag);
+		~ToggleBindToken();
 	};
+	// CMenu
 	struct CMenuToken : public MenuToken {
 		std::string sName;
-		bool bFormatted=true;
-		CMenuToken() {}
-		CMenuToken(const std::string& sName, const bool& p_bFormatted)
-		: sName(sName), bFormatted(p_bFormatted) {
-			Type=CMenuTokenType::DECLARE_CMENU;
-		}
+		std::string sKey=""; // Key to bind this bind to.
+		CMenuToken();
+		CMenuToken(const std::string& sName, const char& p_fAttributeFlag);
+		CMenuToken(const std::string& p_sKey, const std::string& sName, const char& p_fAttributeFlag);
+		~CMenuToken();
 	};
+	// CMenu end
 	struct CMenuEndToken : public MenuToken {
-		CMenuEndToken() {
-			Type=CMenuTokenType::END_CMENU;
-		}
+		CMenuEndToken();
+		~CMenuEndToken();
 	};
 	bool ParseTokens();
 }

@@ -5,13 +5,13 @@
 class Bind {
 public:
 	bool bToggleBind=false;
-	unsigned char cKey=0;
+	std::string sKey="";
 	std::vector<std::string> RawNameContainer /* <---- For caption identification.*/, NameContainer, /* <---- For captions */ CmdStrContainer;
 	Bind();
-	Bind(const unsigned char& p_cKey, const Parser::BindToken& p_Token);
-	Bind(const unsigned char& p_cKey, const Parser::ToggleBindToken& p_Token);
-	Bind(const unsigned char& p_cKey, const std::string& p_sRawName, const std::string& p_sCmdStr);
-	Bind(const unsigned char& p_cKey, const std::string& p_sRawName, const std::string& p_sName, const std::string& p_sCmdStr);
+	Bind(const std::string& p_sKey, const Parser::BindToken& p_Token);
+	Bind(const std::string& p_sKey, const Parser::ToggleBindToken& p_Token);
+	Bind(const std::string& p_sKey, const std::string& p_sRawName, const std::string& p_sCmdStr);
+	Bind(const std::string& p_sKey, const std::string& p_sRawName, const std::string& p_sName, const std::string& p_sCmdStr);
 	~Bind();
 };
 #endif

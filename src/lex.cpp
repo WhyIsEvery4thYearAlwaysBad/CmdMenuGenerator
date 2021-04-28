@@ -25,7 +25,7 @@ std::string formatRaw(std::string p_sInStr) {
 			continue;
 		}
 		// and non-ascii characters
-		if (i<p_sInStr.length()-1 && (!isascii(p_sInStr.at(i)) || !isascii(p_sInStr.at(i+1)))) {
+		if (i<p_sInStr.length()-1 && (!isascii(p_sInStr.at(i)) || !isascii(p_sInStr.at(i+1))) && (p_sInStr.at(i) != '\0' && p_sInStr.at(i+1) != '\0')) {
 			p_sInStr.erase(i,2);
 			i--; 
 			continue;
@@ -36,6 +36,7 @@ std::string formatRaw(std::string p_sInStr) {
 	return p_sInStr;
 }
 
+
 namespace Lexer {
 	// Checks if character is usable in a nonterminal.
 	bool IsIdentChar(const char& c) {
@@ -45,7 +46,7 @@ namespace Lexer {
 		|| c=='_') return true;
 		else return false;
 	}
-	// Convert string to token stream
+	// Convert string to token stream. Returns true if successful and false if an error occurs.
 	bool Tokenize(const std::string& p_sInStr) {
 		bool bErrorsFound=false, bInBlockComment=false;
 		std::string t_sStrTemp;
@@ -116,6 +117,7 @@ namespace Lexer {
 					else if (TokenContainer.back().sValue=="BIND") TokenContainer.back().Type=TokenType::BIND;
 					else if (TokenContainer.back().sValue=="NOEXIT") TokenContainer.back().Type=TokenType::NOEXIT;
 					else if (TokenContainer.back().sValue=="NOFORMAT") TokenContainer.back().Type=TokenType::NOFORMAT;
+					else if (TokenContainer.back().sValue=="KEY") TokenContainer.back().Type=TokenType::KEY;
 					continue;
 				}
 				switch (p_sInStr.at(i))
@@ -244,6 +246,6 @@ namespace Lexer {
 				}
 			}
 		}
-		return bErrorsFound;
+		return !bErrorsFound;
 	}
 }

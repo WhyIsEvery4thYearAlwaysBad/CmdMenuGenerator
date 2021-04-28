@@ -2,8 +2,8 @@
 #define TOKENS_HPP
 #include <string>
 enum TokenType {
-	IDENTIFIER=0,
-	STRING,
+	IDENTIFIER = 0, // asd
+	STRING, // " "
 	EQUALS, // =
 	LCBRACKET, // {
 	RCBRACKET, // }
@@ -12,6 +12,7 @@ enum TokenType {
 	TOGGLE, // TOGGLE
 	NOEXIT, // NOEXIT
 	NOFORMAT, // NOFORMAT
+	KEY, // KEY
 	END_OF_FILE, // the end!
 	COMPILER_ERROR, // ah crepe!
 	UNDEFINED

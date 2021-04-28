@@ -12,6 +12,9 @@
 #include "commandmenu.hpp"
 #include "compiler.hpp"
 #include "launchoptions.hpp"
+
+#define CMENU_KEY_ALIAS_LENGTH 11 /* length of "_cmenu.key_" */
+
 extern std::deque<Parser::MenuToken*> CMenuTokens;
 extern std::deque<Token> Tokens; 
 extern std::deque<Token> ErrorTokens; // 
@@ -19,11 +22,12 @@ std::deque<CommandMenu> CMenuContainer;
 std::map<std::string,std::string> KVMap={
 	{"linger_time","0"},
 	{"predisplay_time","0.25"},
-	{"format","$(nkey). $(str)<cr>"},
+	{"format","$(key). $(str)<cr>"},
 	{"display","caption"},
 	{"resetkeys","bind 1 slot1; bind 2 slot2; bind 3 slot3; bind 4 slot4; bind 5 slot5; bind 6 slot6; bind 7 slot7; bind 8 slot8; bind 9 slot9; bind 0 slot10"}
 };
 std::wstring_convert<std::codecvt_utf8<wchar_t>,wchar_t> convert;
+std::vector<std::string> UsedKeys = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}; // Stores what keys are used by binds.
 // From launch options
 extern std::filesystem::path InputFilePath;
 extern std::filesystem::path sOutputDir;
@@ -39,9 +43,9 @@ int main(int argc, char** argv) {
 	// If tokenization and parsing process failed then error out and return. Also get the compiled bind count.
 	unsigned short iBindCount=0u;
 	unsigned char bUsedDisplayFlags=0; // Flag used to mark if and what display types were used.
-	if (Lexer::Tokenize(InFileContent) 
-		|| Parser::ParseTokens()
-		|| ParseMenuTokens(iBindCount,bUsedDisplayFlags)) {
+	if (!Lexer::Tokenize(InFileContent) 
+		|| !Parser::ParseTokens()
+		|| !ParseMenuTokens(iBindCount,bUsedDisplayFlags)) {
 		
 		for (auto& e : ErrorTokens) {
 			std::cout << e.sValue << '\n';
@@ -67,8 +71,6 @@ int main(int argc, char** argv) {
 		KVMap["display"]="caption";
 	}
 	// Now start creating the neccessary CFG and Captions files for CMenus.
-		// Directories
-		std::filesystem::create_directories(sOutputDir.string()+"/cfg/cmenu");
 	// Main CFG file that initializes our CMenus.
 	std::ofstream InitRoutineFile(sOutputDir.string()+"/cfg/cmenu_initialize.cfg");	
 	InitRoutineFile<<R"(closecaption 1
@@ -105,7 +107,13 @@ cmenu.exitmenu
 		/* Create the actual binds needed for the declared binds. */
 		if (CMenu->Display==CMenuDisplayType::CAPTIONS) CMenuCFG<<"cc_linger_time 10000\ncc_predisplay_time 0\ncc_emit _#cmenu.clear_screen\ncc_emit _#cmenu."+CMenu->sRawName+'\n';
 		else if (CMenu->Display==CMenuDisplayType::CONSOLE) CMenuCFG<<"developer 1\nclear\n";
-		CMenuCFG<<"bind 1 _cmenu.1\nbind 2 _cmenu.2\nbind 3 _cmenu.3\nbind 4 _cmenu.4\nbind 5 _cmenu.5\nbind 6 _cmenu.6\nbind 7 _cmenu.7\nbind 8 _cmenu.8\nbind 9 _cmenu.9\nbind 0 _cmenu.0\n";
+	
+
+		for (auto& key : UsedKeys) {
+			// Compress keynames so that it can fit in an alias
+			CMenuCFG<<"bind "<<key<<" _cmenu.key_"<<((key.length() + CMENU_KEY_ALIAS_LENGTH > 32 ) ? key.substr(0, key.length() - CMENU_KEY_ALIAS_LENGTH) : key)<<'\n';
+		}
+		
 		{
 			unsigned int t_ToggleNum=iToggleNumber;
 			for (auto kTBind=CMenu->binds.begin(); kTBind!=CMenu->binds.end(); kTBind++) {
@@ -135,7 +143,7 @@ cmenu.exitmenu
 						InitRoutineFile<<"alias _#cmenu.toggle_"<<std::to_string(iToggleNumber)<<'_'<<std::to_string(sti)<<"\"cc_emit _#cmenu.toggle_"<<std::to_string(iToggleNumber)<<'_'<<std::to_string(sti)<<"\"\n";
 						CMenuCaptionFile<<convert.from_bytes("\t\t\"_#cmenu.toggle_"+std::to_string(iToggleNumber)+'_'+std::to_string(sti)+"\" \""+kBind->NameContainer.at(sti)+"\"\n");
 					}
-					CMenuCFG<<"alias _cmenu."<<std::to_string(kBind->cKey)<<"\"_cmenu.toggle_"<<std::to_string(iToggleNumber)<<"\"\n";
+					CMenuCFG<<"alias _cmenu.key_"<<((kBind->sKey.length() + CMENU_KEY_ALIAS_LENGTH > 32) ? kBind->sKey.substr(0, kBind->sKey.length() - CMENU_KEY_ALIAS_LENGTH) : kBind->sKey)<<"\"_cmenu.toggle_"<<std::to_string(iToggleNumber)<<"\"\n";
 					iToggleNumber++;
 				}
 				else {
@@ -145,7 +153,7 @@ cmenu.exitmenu
 					}
 					CMenuCaptionFile<<convert.from_bytes(kBind->NameContainer.front());
 					if (kBind==CMenu->binds.end()-1 || (kBind+1)->bToggleBind==true) CMenuCaptionFile<<L"\"\n";
-					CMenuCFG<<"alias _cmenu."<<std::to_string(kBind->cKey)<<"\""<<kBind->CmdStrContainer.at(0)<<"\"\n";
+					CMenuCFG<<"alias _cmenu.key_"<<((kBind->sKey.length() + CMENU_KEY_ALIAS_LENGTH > 32) ? kBind->sKey.substr(0, kBind->sKey.length() - CMENU_KEY_ALIAS_LENGTH) : kBind->sKey)<<"\""<<kBind->CmdStrContainer.at(0)<<"\"\n";
 				}
 			}
 			else if (CMenu->Display==CMenuDisplayType::CONSOLE) {
@@ -157,11 +165,11 @@ cmenu.exitmenu
 						InitRoutineFile<<"alias _#cmenu.toggle_"<<std::to_string(iToggleNumber)<<'_'<<std::to_string(sti)<<"\"echo "<<kBind->NameContainer.at(sti)<<"\"\n";
 					}
 					CMenuCFG<<"_#cmenu.toggle_"<<std::to_string(iToggleNumber)<<'\n';
-					CMenuCFG<<"alias _cmenu."<<std::to_string(kBind->cKey)<<" \"_cmenu.toggle_"<<std::to_string(iToggleNumber)<<"\"\n";
+					CMenuCFG<<"alias _cmenu."<<kBind->sKey<<" \"_cmenu.toggle_"<<std::to_string(iToggleNumber)<<"\"\n";
 					iToggleNumber++;
 				}
 				else {
-					CMenuCFG<<"echo "<<kBind->NameContainer.front()<<'\n'<<"alias _cmenu."<<std::to_string(kBind->cKey)<<" \""<<kBind->CmdStrContainer.front()<<"\"\n";;
+					CMenuCFG<<"echo "<<kBind->NameContainer.front()<<'\n'<<"alias _cmenu."<<kBind->sKey<<" \""<<kBind->CmdStrContainer.front()<<"\"\n";;
 				}
 			}
 			else if (CMenu->Display==CMenuDisplayType::NONE) {
@@ -170,11 +178,11 @@ cmenu.exitmenu
 					for (unsigned char sti=0u; sti < kBind->NameContainer.size(); sti++) {
 						InitRoutineFile<<"alias _cmenu.toggle_"<<std::to_string(iToggleNumber)<<'_'<<std::to_string(sti)<<'\"'<<kBind->CmdStrContainer.at(sti)<<"; alias _cmenu.toggle_"<<std::to_string(iToggleNumber)<<" _cmenu.toggle_"<<std::to_string(iToggleNumber)<<'_'<<std::to_string((sti+1)%kBind->NameContainer.size())<<"\n";
 					}
-					CMenuCFG<<"alias _cmenu."<<std::to_string(kBind->cKey)<<" \"_cmenu.toggle_"<<std::to_string(iToggleNumber)<<"\"\n";
+					CMenuCFG<<"alias _cmenu."<<kBind->sKey<<" \"_cmenu.toggle_"<<std::to_string(iToggleNumber)<<"\"\n";
 					iToggleNumber++;
 				}
 				else {
-					CMenuCFG<<"alias _cmenu."<<std::to_string(kBind->cKey)<<" \""<<kBind->CmdStrContainer.front()<<"\"\n";;
+					CMenuCFG<<"alias _cmenu."<<kBind->sKey<<" \""<<kBind->CmdStrContainer.front()<<"\"\n";;
 				}
 			}
 		}
