@@ -128,16 +128,14 @@ namespace Parser {
 	bool ParseTokens() {
 		// TODO: At some point convert the array into an actual parse tree. 
 		/* `fParserStateFlag` records the states of the parser. 
-			1st bit - PARSER_STATE_FORMATTED
-			2nd bit - PARSER_STATE_NOEXIT
-			3rd bit - PARSER_STATE_BIND_KEYSET
+			1st bit - PARSER_STATE_FORMATTED - Default: 1
+			2nd bit - PARSER_STATE_NOEXIT - Default: 0
 			…
-			7th bit - EOF found?
-			8th bit - Error found?
+			7th bit - EOF found? - Default: 0
+			8th bit - Error found? - Default: 0
 		*/
 		char fParserStateFlag = PARSER_STATE_FORMATTED;
 		int iCMenuDepth=0; // Records how nested is a CMenu.
-		std::string sSpecifiedKey=""; // Key specified by the KEY= modifier.
 		// Check if there have already been errors and keep that in mind.
 		if (ErrorTokens.size()>=1) fParserStateFlag |= PARSER_STATE_ERRORS_FOUND;
 		for (auto token=TokenContainer.begin(); token!=TokenContainer.end(); ) {
@@ -152,26 +150,6 @@ namespace Parser {
 					else fParserStateFlag &= ~PARSER_STATE_FORMATTED;
 					token++;
 					break;
-				case TokenType::KEY:
-				{
-					unsigned short i=1;
-					if (fParserStateFlag & PARSER_STATE_BIND_KEYSET) ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,token->GetFileLoc()+": error: Duplicate modifier \"KEY\"."));
-					else fParserStateFlag |= PARSER_STATE_BIND_KEYSET;
-					
-					if ((token+i)->Type != TokenType::EQUALS) {
-						ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,token->GetFileLoc()+": error: Expected '='."));
-					}
-					else {
-						i++;
-						if ((token+i)->Type != TokenType::STRING)
-							ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,token->GetFileLoc()+": error: Expected string."));
-						else 
-							sSpecifiedKey = (token+i)->sValue;
-						i++;
-					}
-					token += i;
-				}
-				break;
 				case TokenType::TOGGLE: 
 					{
 						std::string NameList[MAX_TOGGLE_STATES];
@@ -192,20 +170,10 @@ namespace Parser {
 							ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,token->GetFileLoc()+": error: Expected string here."));
 						if ((token+i)->Type != TokenType::VBAR) 
 							ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,(token+i)->GetFileLoc()+"error: Expected '|'."));
-						if (!(fParserStateFlag & PARSER_STATE_ERRORS_FOUND)) {
-							if (fParserStateFlag & PARSER_STATE_BIND_KEYSET) {
-								CMenuTokens.push_back(new Parser::ToggleBindToken(sSpecifiedKey, NameList, CmdList, static_cast<unsigned short>((i-2)/2), ((fParserStateFlag & PARSER_STATE_FORMATTED) ? CMTOKATTRIB_FORMATTED : 0) | ((fParserStateFlag & PARSER_STATE_NOEXIT) ? CMTOKATTRIB_NOEXIT : 0 | ((fParserStateFlag & PARSER_STATE_BIND_KEYSET) ? CMTOKATTRIB_BIND_KEYSET : 0))));
-								bool bAlreadyUsed = false;
-								for (auto& key : UsedKeys) {
-									if (key==sSpecifiedKey) bAlreadyUsed = true; 
-								}
-								if (!bAlreadyUsed) UsedKeys.push_back(sSpecifiedKey);
-							}
-							else CMenuTokens.push_back(new Parser::ToggleBindToken(NameList, CmdList, static_cast<unsigned short>((i-2)/2), ((fParserStateFlag & PARSER_STATE_FORMATTED) ? CMTOKATTRIB_FORMATTED : 0) | ((fParserStateFlag & PARSER_STATE_NOEXIT) ? CMTOKATTRIB_NOEXIT : 0)));
-						}
+						if (!(fParserStateFlag & PARSER_STATE_ERRORS_FOUND)) 
+							CMenuTokens.push_back(new Parser::ToggleBindToken(NameList, CmdList, static_cast<unsigned short>((i-2)/2), ((fParserStateFlag & PARSER_STATE_FORMATTED) ? CMTOKATTRIB_FORMATTED : 0) | ((fParserStateFlag & PARSER_STATE_NOEXIT) ? CMTOKATTRIB_NOEXIT : 0)));
 						// Bind already set so reset the modifier flag.
 						fParserStateFlag &= ~(PARSER_STATE_NOEXIT | PARSER_STATE_BIND_KEYSET);
-						fParserStateFlag |= PARSER_STATE_FORMATTED;
 						token += i;
 					}
 					break;
@@ -226,17 +194,9 @@ namespace Parser {
 							ErrorTokens.push_back(Token((token+i)->iLineNum,(token+i)->iLineColumn,TokenType::COMPILER_ERROR,(token+i)->GetFileLoc()+": error: Expected '|'."));
 						else i++;
 						if (!(fParserStateFlag & PARSER_STATE_ERRORS_FOUND))
-							if (fParserStateFlag & PARSER_STATE_BIND_KEYSET) {
-								CMenuTokens.push_back(new Parser::BindToken(sSpecifiedKey, (token+1)->sValue, (token+2)->sValue, ((fParserStateFlag & PARSER_STATE_FORMATTED) ? CMTOKATTRIB_FORMATTED : 0) | ((fParserStateFlag & PARSER_STATE_NOEXIT) ? CMTOKATTRIB_NOEXIT : 0) | CMTOKATTRIB_BIND_KEYSET));
-								bool bAlreadyUsed = false;
-								for (auto& key : UsedKeys) {
-									if (key==sSpecifiedKey) bAlreadyUsed = true; 
-								}
-								if (!bAlreadyUsed) UsedKeys.push_back(sSpecifiedKey);
-							}
-							else CMenuTokens.push_back(new Parser::BindToken((token+1)->sValue, (token+2)->sValue, ((fParserStateFlag & PARSER_STATE_FORMATTED) ? CMTOKATTRIB_FORMATTED : 0) | ((fParserStateFlag & PARSER_STATE_NOEXIT) ? CMTOKATTRIB_NOEXIT : 0)));
+							CMenuTokens.push_back(new Parser::BindToken((token+1)->sValue, (token+2)->sValue, ((fParserStateFlag & PARSER_STATE_FORMATTED) ? CMTOKATTRIB_FORMATTED : 0) | ((fParserStateFlag & PARSER_STATE_NOEXIT) ? CMTOKATTRIB_NOEXIT : 0)));
 						// Bind already set so reset the modifier flag.
-						fParserStateFlag &= ~(PARSER_STATE_NOEXIT | PARSER_STATE_BIND_KEYSET);
+						fParserStateFlag &= ~PARSER_STATE_NOEXIT;
 						fParserStateFlag |= PARSER_STATE_FORMATTED;
 						token+=i;
 					}
@@ -252,22 +212,8 @@ namespace Parser {
 					if ((token+i)->Type!=TokenType::LCBRACKET) 
 						ErrorTokens.push_back(Token((token+i)->iLineNum,(token+i)->iLineColumn,TokenType::COMPILER_ERROR,(token+i)->GetFileLoc()+": error: Expected '{' here."));
 					if (!(fParserStateFlag & PARSER_STATE_ERRORS_FOUND)) 
-						if (fParserStateFlag & PARSER_STATE_BIND_KEYSET) {
-							CMenuTokens.push_back(new Parser::CMenuToken(sSpecifiedKey, 
-							token->sValue,((fParserStateFlag & PARSER_STATE_FORMATTED) ? CMTOKATTRIB_FORMATTED : 0) 
-							| CMTOKATTRIB_NOEXIT
-							| CMTOKATTRIB_BIND_KEYSET));
-							bool bAlreadyUsed = false;
-							for (auto& key : UsedKeys) {
-								if (key==sSpecifiedKey) bAlreadyUsed = true; 
-							}
-							if (!bAlreadyUsed) UsedKeys.push_back(sSpecifiedKey);
-						}
-						else CMenuTokens.push_back(new Parser::CMenuToken(
-							token->sValue,((fParserStateFlag & PARSER_STATE_FORMATTED) ? CMTOKATTRIB_FORMATTED : 0) 
-							| CMTOKATTRIB_NOEXIT));
+						CMenuTokens.push_back(new Parser::CMenuToken(token->sValue,((fParserStateFlag & PARSER_STATE_FORMATTED) ? CMTOKATTRIB_FORMATTED : 0) | CMTOKATTRIB_NOEXIT));
 					fParserStateFlag |= CMTOKATTRIB_FORMATTED;
-					fParserStateFlag &= ~CMTOKATTRIB_BIND_KEYSET;
 					token+=i;
 				}
 				break;
@@ -341,16 +287,20 @@ bool ParseMenuTokens(unsigned short& p_iBindCount, unsigned char& p_bUsedDisplay
 	if (ErrorTokens.size()>=1) return false;
 	std::deque<CommandMenu> CMenuStack;
 	std::stack<unsigned char> NumKeyStack;
-	// Variable is here to reduce the amount of goddamn downcasts I would have to do.
+	
+	// This variable is in the function scope instead of the switch-case scope, because the end cmenu tokens NEED to remember the attributes of their cmenus.
 	Parser::CMenuToken CurrentCMenu;
+	
 	for (auto token = CMenuTokens.begin(); token != CMenuTokens.end(); token++) {
+		// Automatically resets the KEY KV to prevent other binds from being affected by it.
+		if (token != CMenuTokens.begin() && (*(token - 1))->Type != Parser::CMenuTokenType::KV_SET) KVMap["KEY"]="";
+		if ((*token)->Type != Parser::CMenuTokenType::KV_SET && KVMap["KEY"] != "" && !((*token)->fAttribs & CMTOKATTRIB_BIND_KEYSET)) (*token)->fAttribs |= CMTOKATTRIB_BIND_KEYSET;
 		switch ((*token)->Type)
 		{
 			case Parser::CMenuTokenType::KV_SET:
 				{
 					Parser::KVToken temp=static_cast<Parser::KVToken&>(**token);
 					KVMap.insert_or_assign(temp.Key,temp.Value);
-					
 					// Store what display types were used in p_bUsedDisplayFlags.
 					if (KVMap["display"]=="none") p_bUsedDisplayFlags |= 1;
 					else if (KVMap["display"]=="console") p_bUsedDisplayFlags |= 2;
@@ -360,7 +310,8 @@ bool ParseMenuTokens(unsigned short& p_iBindCount, unsigned char& p_bUsedDisplay
 			case Parser::CMenuTokenType::DECLARE_CMENU:
 				{
 					//For binds to CMenuContainer.
-					CurrentCMenu=static_cast<Parser::CMenuToken&>(**token);
+					CurrentCMenu = static_cast<Parser::CMenuToken&>(**token);
+					CurrentCMenu.sKey = KVMap["KEY"];
 					std::size_t iDuplicateNumber=0llu;
 					// Form duplicates if formatted name is already taken.
 					if (CMenuStack.size()>0) for (auto p=CMenuStack.end(); p!=CMenuStack.begin();)
@@ -375,8 +326,21 @@ bool ParseMenuTokens(unsigned short& p_iBindCount, unsigned char& p_bUsedDisplay
 					CMenuStack.push_front(CommandMenu(CurrentCMenu.sName));
 					if (iDuplicateNumber>0) CMenuStack.front().sRawName+='_'+std::to_string(iDuplicateNumber);
 					if (CMenuStack.size()>1) {
-						if (iDuplicateNumber>0) (CMenuStack.begin()+1)->binds.push_back(Bind(std::to_string(NumKeyStack.top()),Parser::BindToken(CurrentCMenu.sName,"exec $cmenu_"+formatRaw(CurrentCMenu.sName)+'_'+std::to_string(iDuplicateNumber),CurrentCMenu.fAttribs)));
-						else (CMenuStack.begin()+1)->binds.push_back(Bind(std::to_string(NumKeyStack.top()),Parser::BindToken(CurrentCMenu.sName,"exec $cmenu_"+formatRaw(CurrentCMenu.sName),CurrentCMenu.fAttribs)));
+						if (CurrentCMenu.fAttribs & CMTOKATTRIB_BIND_KEYSET) {
+							if (iDuplicateNumber>0) 
+								(CMenuStack.begin()+1)->binds.push_back(Bind(CurrentCMenu.sKey,Parser::BindToken(CurrentCMenu.sName,"exec $cmenu_"+formatRaw(CurrentCMenu.sName)+'_'+std::to_string(iDuplicateNumber),CurrentCMenu.fAttribs)));
+							else 
+								(CMenuStack.begin()+1)->binds.push_back(Bind(CurrentCMenu.sKey,Parser::BindToken(CurrentCMenu.sName,"exec $cmenu_"+formatRaw(CurrentCMenu.sName),CurrentCMenu.fAttribs)));
+							bool bAlreadyUsed = false;
+							for (auto& key : UsedKeys) {
+								if (key == CurrentCMenu.sKey) bAlreadyUsed = true; 
+							}
+							if (!bAlreadyUsed) UsedKeys.push_back(CurrentCMenu.sKey);
+						}
+						else {
+							if (iDuplicateNumber>0) (CMenuStack.begin()+1)->binds.push_back(Bind(std::to_string(NumKeyStack.top()),Parser::BindToken(CurrentCMenu.sName,"exec $cmenu_"+formatRaw(CurrentCMenu.sName)+'_'+std::to_string(iDuplicateNumber),CurrentCMenu.fAttribs)));
+							else (CMenuStack.begin()+1)->binds.push_back(Bind(std::to_string(NumKeyStack.top()),Parser::BindToken(CurrentCMenu.sName,"exec $cmenu_"+formatRaw(CurrentCMenu.sName),CurrentCMenu.fAttribs)));
+						}
 					}
 					NumKeyStack.push(1u);
 				}
@@ -384,17 +348,17 @@ bool ParseMenuTokens(unsigned short& p_iBindCount, unsigned char& p_bUsedDisplay
 			case Parser::CMenuTokenType::END_CMENU:
 				if (CMenuStack.size() > 0) {
 					// Warning:
-					if (CMenuStack.front().binds.size()>10) std::cout<<"Warning: More than ten binds in CMenu \'"<<CMenuStack.front().sName<<"\'!\n";
+					if (NumKeyStack.top()>9) std::cout<<"Warning: More than ten number-key binds in CMenu \'"<<CMenuStack.front().sName<<"\'!\n";
 					CMenuContainer.push_back(CMenuStack.front());
 					CMenuStack.pop_front();
-					if (!NumKeyStack.empty()) {
-						NumKeyStack.pop();
-						if (!NumKeyStack.empty()) NumKeyStack.top()=(NumKeyStack.top()+1)%10;
-					}
-					else {
-						std::cerr<<"ParseMenuTokens():CMenuTokens+"<<std::distance(CMenuTokens.begin(),token)<<":case Parser::CMenuTokenType::END_CMENU:fatal error: Tried to access nonexistent element in number key stack.\n";
-						return false;					
-					}
+						if (!NumKeyStack.empty()) {
+							NumKeyStack.pop();
+							if (!(CurrentCMenu.fAttribs & CMTOKATTRIB_BIND_KEYSET) && !NumKeyStack.empty()) NumKeyStack.top()=(NumKeyStack.top()+1);
+						}
+						else {
+							std::cerr<<"ParseMenuTokens():CMenuTokens+"<<std::distance(CMenuTokens.begin(),token)<<":case Parser::CMenuTokenType::END_CMENU:fatal error: Tried to access nonexistent element in number key stack.\n";
+							return false;					
+						}
 				}
 				else {
 					std::cerr<<"ParseMenuTokens():CMenuTokens+"<<std::distance(CMenuTokens.begin(),token)<<":case Parser::CMenuTokenType::END_CMENU:fatal error: Tried to access nonexistent CMenu in CMenu stack.\n";
@@ -404,12 +368,20 @@ bool ParseMenuTokens(unsigned short& p_iBindCount, unsigned char& p_bUsedDisplay
 			case Parser::CMenuTokenType::MENU_BIND:
 			{
 				Parser::BindToken CurrentBindToken=static_cast<Parser::BindToken&>(**token);
+				CurrentBindToken.sKey = KVMap["KEY"];
 				if (CMenuStack.size() > 0) {
 					if (!(CurrentBindToken.fAttribs & CMTOKATTRIB_BIND_KEYSET)) {
 						CMenuStack.front().binds.push_back(Bind(std::to_string(NumKeyStack.top()),CurrentBindToken));
-						NumKeyStack.top()=(NumKeyStack.top()+1)%10;
+						NumKeyStack.top()=(NumKeyStack.top()+1);
 					}
-					else CMenuStack.front().binds.push_back(Bind(CurrentBindToken.sKey,CurrentBindToken));
+					else {
+						CMenuStack.front().binds.push_back(Bind(CurrentBindToken.sKey,CurrentBindToken));
+						bool bAlreadyUsed = false;
+						for (auto& key : UsedKeys) {
+							if (key == CurrentBindToken.sKey) bAlreadyUsed = true; 
+						}
+						if (!bAlreadyUsed) UsedKeys.push_back(CurrentBindToken.sKey);
+					}
 					p_iBindCount++;
 				}
 				else {
@@ -421,20 +393,27 @@ bool ParseMenuTokens(unsigned short& p_iBindCount, unsigned char& p_bUsedDisplay
 			case Parser::CMenuTokenType::MENU_TOGGLE_BIND:
 			{
 				Parser::ToggleBindToken CurrentToggleBindToken = static_cast<Parser::ToggleBindToken&>(**token);
+				CurrentToggleBindToken.sKey = KVMap["KEY"];
 				if (CMenuStack.size() > 0) {
 					
 					if (!(CurrentToggleBindToken.fAttribs & CMTOKATTRIB_BIND_KEYSET)) {
 						CMenuStack.front().binds.push_back(Bind(std::to_string(NumKeyStack.top()),CurrentToggleBindToken));
 						if (!NumKeyStack.empty()) {
-							NumKeyStack.top()=(NumKeyStack.top()+1)%10;
+							NumKeyStack.top()=(NumKeyStack.top()+1);
 						}
 						else {
 							std::cerr<<"ParseMenuTokens():CMenuTokens+"<<std::distance(CMenuTokens.begin(),token)<<":case Parser::CMenuTokenType::MENU_TOGGLE_BIND:fatal error: Tried to access nonexistent CMenu in number key stack.\n";
 							return false;
 						}
 					}
-					else
+					else {
 						CMenuStack.front().binds.push_back(Bind(CurrentToggleBindToken.sKey,CurrentToggleBindToken));
+						bool bAlreadyUsed = false;
+						for (auto& key : UsedKeys) {
+							if (key == CurrentToggleBindToken.sKey) bAlreadyUsed = true; 
+						}
+						if (!bAlreadyUsed) UsedKeys.push_back(CurrentToggleBindToken.sKey);
+					}
 					p_iBindCount++;
 					break;
 				}

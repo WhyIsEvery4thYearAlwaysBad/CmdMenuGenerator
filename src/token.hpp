@@ -12,7 +12,6 @@ enum TokenType {
 	TOGGLE, // TOGGLE
 	NOEXIT, // NOEXIT
 	NOFORMAT, // NOFORMAT
-	KEY, // KEY
 	END_OF_FILE, // the end!
 	COMPILER_ERROR, // ah crepe!
 	UNDEFINED

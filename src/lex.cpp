@@ -117,7 +117,6 @@ namespace Lexer {
 					else if (TokenContainer.back().sValue=="BIND") TokenContainer.back().Type=TokenType::BIND;
 					else if (TokenContainer.back().sValue=="NOEXIT") TokenContainer.back().Type=TokenType::NOEXIT;
 					else if (TokenContainer.back().sValue=="NOFORMAT") TokenContainer.back().Type=TokenType::NOFORMAT;
-					else if (TokenContainer.back().sValue=="KEY") TokenContainer.back().Type=TokenType::KEY;
 					continue;
 				}
 				switch (p_sInStr.at(i))
