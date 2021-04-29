@@ -338,8 +338,8 @@ bool ParseMenuTokens(unsigned short& p_iBindCount, unsigned char& p_bUsedDisplay
 							if (!bAlreadyUsed) UsedKeys.push_back(CurrentCMenu.sKey);
 						}
 						else {
-							if (iDuplicateNumber>0) (CMenuStack.begin()+1)->binds.push_back(Bind(std::to_string(NumKeyStack.top()),Parser::BindToken(CurrentCMenu.sName,"exec $cmenu_"+formatRaw(CurrentCMenu.sName)+'_'+std::to_string(iDuplicateNumber),CurrentCMenu.fAttribs)));
-							else (CMenuStack.begin()+1)->binds.push_back(Bind(std::to_string(NumKeyStack.top()),Parser::BindToken(CurrentCMenu.sName,"exec $cmenu_"+formatRaw(CurrentCMenu.sName),CurrentCMenu.fAttribs)));
+							if (iDuplicateNumber>0) (CMenuStack.begin()+1)->binds.push_back(Bind(std::to_string(NumKeyStack.top() % 10),Parser::BindToken(CurrentCMenu.sName,"exec $cmenu_"+formatRaw(CurrentCMenu.sName)+'_'+std::to_string(iDuplicateNumber),CurrentCMenu.fAttribs)));
+							else (CMenuStack.begin()+1)->binds.push_back(Bind(std::to_string(NumKeyStack.top() % 10),Parser::BindToken(CurrentCMenu.sName,"exec $cmenu_"+formatRaw(CurrentCMenu.sName),CurrentCMenu.fAttribs)));
 						}
 					}
 					NumKeyStack.push(1u);
@@ -347,8 +347,8 @@ bool ParseMenuTokens(unsigned short& p_iBindCount, unsigned char& p_bUsedDisplay
 				break;
 			case Parser::CMenuTokenType::END_CMENU:
 				if (CMenuStack.size() > 0) {
-					// Warning:
-					if (NumKeyStack.top()>9) std::cout<<"Warning: More than ten number-key binds in CMenu \'"<<CMenuStack.front().sName<<"\'!\n";
+					// if there are more than 10 number-key binds, they will overlap
+					if (NumKeyStack.top()>11) std::cout<<"Warning: More than ten number-key binds in CMenu \'"<<CMenuStack.front().sName<<"\'. Some binds will overlap each other!\n";
 					CMenuContainer.push_back(CMenuStack.front());
 					CMenuStack.pop_front();
 						if (!NumKeyStack.empty()) {
@@ -371,7 +371,7 @@ bool ParseMenuTokens(unsigned short& p_iBindCount, unsigned char& p_bUsedDisplay
 				CurrentBindToken.sKey = KVMap["KEY"];
 				if (CMenuStack.size() > 0) {
 					if (!(CurrentBindToken.fAttribs & CMTOKATTRIB_BIND_KEYSET)) {
-						CMenuStack.front().binds.push_back(Bind(std::to_string(NumKeyStack.top()),CurrentBindToken));
+						CMenuStack.front().binds.push_back(Bind(std::to_string(NumKeyStack.top() % 10),CurrentBindToken));
 						NumKeyStack.top()=(NumKeyStack.top()+1);
 					}
 					else {
@@ -397,7 +397,7 @@ bool ParseMenuTokens(unsigned short& p_iBindCount, unsigned char& p_bUsedDisplay
 				if (CMenuStack.size() > 0) {
 					
 					if (!(CurrentToggleBindToken.fAttribs & CMTOKATTRIB_BIND_KEYSET)) {
-						CMenuStack.front().binds.push_back(Bind(std::to_string(NumKeyStack.top()),CurrentToggleBindToken));
+						CMenuStack.front().binds.push_back(Bind(std::to_string(NumKeyStack.top() % 10),CurrentToggleBindToken));
 						if (!NumKeyStack.empty()) {
 							NumKeyStack.top()=(NumKeyStack.top()+1);
 						}
