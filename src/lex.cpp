@@ -14,8 +14,8 @@ extern std::deque<Parser::MenuToken*> CMenuTokens;
 
 // Convert to a safer string format for file and caption names.
 std::string formatRaw(std::string p_sInStr) {
-	// Remove punctation
-	p_sInStr.erase(std::remove_if(p_sInStr.begin(), p_sInStr.end(), [](char c){return std::ispunct(c);}),p_sInStr.end());
+	// Remove punctation and nonascii characters
+	p_sInStr.erase(std::remove_if(p_sInStr.begin(), p_sInStr.end(), [](char c){return std::ispunct(c) || !isascii(c);}), p_sInStr.end());
 	// and replace spaces with underscores
 	std::replace(p_sInStr.begin(), p_sInStr.end(), ' ', '_');
 	// replace uppercase with lower case 
