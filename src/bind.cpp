@@ -17,11 +17,11 @@ Bind::Bind(const std::string& p_sKey, const Parser::BindToken& p_Token)
 				pos=sFormatVal.find("$(key)",pos);
 			}
 		}
-		if (sFormatVal.find("$(str)")!=std::string::npos) {
-			std::size_t pos=sFormatVal.find("$(str)");
+		if (sFormatVal.find("$(title)")!=std::string::npos) {
+			std::size_t pos=sFormatVal.find("$(title)");
 			while (pos!=std::string::npos) {
-				sFormatVal.replace(pos,6,p_Token.sName);
-				pos=sFormatVal.find("$(str)",pos);
+				sFormatVal.replace(pos,8,p_Token.sName);
+				pos=sFormatVal.find("$(title)",pos);
 			}
 		}
 		NameContainer.push_back(sFormatVal);
@@ -45,11 +45,11 @@ Bind::Bind(const std::string& p_sKey, const Parser::ToggleBindToken& p_Token)
 					pos=sFormatVal.find("$(key)",pos);
 				}
 			}
-			if (sFormatVal.find("$(str)")!=std::string::npos) {
-				std::size_t pos=sFormatVal.find("$(str)");
+			if (sFormatVal.find("$(title)")!=std::string::npos) {
+				std::size_t pos=sFormatVal.find("$(title)");
 				while (pos!=std::string::npos) {
-					sFormatVal.replace(pos,6,p_Token.NameContainer[i]);
-					pos=sFormatVal.find("$(str)",pos);
+					sFormatVal.replace(pos,8,p_Token.NameContainer[i]);
+					pos=sFormatVal.find("$(title)",pos);
 				}
 			}
 			NameContainer.push_back(sFormatVal);

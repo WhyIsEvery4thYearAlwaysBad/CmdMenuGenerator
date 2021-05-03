@@ -23,7 +23,7 @@ std::deque<CommandMenu> CMenuContainer;
 std::map<std::string,std::string> KVMap={
 	{"linger_time","0"},
 	{"predisplay_time","0.25"},
-	{"format","$(key). $(str)<cr>"},
+	{"format","$(key). $(title)<cr>"},
 	{"display","caption"},
 	{"resetkeys","bind 1 slot1; bind 2 slot2; bind 3 slot3; bind 4 slot4; bind 5 slot5; bind 6 slot6; bind 7 slot7; bind 8 slot8; bind 9 slot9; bind 0 slot10"}
 };
