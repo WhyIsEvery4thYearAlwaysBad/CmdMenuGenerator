@@ -3,5 +3,5 @@
 std::string formatRaw(std::string p_sInStr);
 namespace Lexer {
 	// Tokenize any string into needed Tokens for parsing.
-	bool Tokenize(const std::string& str);
+	bool Tokenize(const std::string_view& str);
 }

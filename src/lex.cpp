@@ -1,4 +1,5 @@
 #include <string>
+#include <algorithm>
 #include <deque>
 #include "lex.hpp"
 #include "compiler.hpp"
@@ -13,26 +14,12 @@ extern std::deque<Parser::MenuToken*> CMenuTokens;
 
 // Convert to a safer string format for file and caption names.
 std::string formatRaw(std::string p_sInStr) {
-	for (unsigned long long i=0; i < p_sInStr.length(); i++) {
-		if (p_sInStr.at(i)=='<' && p_sInStr.find('>',i)!=std::string::npos) {
-			p_sInStr.erase(i,(p_sInStr.find('>',i+1)-i)+1);
-			if (i>0) i--;
-		}
-		// remove punctuation
-		if (ispunct(p_sInStr.at(i))) {
-			p_sInStr.erase(i,1);
-			i--;
-			continue;
-		}
-		// and non-ascii characters
-		if (i<p_sInStr.length()-1 && (!isascii(p_sInStr.at(i)) || !isascii(p_sInStr.at(i+1))) && (p_sInStr.at(i) != '\0' && p_sInStr.at(i+1) != '\0')) {
-			p_sInStr.erase(i,2);
-			i--; 
-			continue;
-		}
-		if (isspace(p_sInStr.at(i)) && p_sInStr.at(i)!='\0') p_sInStr.at(i)='_';
-		if (isupper(p_sInStr.at(i))) p_sInStr.at(i)=tolower(p_sInStr.at(i)); 
-	}
+	// Remove punctation
+	p_sInStr.erase(std::remove_if(p_sInStr.begin(), p_sInStr.end(), [](char c){return std::ispunct(c);}),p_sInStr.end());
+	// and replace spaces with underscores
+	std::replace(p_sInStr.begin(), p_sInStr.end(), ' ', '_');
+	// replace uppercase with lower case 
+	std::transform(p_sInStr.begin(), p_sInStr.end(), p_sInStr.begin(), [](char c){ return std::tolower(c);});
 	return p_sInStr;
 }
 
@@ -47,7 +34,7 @@ namespace Lexer {
 		else return false;
 	}
 	// Convert string to token stream. Returns true if successful and false if an error occurs.
-	bool Tokenize(const std::string& p_sInStr) {
+	bool Tokenize(const std::string_view& p_sInStr) {
 		bool bErrorsFound=false, bInBlockComment=false;
 		std::string t_sStrTemp;
 		for (std::size_t i=0; i < p_sInStr.length(); )

@@ -3,6 +3,7 @@
 #include <iostream>
 #include <filesystem>
 #include <codecvt>
+#include <algorithm>
 #include <map>
 #include <cstdio>
 #include <windows.h>
@@ -46,10 +47,7 @@ int main(int argc, char** argv) {
 	if (!Lexer::Tokenize(InFileContent) 
 		|| !Parser::ParseTokens()
 		|| !ParseMenuTokens(iBindCount,bUsedDisplayFlags)) {
-		
-		for (auto& e : ErrorTokens) {
-			std::cout << e.sValue << '\n';
-		}
+		std::for_each(ErrorTokens.cbegin(),ErrorTokens.cend(),[](const Token& e){std::cout << e.sValue << '\n';});
 		return -1;
 	}
 	
@@ -93,23 +91,20 @@ cmenu.exitmenu
 	CMenuCaptionFile<<convert.from_bytes("\"lang\"\n{\n\t\"Language\" \"commandmenu\"\n\t\"Tokens\"\n\t{\n\t\t\"_#cmenu.clear_screen\" \"<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	\"\n");
 	
 	std::string CMenuCFGPath; // String path for each CMenu CFG.
-	unsigned long iToggleNumber=0u;
-	for (auto CMenu=CMenuContainer.begin(); CMenu!=CMenuContainer.end(); CMenu++) {
+	unsigned long iToggleNumber = 0u;
+	for (auto CMenu = CMenuContainer.begin(); CMenu != CMenuContainer.end(); CMenu++) {
 		unsigned int iTBindSegmentNum=0u;
 		CMenuCFGPath=sOutputDir.string()+"/cfg/$cmenu_"+CMenu->sRawName+".cfg";
 		std::ofstream CMenuCFG(CMenuCFGPath);
 		/* Disable other displays if this CMenu isnt using it and there are other CMenus that use it.*/
-		
 		if (CMenu->Display!=CMenuDisplayType::CONSOLE && (bUsedDisplayFlags & 2))
 			CMenuCFG<<"developer 0\n";
 		if (CMenu->Display!=CMenuDisplayType::CAPTIONS && (bUsedDisplayFlags & 4))
 			CMenuCFG<<"cc_emit _#cmenu.clear_screen\n";
 		
 		/* Create the actual binds needed for the declared binds. */
-		if (CMenu->Display==CMenuDisplayType::CAPTIONS) CMenuCFG<<"cc_linger_time 10000\ncc_predisplay_time 0\ncc_emit _#cmenu.clear_screen\ncc_emit _#cmenu."+CMenu->sRawName+'\n';
-		else if (CMenu->Display==CMenuDisplayType::CONSOLE) CMenuCFG<<"developer 1\nclear\n";
-	
-
+		if (CMenu->Display == CMenuDisplayType::CAPTIONS) CMenuCFG<<"cc_linger_time 10000\ncc_predisplay_time 0\ncc_emit _#cmenu.clear_screen\ncc_emit _#cmenu."+CMenu->sRawName+'\n';
+		else if (CMenu->Display == CMenuDisplayType::CONSOLE) CMenuCFG<<"developer 1\nclear\n";
 		for (auto& key : UsedKeys) {
 			// Compress keynames so that it can fit in an alias
 			CMenuCFG<<"bind "<<key<<" _cmenu.key_"<<((key.length() + CMENU_KEY_ALIAS_LENGTH > 32 ) ? key.substr(0, key.length() - CMENU_KEY_ALIAS_LENGTH) : key)<<'\n';
@@ -131,7 +126,7 @@ cmenu.exitmenu
 			iTBindSegmentNum=0u;
 		}
 		CMenuCFG<<"_cmenu.nullkeys\n";
-		/* Write captions for our binds. */
+		/* Write the displays for our binds. */
 		for (auto kBind = CMenu->binds.begin(); kBind != CMenu->binds.end(); kBind++) {
 			if (CMenu->Display==CMenuDisplayType::CAPTIONS) {
 				if (kBind==CMenu->binds.begin() && kBind->bToggleBind!=true) 

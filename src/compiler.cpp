@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cassert>
 #include <string>
 #include <deque>
 #include <map>
@@ -259,7 +260,7 @@ namespace Parser {
 					token=TokenContainer.end();
 					break;
 				case TokenType::UNDEFINED: 
-					ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,token->GetFileLoc()+": error: Unrecognized character '"+token->sValue+"'."));
+					ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,token->GetFileLoc()+": error: Unrecognized character \'"+token->sValue+"\'."));
 					token++;
 					break;
 				default:
@@ -331,11 +332,8 @@ bool ParseMenuTokens(unsigned short& p_iBindCount, unsigned char& p_bUsedDisplay
 								(CMenuStack.begin()+1)->binds.push_back(Bind(CurrentCMenu.sKey,Parser::BindToken(CurrentCMenu.sName,"exec $cmenu_"+formatRaw(CurrentCMenu.sName)+'_'+std::to_string(iDuplicateNumber),CurrentCMenu.fAttribs)));
 							else 
 								(CMenuStack.begin()+1)->binds.push_back(Bind(CurrentCMenu.sKey,Parser::BindToken(CurrentCMenu.sName,"exec $cmenu_"+formatRaw(CurrentCMenu.sName),CurrentCMenu.fAttribs)));
-							bool bAlreadyUsed = false;
-							for (auto& key : UsedKeys) {
-								if (key == CurrentCMenu.sKey) bAlreadyUsed = true; 
-							}
-							if (!bAlreadyUsed) UsedKeys.push_back(CurrentCMenu.sKey);
+							// Add the keyname to a list of used key names if it isn't already added.
+							if (std::none_of(UsedKeys.cbegin(),UsedKeys.cend(),[&CurrentCMenu](std::string_view s){ return s == CurrentCMenu.sKey; })) UsedKeys.push_back(CurrentCMenu.sKey);
 						}
 						else {
 							if (iDuplicateNumber>0) (CMenuStack.begin()+1)->binds.push_back(Bind(std::to_string(NumKeyStack.top() % 10),Parser::BindToken(CurrentCMenu.sName,"exec $cmenu_"+formatRaw(CurrentCMenu.sName)+'_'+std::to_string(iDuplicateNumber),CurrentCMenu.fAttribs)));
@@ -346,81 +344,49 @@ bool ParseMenuTokens(unsigned short& p_iBindCount, unsigned char& p_bUsedDisplay
 				}
 				break;
 			case Parser::CMenuTokenType::END_CMENU:
-				if (CMenuStack.size() > 0) {
-					// if there are more than 10 number-key binds, they will overlap
-					if (NumKeyStack.top()>11) std::cout<<"Warning: More than ten number-key binds in CMenu \'"<<CMenuStack.front().sName<<"\'. Some binds will overlap each other!\n";
-					CMenuContainer.push_back(CMenuStack.front());
-					CMenuStack.pop_front();
-						if (!NumKeyStack.empty()) {
-							NumKeyStack.pop();
-							if (!(CurrentCMenu.fAttribs & CMTOKATTRIB_BIND_KEYSET) && !NumKeyStack.empty()) NumKeyStack.top()=(NumKeyStack.top()+1);
-						}
-						else {
-							std::cerr<<"ParseMenuTokens():CMenuTokens+"<<std::distance(CMenuTokens.begin(),token)<<":case Parser::CMenuTokenType::END_CMENU:fatal error: Tried to access nonexistent element in number key stack.\n";
-							return false;					
-						}
-				}
-				else {
-					std::cerr<<"ParseMenuTokens():CMenuTokens+"<<std::distance(CMenuTokens.begin(),token)<<":case Parser::CMenuTokenType::END_CMENU:fatal error: Tried to access nonexistent CMenu in CMenu stack.\n";
-					return false;
-				}
-				break;
+				assert(CMenuStack.size() > 0);
+				// if there are more than 10 number-key binds, they will overlap
+				if (NumKeyStack.top()>11) std::cout<<"Warning: More than ten number-key binds in CMenu \'"<<CMenuStack.front().sName<<"\'. Some binds will overlap each other!\n";
+				CMenuContainer.push_back(CMenuStack.front());
+				CMenuStack.pop_front();
+				assert(!NumKeyStack.empty());
+				NumKeyStack.pop();
+				if (!(CurrentCMenu.fAttribs & CMTOKATTRIB_BIND_KEYSET) && !NumKeyStack.empty()) NumKeyStack.top()=(NumKeyStack.top()+1);
+			break;
 			case Parser::CMenuTokenType::MENU_BIND:
 			{
 				Parser::BindToken CurrentBindToken=static_cast<Parser::BindToken&>(**token);
 				CurrentBindToken.sKey = KVMap["KEY"];
-				if (CMenuStack.size() > 0) {
-					if (!(CurrentBindToken.fAttribs & CMTOKATTRIB_BIND_KEYSET)) {
-						CMenuStack.front().binds.push_back(Bind(std::to_string(NumKeyStack.top() % 10),CurrentBindToken));
-						NumKeyStack.top()=(NumKeyStack.top()+1);
-					}
-					else {
-						CMenuStack.front().binds.push_back(Bind(CurrentBindToken.sKey,CurrentBindToken));
-						bool bAlreadyUsed = false;
-						for (auto& key : UsedKeys) {
-							if (key == CurrentBindToken.sKey) bAlreadyUsed = true; 
-						}
-						if (!bAlreadyUsed) UsedKeys.push_back(CurrentBindToken.sKey);
-					}
-					p_iBindCount++;
+				assert(CMenuStack.size() > 0);
+				if (!(CurrentBindToken.fAttribs & CMTOKATTRIB_BIND_KEYSET)) {
+					CMenuStack.front().binds.push_back(Bind(std::to_string(NumKeyStack.top() % 10),CurrentBindToken));
+					NumKeyStack.top()=(NumKeyStack.top()+1);
 				}
 				else {
-					std::cerr<<"ParseMenuTokens():CMenuTokens+"<<std::distance(CMenuTokens.begin(),token)<<":case Parser::CMenuTokenType::MENU_BIND:fatal error: Tried to access nonexistent CMenu in CMenu stack.\n";
-					return false;
+					CMenuStack.front().binds.push_back(Bind(CurrentBindToken.sKey,CurrentBindToken));
+					// Add the keyname to a list of used key names if it isn't already added.
+					if (std::none_of(UsedKeys.cbegin(),UsedKeys.cend(),[&CurrentBindToken](std::string_view s){ return s == CurrentBindToken.sKey;})) UsedKeys.push_back(CurrentBindToken.sKey);
 				}
+				p_iBindCount++;
 			}
 			break;
 			case Parser::CMenuTokenType::MENU_TOGGLE_BIND:
 			{
 				Parser::ToggleBindToken CurrentToggleBindToken = static_cast<Parser::ToggleBindToken&>(**token);
 				CurrentToggleBindToken.sKey = KVMap["KEY"];
-				if (CMenuStack.size() > 0) {
-					
-					if (!(CurrentToggleBindToken.fAttribs & CMTOKATTRIB_BIND_KEYSET)) {
-						CMenuStack.front().binds.push_back(Bind(std::to_string(NumKeyStack.top() % 10),CurrentToggleBindToken));
-						if (!NumKeyStack.empty()) {
-							NumKeyStack.top()=(NumKeyStack.top()+1);
-						}
-						else {
-							std::cerr<<"ParseMenuTokens():CMenuTokens+"<<std::distance(CMenuTokens.begin(),token)<<":case Parser::CMenuTokenType::MENU_TOGGLE_BIND:fatal error: Tried to access nonexistent CMenu in number key stack.\n";
-							return false;
-						}
-					}
-					else {
-						CMenuStack.front().binds.push_back(Bind(CurrentToggleBindToken.sKey,CurrentToggleBindToken));
-						bool bAlreadyUsed = false;
-						for (auto& key : UsedKeys) {
-							if (key == CurrentToggleBindToken.sKey) bAlreadyUsed = true; 
-						}
-						if (!bAlreadyUsed) UsedKeys.push_back(CurrentToggleBindToken.sKey);
-					}
-					p_iBindCount++;
-					break;
+				assert(CMenuStack.size() > 0);				
+				if (!(CurrentToggleBindToken.fAttribs & CMTOKATTRIB_BIND_KEYSET)) {
+					CMenuStack.front().binds.push_back(Bind(std::to_string(NumKeyStack.top() % 10),CurrentToggleBindToken));
+					assert(!NumKeyStack.empty());
+					NumKeyStack.top()=(NumKeyStack.top()+1);
 				}
 				else {
-					std::cerr<<"ParseMenuTokens():CMenuTokens+"<<std::distance(CMenuTokens.begin(),token)<<":case Parser::CMenuTokenType::MENU_TOGGLE_BIND:fatal error: Tried to access nonexistent CMenu in CMenu stack.\n";
-					return false;
+					CMenuStack.front().binds.push_back(Bind(CurrentToggleBindToken.sKey,CurrentToggleBindToken));
+					// Add the keyname to a list of used key names if it isn't already added.
+					if (std::none_of(UsedKeys.cbegin(),UsedKeys.cend(),[&CurrentToggleBindToken](std::string_view s){ return s == CurrentToggleBindToken.sKey;})) UsedKeys.push_back(CurrentToggleBindToken.sKey);
 				}
+				p_iBindCount++;
+				break;
 			}
 			break;
 			default:
