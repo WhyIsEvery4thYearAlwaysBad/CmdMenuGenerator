@@ -340,6 +340,7 @@ bool ParseMenuTokens(unsigned short& p_iBindCount, unsigned char& p_bUsedDisplay
 							else (CMenuStack.begin()+1)->binds.push_back(Bind(std::to_string(NumKeyStack.top() % 10),Parser::BindToken(CurrentCMenu.sName,"exec $cmenu_"+formatRaw(CurrentCMenu.sName),CurrentCMenu.fAttribs)));
 						}
 					}
+					if (!(CurrentCMenu.fAttribs & CMTOKATTRIB_BIND_KEYSET) && !NumKeyStack.empty()) NumKeyStack.top()=(NumKeyStack.top()+1);
 					NumKeyStack.push(1u);
 				}
 				break;
@@ -351,7 +352,6 @@ bool ParseMenuTokens(unsigned short& p_iBindCount, unsigned char& p_bUsedDisplay
 				CMenuStack.pop_front();
 				assert(!NumKeyStack.empty());
 				NumKeyStack.pop();
-				if (!(CurrentCMenu.fAttribs & CMTOKATTRIB_BIND_KEYSET) && !NumKeyStack.empty()) NumKeyStack.top()=(NumKeyStack.top()+1);
 			break;
 			case Parser::CMenuTokenType::MENU_BIND:
 			{
