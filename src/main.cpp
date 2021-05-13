@@ -15,10 +15,7 @@
 #include "launchoptions.hpp"
 
 #define CMENU_KEY_ALIAS_LENGTH 11 /* length of "_cmenu.key_" */
-
-extern std::deque<Parser::MenuToken*> CMenuTokens;
-extern std::deque<Token> Tokens; 
-extern std::deque<Token> ErrorTokens; // 
+extern std::deque<Token> ErrorTokens;
 std::deque<CommandMenu> CMenuContainer;
 std::map<std::string,std::string> KVMap={
 	{"linger_time","0"},
@@ -72,9 +69,12 @@ int main(int argc, char** argv) {
 	std::filesystem::create_directories(sOutputDir.string()+"/cfg");
 	// Main CFG file that initializes our CMenus.
 	std::ofstream InitRoutineFile(sOutputDir.string()+"/cfg/cmenu_initialize.cfg");	
-	InitRoutineFile<<R"(closecaption 1
-cc_lang commandmenu
-alias _cmenu.nullkeys"alias _cmenu.1 ; alias _cmenu.2 ; alias _cmenu.3 ; alias _cmenu.4 ; alias _cmenu.5 ; alias _cmenu.6 ; alias _cmenu.7 ; alias _cmenu.8 ; alias _cmenu.9; alias _cmenu.0"
+	InitRoutineFile<<"closecaption 1\ncc_lang commandmenu\nalias _cmenu.nullkeys \"";
+	std::for_each(UsedKeys.cbegin(), UsedKeys.cend(), 
+	[&InitRoutineFile](const std::string_view key){
+		InitRoutineFile<<"alias _cmenu.key_"<<((key.length() + CMENU_KEY_ALIAS_LENGTH > 32 ) ? key.substr(0, key.length() - CMENU_KEY_ALIAS_LENGTH) : key) << ';';
+	});
+	InitRoutineFile<<R"("
 alias cmenu.exitmenu"cc_emit _#cmenu.clear_screen;)"<<"cc_linger_time "<<KVMap["linger_time"]<<";cc_predisplay_time "<<KVMap["predisplay_time"]<<';'<<KVMap["resetkeys"]<<"; cmenu.on_exitmenu\"";
 	InitRoutineFile<<R"(
 alias cmenu.on_exitmenu ;
@@ -105,11 +105,10 @@ cmenu.exitmenu
 		/* Create the actual binds needed for the declared binds. */
 		if (CMenu->Display == CMenuDisplayType::CAPTIONS) CMenuCFG<<"cc_linger_time 10000\ncc_predisplay_time 0\ncc_emit _#cmenu.clear_screen\ncc_emit _#cmenu."+CMenu->sRawName+'\n';
 		else if (CMenu->Display == CMenuDisplayType::CONSOLE) CMenuCFG<<"developer 1\nclear\n";
-		for (auto& key : UsedKeys) {
-			// Compress keynames so that it can fit in an alias
-			CMenuCFG<<"bind "<<key<<" _cmenu.key_"<<((key.length() + CMENU_KEY_ALIAS_LENGTH > 32 ) ? key.substr(0, key.length() - CMENU_KEY_ALIAS_LENGTH) : key)<<'\n';
-		}
-		
+		// Compress keynames so that it can fit in an alias
+		std::for_each(UsedKeys.cbegin(), UsedKeys.cend(), 
+			[&CMenuCFG](const std::string_view key){ CMenuCFG<<"bind "<<key<<" _cmenu.key_"<<((key.length() + CMENU_KEY_ALIAS_LENGTH > 32 ) ? key.substr(0, key.length() - CMENU_KEY_ALIAS_LENGTH) : key)<<'\n';
+		});
 		{
 			unsigned int t_ToggleNum=iToggleNumber;
 			for (auto kTBind=CMenu->binds.begin(); kTBind!=CMenu->binds.end(); kTBind++) {
