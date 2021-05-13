@@ -311,12 +311,6 @@ bool ParseMenuTokens(unsigned short& p_iBindCount, unsigned char& p_bUsedDisplay
 			if (KVMap["display"]=="none") p_bUsedDisplayFlags |= 1;
 			else if (KVMap["display"]=="console") p_bUsedDisplayFlags |= 2;
 			else if (KVMap["display"]=="caption") p_bUsedDisplayFlags |= 4;
-			/*auto it = std::find_if(token, CMenuTokens.end(), [](){ return ; });
-			assert(it != CMenuTokens.end());
-			std::visit([](auto&& args){
-				args.fAttribs
-			});
-			*/
 		}
 		else if (std::holds_alternative<Parser::CMenuToken>(*token))
 		{
@@ -325,20 +319,18 @@ bool ParseMenuTokens(unsigned short& p_iBindCount, unsigned char& p_bUsedDisplay
 			CurrentCMenu.sKey = KVMap["KEY"];
 			std::size_t iDuplicateNumber = 0llu;
 			// Form duplicates if formatted name is already taken.
-			if (CMenuStack.size()>0) for (auto p=CMenuStack.end(); p!=CMenuStack.begin();)
-			{
-				p--; // This has to be here instead of being in the for declaration, otherwise if there is one commandmenu in the stack, it would not be checked for duplication.
-				if (formatRaw(p->sName)==formatRaw(CurrentCMenu.sName)) iDuplicateNumber++;
-			}
-			for (auto& p : CMenuContainer)
-			{
-				if (formatRaw(p.sName)==formatRaw(CurrentCMenu.sName)) iDuplicateNumber++;
-			}
+			if (CMenuStack.size() > 0) iDuplicateNumber += std::count_if(CMenuStack.rbegin(), CMenuStack.rend(), [&CurrentCMenu](const CommandMenu p){
+				return (formatRaw(p.sName) == formatRaw(CurrentCMenu.sName));
+			});
+			if (CMenuContainer.size() > 1) iDuplicateNumber += std::count_if(CMenuContainer.begin(), CMenuContainer.end(), [&CurrentCMenu](const CommandMenu p){
+				return (formatRaw(p.sName) == formatRaw(CurrentCMenu.sName));
+			});
+			else if (CMenuContainer.size() == 1) iDuplicateNumber += (formatRaw(CMenuContainer.front().sName) == formatRaw(CurrentCMenu.sName));
 			CMenuStack.push_front(CommandMenu(CurrentCMenu.sName));
-			if (iDuplicateNumber>0) CMenuStack.front().sRawName+='_'+std::to_string(iDuplicateNumber);
-			if (CMenuStack.size()>1) {
+			if (iDuplicateNumber > 0) CMenuStack.front().sRawName+='_'+std::to_string(iDuplicateNumber);
+			if (CMenuStack.size() > 1) {
 				if (CurrentCMenu.fAttribs & CMTOKATTRIB_BIND_KEYSET) {
-					if (iDuplicateNumber>0) 
+					if (iDuplicateNumber > 0)
 						(CMenuStack.begin()+1)->binds.push_back(Bind(CurrentCMenu.sKey,Parser::BindToken(CurrentCMenu.sName,"exec $cmenu_"+formatRaw(CurrentCMenu.sName)+'_'+std::to_string(iDuplicateNumber),CurrentCMenu.fAttribs)));
 					else 
 						(CMenuStack.begin()+1)->binds.push_back(Bind(CurrentCMenu.sKey,Parser::BindToken(CurrentCMenu.sName,"exec $cmenu_"+formatRaw(CurrentCMenu.sName),CurrentCMenu.fAttribs)));
