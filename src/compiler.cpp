@@ -1,9 +1,9 @@
-#include <iostream>
 #include <cassert>
 #include <string>
 #include <deque>
 #include <map>
 #include <stack>
+#include <variant>
 #include "compiler.hpp"
 #include "lex.hpp"
 #include "token.hpp"
@@ -13,7 +13,10 @@
 extern std::map<std::string,std::string> KVMap;
 std::deque<Token> TokenContainer;
 std::deque<Token> ErrorTokens;
-std::deque<Parser::MenuToken*> CMenuTokens;
+// Raw pointer bad, std::variant good.
+typedef std::variant<Parser::MenuToken, Parser::KVToken, Parser::BindToken, Parser::ToggleBindToken, Parser::CMenuToken, Parser::CMenuEndToken> MenuToken_t;
+std::deque<MenuToken_t> CMenuTokens;
+
 extern std::deque<CommandMenu> CMenuContainer; // Made in main.cpp
 extern std::vector<std::string> UsedKeys; // made in main.cpp
 
@@ -172,7 +175,7 @@ namespace Parser {
 						if ((token+i)->Type != TokenType::VBAR) 
 							ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,(token+i)->GetFileLoc()+"error: Expected '|'."));
 						if (!(fParserStateFlag & PARSER_STATE_ERRORS_FOUND)) 
-							CMenuTokens.push_back(new Parser::ToggleBindToken(NameList, CmdList, static_cast<unsigned short>((i-2)/2), ((fParserStateFlag & PARSER_STATE_FORMATTED) ? CMTOKATTRIB_FORMATTED : 0) | ((fParserStateFlag & PARSER_STATE_NOEXIT) ? CMTOKATTRIB_NOEXIT : 0)));
+							CMenuTokens.push_back(Parser::ToggleBindToken(NameList, CmdList, static_cast<unsigned short>((i-2)/2), ((fParserStateFlag & PARSER_STATE_FORMATTED) ? CMTOKATTRIB_FORMATTED : 0) | ((fParserStateFlag & PARSER_STATE_NOEXIT) ? CMTOKATTRIB_NOEXIT : 0)));
 						// Bind already set so reset the modifier flag.
 						fParserStateFlag &= ~(PARSER_STATE_NOEXIT | PARSER_STATE_BIND_KEYSET);
 						token += i;
@@ -195,7 +198,7 @@ namespace Parser {
 							ErrorTokens.push_back(Token((token+i)->iLineNum,(token+i)->iLineColumn,TokenType::COMPILER_ERROR,(token+i)->GetFileLoc()+": error: Expected '|'."));
 						else i++;
 						if (!(fParserStateFlag & PARSER_STATE_ERRORS_FOUND))
-							CMenuTokens.push_back(new Parser::BindToken((token+1)->sValue, (token+2)->sValue, ((fParserStateFlag & PARSER_STATE_FORMATTED) ? CMTOKATTRIB_FORMATTED : 0) | ((fParserStateFlag & PARSER_STATE_NOEXIT) ? CMTOKATTRIB_NOEXIT : 0)));
+							CMenuTokens.push_back(Parser::BindToken((token+1)->sValue, (token+2)->sValue, ((fParserStateFlag & PARSER_STATE_FORMATTED) ? CMTOKATTRIB_FORMATTED : 0) | ((fParserStateFlag & PARSER_STATE_NOEXIT) ? CMTOKATTRIB_NOEXIT : 0)));
 						// Bind already set so reset the modifier flag.
 						fParserStateFlag &= ~PARSER_STATE_NOEXIT;
 						fParserStateFlag |= PARSER_STATE_FORMATTED;
@@ -213,7 +216,7 @@ namespace Parser {
 					if ((token+i)->Type!=TokenType::LCBRACKET) 
 						ErrorTokens.push_back(Token((token+i)->iLineNum,(token+i)->iLineColumn,TokenType::COMPILER_ERROR,(token+i)->GetFileLoc()+": error: Expected '{' here."));
 					if (!(fParserStateFlag & PARSER_STATE_ERRORS_FOUND)) 
-						CMenuTokens.push_back(new Parser::CMenuToken(token->sValue,((fParserStateFlag & PARSER_STATE_FORMATTED) ? CMTOKATTRIB_FORMATTED : 0) | CMTOKATTRIB_NOEXIT));
+						CMenuTokens.push_back(Parser::CMenuToken(token->sValue,((fParserStateFlag & PARSER_STATE_FORMATTED) ? CMTOKATTRIB_FORMATTED : 0) | CMTOKATTRIB_NOEXIT));
 					fParserStateFlag |= CMTOKATTRIB_FORMATTED;
 					token+=i;
 				}
@@ -233,7 +236,7 @@ namespace Parser {
 						ErrorTokens.push_back(Token((token+i)->iLineNum,(token+i)->iLineColumn,TokenType::COMPILER_ERROR,(token+i)->GetFileLoc()+": error: Expected a string here."));
 					}
 					else i++;
-					if (!(fParserStateFlag & PARSER_STATE_ERRORS_FOUND)) CMenuTokens.push_back(new Parser::KVToken(token->sValue,(token+2)->sValue));
+					if (!(fParserStateFlag & PARSER_STATE_ERRORS_FOUND)) CMenuTokens.push_back(Parser::KVToken(token->sValue,(token+2)->sValue));
 					token+=i;
 				}
 				break;
@@ -251,7 +254,7 @@ namespace Parser {
 						ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,token->GetFileLoc()+": error: Stray '}'"));
 						iCMenuDepth++;
 					}
-					if (!(fParserStateFlag & PARSER_STATE_ERRORS_FOUND)) CMenuTokens.push_back(new Parser::CMenuEndToken());
+					if (!(fParserStateFlag & PARSER_STATE_ERRORS_FOUND)) CMenuTokens.push_back(Parser::CMenuEndToken());
 					token++;
 					break;
 				case TokenType::END_OF_FILE:
@@ -294,103 +297,107 @@ bool ParseMenuTokens(unsigned short& p_iBindCount, unsigned char& p_bUsedDisplay
 	
 	for (auto token = CMenuTokens.begin(); token != CMenuTokens.end(); token++) {
 		// Automatically resets the KEY KV to prevent other binds from being affected by it.
-		if (token != CMenuTokens.begin() && (*(token - 1))->Type != Parser::CMenuTokenType::KV_SET) KVMap["KEY"]="";
-		if ((*token)->Type != Parser::CMenuTokenType::KV_SET && KVMap["KEY"] != "" && !((*token)->fAttribs & CMTOKATTRIB_BIND_KEYSET)) (*token)->fAttribs |= CMTOKATTRIB_BIND_KEYSET;
-		switch ((*token)->Type)
+		if (token != CMenuTokens.begin() && !std::holds_alternative<Parser::KVToken>(*(token - 1))) KVMap["KEY"]="";
+		if (!std::holds_alternative<Parser::KVToken>(*token)
+			&& KVMap["KEY"] != "")
+			std::visit([](auto&& args){
+				args.fAttribs |= CMTOKATTRIB_BIND_KEYSET;
+			}, *token);
+		// Parse menu tokens.
+		if (std::holds_alternative<Parser::KVToken>(*token))
 		{
-			case Parser::CMenuTokenType::KV_SET:
-				{
-					Parser::KVToken temp=static_cast<Parser::KVToken&>(**token);
-					KVMap.insert_or_assign(temp.Key,temp.Value);
-					// Store what display types were used in p_bUsedDisplayFlags.
-					if (KVMap["display"]=="none") p_bUsedDisplayFlags |= 1;
-					else if (KVMap["display"]=="console") p_bUsedDisplayFlags |= 2;
-					else if (KVMap["display"]=="caption") p_bUsedDisplayFlags |= 4;
+			KVMap.insert_or_assign(std::get<Parser::KVToken>(*token).Key, std::get<Parser::KVToken>(*token).Value);
+			// Store what display types were used in p_bUsedDisplayFlags.
+			if (KVMap["display"]=="none") p_bUsedDisplayFlags |= 1;
+			else if (KVMap["display"]=="console") p_bUsedDisplayFlags |= 2;
+			else if (KVMap["display"]=="caption") p_bUsedDisplayFlags |= 4;
+			/*auto it = std::find_if(token, CMenuTokens.end(), [](){ return ; });
+			assert(it != CMenuTokens.end());
+			std::visit([](auto&& args){
+				args.fAttribs
+			});
+			*/
+		}
+		else if (std::holds_alternative<Parser::CMenuToken>(*token))
+		{
+			//For binds to CMenuContainer.
+			CurrentCMenu = std::get<Parser::CMenuToken>(*token);
+			CurrentCMenu.sKey = KVMap["KEY"];
+			std::size_t iDuplicateNumber = 0llu;
+			// Form duplicates if formatted name is already taken.
+			if (CMenuStack.size()>0) for (auto p=CMenuStack.end(); p!=CMenuStack.begin();)
+			{
+				p--; // This has to be here instead of being in the for declaration, otherwise if there is one commandmenu in the stack, it would not be checked for duplication.
+				if (formatRaw(p->sName)==formatRaw(CurrentCMenu.sName)) iDuplicateNumber++;
+			}
+			for (auto& p : CMenuContainer)
+			{
+				if (formatRaw(p.sName)==formatRaw(CurrentCMenu.sName)) iDuplicateNumber++;
+			}
+			CMenuStack.push_front(CommandMenu(CurrentCMenu.sName));
+			if (iDuplicateNumber>0) CMenuStack.front().sRawName+='_'+std::to_string(iDuplicateNumber);
+			if (CMenuStack.size()>1) {
+				if (CurrentCMenu.fAttribs & CMTOKATTRIB_BIND_KEYSET) {
+					if (iDuplicateNumber>0) 
+						(CMenuStack.begin()+1)->binds.push_back(Bind(CurrentCMenu.sKey,Parser::BindToken(CurrentCMenu.sName,"exec $cmenu_"+formatRaw(CurrentCMenu.sName)+'_'+std::to_string(iDuplicateNumber),CurrentCMenu.fAttribs)));
+					else 
+						(CMenuStack.begin()+1)->binds.push_back(Bind(CurrentCMenu.sKey,Parser::BindToken(CurrentCMenu.sName,"exec $cmenu_"+formatRaw(CurrentCMenu.sName),CurrentCMenu.fAttribs)));
+					// Add the keyname to a list of used key names if it isn't already added.
+					if (std::none_of(UsedKeys.cbegin(),UsedKeys.cend(),[&CurrentCMenu](std::string_view s){ return s == CurrentCMenu.sKey; })) UsedKeys.push_back(CurrentCMenu.sKey);
 				}
-				break;
-			case Parser::CMenuTokenType::DECLARE_CMENU:
-				{
-					//For binds to CMenuContainer.
-					CurrentCMenu = static_cast<Parser::CMenuToken&>(**token);
-					CurrentCMenu.sKey = KVMap["KEY"];
-					std::size_t iDuplicateNumber=0llu;
-					// Form duplicates if formatted name is already taken.
-					if (CMenuStack.size()>0) for (auto p=CMenuStack.end(); p!=CMenuStack.begin();)
-					{
-						p--; // This has to be here instead of being in the for declaration, otherwise if there is one commandmenu in the stack, it would not be checked for duplication.
-						if (formatRaw(p->sName)==formatRaw(CurrentCMenu.sName)) iDuplicateNumber++;
-					}
-					for (auto& p : CMenuContainer)
-					{
-						if (formatRaw(p.sName)==formatRaw(CurrentCMenu.sName)) iDuplicateNumber++;
-					}
-					CMenuStack.push_front(CommandMenu(CurrentCMenu.sName));
-					if (iDuplicateNumber>0) CMenuStack.front().sRawName+='_'+std::to_string(iDuplicateNumber);
-					if (CMenuStack.size()>1) {
-						if (CurrentCMenu.fAttribs & CMTOKATTRIB_BIND_KEYSET) {
-							if (iDuplicateNumber>0) 
-								(CMenuStack.begin()+1)->binds.push_back(Bind(CurrentCMenu.sKey,Parser::BindToken(CurrentCMenu.sName,"exec $cmenu_"+formatRaw(CurrentCMenu.sName)+'_'+std::to_string(iDuplicateNumber),CurrentCMenu.fAttribs)));
-							else 
-								(CMenuStack.begin()+1)->binds.push_back(Bind(CurrentCMenu.sKey,Parser::BindToken(CurrentCMenu.sName,"exec $cmenu_"+formatRaw(CurrentCMenu.sName),CurrentCMenu.fAttribs)));
-							// Add the keyname to a list of used key names if it isn't already added.
-							if (std::none_of(UsedKeys.cbegin(),UsedKeys.cend(),[&CurrentCMenu](std::string_view s){ return s == CurrentCMenu.sKey; })) UsedKeys.push_back(CurrentCMenu.sKey);
-						}
-						else {
-							if (iDuplicateNumber>0) (CMenuStack.begin()+1)->binds.push_back(Bind(std::to_string(NumKeyStack.top() % 10),Parser::BindToken(CurrentCMenu.sName,"exec $cmenu_"+formatRaw(CurrentCMenu.sName)+'_'+std::to_string(iDuplicateNumber),CurrentCMenu.fAttribs)));
-							else (CMenuStack.begin()+1)->binds.push_back(Bind(std::to_string(NumKeyStack.top() % 10),Parser::BindToken(CurrentCMenu.sName,"exec $cmenu_"+formatRaw(CurrentCMenu.sName),CurrentCMenu.fAttribs)));
-						}
-					}
-					if (!(CurrentCMenu.fAttribs & CMTOKATTRIB_BIND_KEYSET) && !NumKeyStack.empty()) NumKeyStack.top()=(NumKeyStack.top()+1);
-					NumKeyStack.push(1u);
+				else {
+					if (iDuplicateNumber>0) (CMenuStack.begin()+1)->binds.push_back(Bind(std::to_string(NumKeyStack.top() % 10),Parser::BindToken(CurrentCMenu.sName,"exec $cmenu_"+formatRaw(CurrentCMenu.sName)+'_'+std::to_string(iDuplicateNumber),CurrentCMenu.fAttribs)));
+					else (CMenuStack.begin()+1)->binds.push_back(Bind(std::to_string(NumKeyStack.top() % 10),Parser::BindToken(CurrentCMenu.sName,"exec $cmenu_"+formatRaw(CurrentCMenu.sName),CurrentCMenu.fAttribs)));
 				}
-				break;
-			case Parser::CMenuTokenType::END_CMENU:
-				assert(CMenuStack.size() > 0);
-				// if there are more than 10 number-key binds, they will overlap
-				if (NumKeyStack.top()>11) std::cout<<"Warning: More than ten number-key binds in CMenu \'"<<CMenuStack.front().sName<<"\'. Some binds will overlap each other!\n";
-				CMenuContainer.push_back(CMenuStack.front());
-				CMenuStack.pop_front();
+			}
+			if (!(CurrentCMenu.fAttribs & CMTOKATTRIB_BIND_KEYSET) && !NumKeyStack.empty()) NumKeyStack.top()=(NumKeyStack.top()+1);
+			NumKeyStack.push(1u);
+		}
+		else if (std::holds_alternative<Parser::CMenuEndToken>(*token))
+		{
+			assert(CMenuStack.size() > 0);
+			// if there are more than 10 number-key binds, they will overlap
+			if (NumKeyStack.top()>11) std::cout<<"Warning: More than ten number-key binds in CMenu \'"<<CMenuStack.front().sName<<"\'. Some binds will overlap each other!\n";
+			CMenuContainer.push_back(CMenuStack.front());
+			CMenuStack.pop_front();
+			assert(!NumKeyStack.empty());
+			NumKeyStack.pop();
+		}
+		else if (std::holds_alternative<Parser::BindToken>(*token))
+		{
+			Parser::BindToken CurrentBindToken = std::get<Parser::BindToken>(*token);
+			CurrentBindToken.sKey = KVMap["KEY"];
+			assert(CMenuStack.size() > 0);
+			if (!(CurrentBindToken.fAttribs & CMTOKATTRIB_BIND_KEYSET)) {
+				CMenuStack.front().binds.push_back(Bind(std::to_string(NumKeyStack.top() % 10),CurrentBindToken));
+				NumKeyStack.top()=(NumKeyStack.top()+1);
+			}
+			else {
+				CMenuStack.front().binds.push_back(Bind(CurrentBindToken.sKey,CurrentBindToken));
+				// Add the keyname to a list of used key names if it isn't already added.
+				if (std::none_of(UsedKeys.cbegin(),UsedKeys.cend(),[&CurrentBindToken](std::string_view s){ return s == CurrentBindToken.sKey;})) UsedKeys.push_back(CurrentBindToken.sKey);
+			}
+			p_iBindCount++;
+		}
+		else if (std::holds_alternative<Parser::ToggleBindToken>(*token))
+		{
+			Parser::ToggleBindToken CurrentToggleBindToken = std::get<Parser::ToggleBindToken>(*token);
+			CurrentToggleBindToken.sKey = KVMap["KEY"];
+			assert(CMenuStack.size() > 0);				
+			if (!(CurrentToggleBindToken.fAttribs & CMTOKATTRIB_BIND_KEYSET)) {
+				CMenuStack.front().binds.push_back(Bind(std::to_string(NumKeyStack.top() % 10),CurrentToggleBindToken));
 				assert(!NumKeyStack.empty());
-				NumKeyStack.pop();
-			break;
-			case Parser::CMenuTokenType::MENU_BIND:
-			{
-				Parser::BindToken CurrentBindToken=static_cast<Parser::BindToken&>(**token);
-				CurrentBindToken.sKey = KVMap["KEY"];
-				assert(CMenuStack.size() > 0);
-				if (!(CurrentBindToken.fAttribs & CMTOKATTRIB_BIND_KEYSET)) {
-					CMenuStack.front().binds.push_back(Bind(std::to_string(NumKeyStack.top() % 10),CurrentBindToken));
-					NumKeyStack.top()=(NumKeyStack.top()+1);
-				}
-				else {
-					CMenuStack.front().binds.push_back(Bind(CurrentBindToken.sKey,CurrentBindToken));
-					// Add the keyname to a list of used key names if it isn't already added.
-					if (std::none_of(UsedKeys.cbegin(),UsedKeys.cend(),[&CurrentBindToken](std::string_view s){ return s == CurrentBindToken.sKey;})) UsedKeys.push_back(CurrentBindToken.sKey);
-				}
-				p_iBindCount++;
+				NumKeyStack.top()=(NumKeyStack.top()+1);
 			}
-			break;
-			case Parser::CMenuTokenType::MENU_TOGGLE_BIND:
-			{
-				Parser::ToggleBindToken CurrentToggleBindToken = static_cast<Parser::ToggleBindToken&>(**token);
-				CurrentToggleBindToken.sKey = KVMap["KEY"];
-				assert(CMenuStack.size() > 0);				
-				if (!(CurrentToggleBindToken.fAttribs & CMTOKATTRIB_BIND_KEYSET)) {
-					CMenuStack.front().binds.push_back(Bind(std::to_string(NumKeyStack.top() % 10),CurrentToggleBindToken));
-					assert(!NumKeyStack.empty());
-					NumKeyStack.top()=(NumKeyStack.top()+1);
-				}
-				else {
-					CMenuStack.front().binds.push_back(Bind(CurrentToggleBindToken.sKey,CurrentToggleBindToken));
-					// Add the keyname to a list of used key names if it isn't already added.
-					if (std::none_of(UsedKeys.cbegin(),UsedKeys.cend(),[&CurrentToggleBindToken](std::string_view s){ return s == CurrentToggleBindToken.sKey;})) UsedKeys.push_back(CurrentToggleBindToken.sKey);
-				}
-				p_iBindCount++;
-				break;
+			else {
+				CMenuStack.front().binds.push_back(Bind(CurrentToggleBindToken.sKey,CurrentToggleBindToken));
+				// Add the keyname to a list of used key names if it isn't already added.
+				if (std::none_of(UsedKeys.cbegin(),UsedKeys.cend(),[&CurrentToggleBindToken](std::string_view s){ return s == CurrentToggleBindToken.sKey;})) UsedKeys.push_back(CurrentToggleBindToken.sKey);
 			}
-			break;
-			default:
-				break;
+			p_iBindCount++;
+		}
+		else {
+			
 		}
 	}
 	return true;
