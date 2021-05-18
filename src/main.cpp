@@ -64,15 +64,18 @@ alias cmenu.on_exitmenu ;
 alias cmenu.on_page_exit ;
 cmenu.exitmenu
 )";
-	// Conversion to UCS-2.
-	std::locale utf16(std::locale::classic(),new std::codecvt_utf16<wchar_t, 0xffff, std::little_endian>);
-	// Create the captions directory once.
-	if (!std::filesystem::exists(sOutputDir.string()+"/resource")) std::filesystem::create_directories(sOutputDir.string()+"/resource");
-	std::wofstream CMenuCaptionFile(sOutputDir.string()+"/resource/closecaption_commandmenu.txt",std::ios_base::binary);
-	CMenuCaptionFile.imbue(utf16);
-	CMenuCaptionFile<<(wchar_t)0xFEFF; // BOM.
-	CMenuCaptionFile<<convert.from_bytes("\"lang\"\n{\n\t\"Language\" \"commandmenu\"\n\t\"Tokens\"\n\t{\n\t\t\"_#cmenu.clear_screen\" \"<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	\"\n");
-	
+	// Make caption file if any CMenu uses captions for displays.
+	std::wofstream CMenuCaptionFile;
+	if (bUsedDisplayFlags & FL_DISPLAY_CAPTION) {
+		// Conversion to UCS-2 through *shudders* std::locale.
+		std::locale utf16(std::locale::classic(),new std::codecvt_utf16<wchar_t, 0xffff, std::little_endian>);
+		// Create the captions directory once.
+		if (!std::filesystem::exists(sOutputDir.string()+"/resource")) std::filesystem::create_directories(sOutputDir.string()+"/resource");
+		CMenuCaptionFile.open(sOutputDir.string()+"/resource/closecaption_commandmenu.txt", std::ios_base::binary);
+		CMenuCaptionFile.imbue(utf16);
+		CMenuCaptionFile<<(wchar_t)0xFEFF; // The Byte Order Mark.
+		CMenuCaptionFile<<convert.from_bytes("\"lang\"\n{\n\t\"Language\" \"commandmenu\"\n\t\"Tokens\"\n\t{\n\t\t\"_#cmenu.clear_screen\" \"<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	<cr>	\"\n");
+	}
 	std::string CMenuCFGPath; // String path for each CMenu CFG.
 	unsigned long iToggleNumber = 0u;
 	for (auto CMenu = CMenuContainer.begin(); CMenu != CMenuContainer.end(); CMenu++) {
