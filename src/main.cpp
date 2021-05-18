@@ -40,36 +40,19 @@ int main(int argc, char** argv) {
 	}
 	// If tokenization and parsing process failed then error out and return. Also get the compiled bind count.
 	unsigned short iBindCount=0u;
-	unsigned char bUsedDisplayFlags=0; // Flag used to mark if and what display types were used.
+	char bUsedDisplayFlags = 0; // Flag used to mark if and what display types were used.
 	if (!Lexer::Tokenize(InFileContent) 
 		|| !Parser::ParseTokens()
-		|| !ParseMenuTokens(iBindCount,bUsedDisplayFlags)) {
+		|| !ParseMenuTokens(iBindCount, bUsedDisplayFlags)) {
 		std::for_each(ErrorTokens.cbegin(),ErrorTokens.cend(),[](const Token& e){std::cout << e.sValue << '\n';});
 		return -1;
-	}
-	
-	/*
-	display="caption" - Makes cmenus use the caption for bind displays
-	display="console" - Makes cmenus use the console for bind displys
-	display="none" - Disables bind display for future CMenus. 
-	First trim the display KV to remove spaces and make the value lowercase.
-	*/
-	if (KVMap["display"] != "caption" && KVMap["display"] != "console" && KVMap["display"]!="none") 
-		for (unsigned long long i=0; i < KVMap["display"].length(); i++) {
-			if (isspace(KVMap["display"].at(i))==true) KVMap["display"].erase(i,1);
-			KVMap["display"].at(i)=tolower(KVMap["display"].at(i));
-		}
-	
-	// Then if the display KV isn't one of the three specified values, force it to default ("caption").
-	if (KVMap["display"] != "caption" && KVMap["display"] != "console" && KVMap["display"]!="none") {
-		std::cout<<"warning: Unknown display type \""<<KVMap["display"]<<"\". Falling back to caption display!\n";
-		KVMap["display"]="caption";
 	}
 	// Now start creating the neccessary CFG and Captions files for CMenus.
 	std::filesystem::create_directories(sOutputDir.string()+"/cfg");
 	// Main CFG file that initializes our CMenus.
 	std::ofstream InitRoutineFile(sOutputDir.string()+"/cfg/cmenu_initialize.cfg");	
 	InitRoutineFile<<"closecaption 1\ncc_lang commandmenu\nalias _cmenu.nullkeys \"";
+	// Output the null keys alias.
 	std::for_each(UsedKeys.cbegin(), UsedKeys.cend(), 
 	[&InitRoutineFile](const std::string_view key){
 		InitRoutineFile<<"alias _cmenu.key_"<<((key.length() + CMENU_KEY_ALIAS_LENGTH > 32 ) ? key.substr(0, key.length() - CMENU_KEY_ALIAS_LENGTH) : key) << ';';
@@ -97,9 +80,9 @@ cmenu.exitmenu
 		CMenuCFGPath=sOutputDir.string()+"/cfg/$cmenu_"+CMenu->sRawName+".cfg";
 		std::ofstream CMenuCFG(CMenuCFGPath);
 		/* Disable other displays if this CMenu isnt using it and there are other CMenus that use it.*/
-		if (CMenu->Display!=CMenuDisplayType::CONSOLE && (bUsedDisplayFlags & 2))
+		if (CMenu->Display!=CMenuDisplayType::CONSOLE && (bUsedDisplayFlags & FL_DISPLAY_CONSOLE))
 			CMenuCFG<<"developer 0\n";
-		if (CMenu->Display!=CMenuDisplayType::CAPTIONS && (bUsedDisplayFlags & 4))
+		if (CMenu->Display!=CMenuDisplayType::CAPTIONS && (bUsedDisplayFlags & FL_DISPLAY_CAPTION))
 			CMenuCFG<<"cc_emit _#cmenu.clear_screen\n";
 		
 		/* Create the actual binds needed for the declared binds. */

@@ -18,7 +18,13 @@
 #define CMTOKATTRIB_NOEXIT (1<<1)
 #define CMTOKATTRIB_BIND_KEYSET (1<<2)
 
-bool ParseMenuTokens(unsigned short& p_iBindCount, unsigned char& p_bUsedDisplayFlags);
+
+/* Display flags */
+#define FL_DISPLAY_NONE (1<<0)
+#define FL_DISPLAY_CONSOLE (1<<1)
+#define FL_DISPLAY_CAPTION (1<<2)
+
+bool ParseMenuTokens(unsigned short& p_iBindCount, char& p_bUsedDisplayFlags);
 namespace Parser {
 	// For handling multi Tokens.
 	enum CMenuTokenType {MENU_BIND=0, MENU_TOGGLE_BIND, DECLARE_CMENU, END_CMENU, KV_SET};

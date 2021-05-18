@@ -2,6 +2,7 @@
 #include <string>
 #include <deque>
 #include <map>
+#include <iomanip>
 #include <stack>
 #include <variant>
 #include "compiler.hpp"
@@ -286,8 +287,9 @@ namespace Parser {
 		
 	Returns true if conversion was successful. If not then it returns false.
 */
-bool ParseMenuTokens(unsigned short& p_iBindCount, unsigned char& p_bUsedDisplayFlags) {
+bool ParseMenuTokens(unsigned short& p_iBindCount, char& p_bUsedDisplayFlags) {
 	// Has there been an error? BAIL.
+	char t_bUsedDisplayFlags = p_bUsedDisplayFlags;
 	if (ErrorTokens.size()>=1) return false;
 	std::deque<CommandMenu> CMenuStack;
 	std::stack<unsigned char> NumKeyStack;
@@ -307,10 +309,18 @@ bool ParseMenuTokens(unsigned short& p_iBindCount, unsigned char& p_bUsedDisplay
 		if (std::holds_alternative<Parser::KVToken>(*token))
 		{
 			KVMap.insert_or_assign(std::get<Parser::KVToken>(*token).Key, std::get<Parser::KVToken>(*token).Value);
-			// Store what display types were used in p_bUsedDisplayFlags.
-			if (KVMap["display"]=="none") p_bUsedDisplayFlags |= 1;
-			else if (KVMap["display"]=="console") p_bUsedDisplayFlags |= 2;
-			else if (KVMap["display"]=="caption") p_bUsedDisplayFlags |= 4;
+			// Store what display types were used in p_bUsedDisplayFlags IF they get used.
+			if (std::get<Parser::KVToken>(*token).Key == "display") {
+				if (KVMap["display"]=="none") t_bUsedDisplayFlags |= FL_DISPLAY_NONE;
+				else if (KVMap["display"]=="console") t_bUsedDisplayFlags |= FL_DISPLAY_CONSOLE;
+				else if (KVMap["display"]=="caption") t_bUsedDisplayFlags |= FL_DISPLAY_CAPTION;
+				// If the display KV isn't one of the three specified values, force it to the default value. ("caption").
+				else {
+					std::cout<<"warning: Unknown display type "<<quoted(KVMap["display"])<<". Falling back to caption display!\n";
+					KVMap["display"]="caption";
+					t_bUsedDisplayFlags |= FL_DISPLAY_CAPTION;
+				}
+			}
 		}
 		else if (std::holds_alternative<Parser::CMenuToken>(*token))
 		{
@@ -344,6 +354,7 @@ bool ParseMenuTokens(unsigned short& p_iBindCount, unsigned char& p_bUsedDisplay
 			}
 			if (!(CurrentCMenu.fAttribs & CMTOKATTRIB_BIND_KEYSET) && !NumKeyStack.empty()) NumKeyStack.top()=(NumKeyStack.top()+1);
 			NumKeyStack.push(1u);
+			p_bUsedDisplayFlags = t_bUsedDisplayFlags;
 		}
 		else if (std::holds_alternative<Parser::CMenuEndToken>(*token))
 		{
