@@ -26,8 +26,6 @@
 
 bool ParseMenuTokens(unsigned short& p_iBindCount, char& p_bUsedDisplayFlags);
 namespace Parser {
-	// For handling multi Tokens.
-	enum CMenuTokenType {MENU_BIND=0, MENU_TOGGLE_BIND, DECLARE_CMENU, END_CMENU, KV_SET};
 	struct MenuToken {
 		CMenuTokenType Type;
 		char fAttribs=0; // Attribute flag.

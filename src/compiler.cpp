@@ -36,33 +36,20 @@ namespace Parser {
 	
 	Parser::KVToken::KVToken(const std::string& ident, const std::string& value)
 	: Key(ident), Value(value) {
-		Type=CMenuTokenType::KV_SET;
 		fAttribs=0;
 	}
 	
-	Parser::BindToken::BindToken() {
-		
-	}
+	Parser::BindToken::BindToken() {}
 	
 	Parser::BindToken::BindToken(const std::string& p_sName, const std::string& p_sCmdStr, const char& p_fAttributeFlag)
-	: sName(p_sName), sCmdStr(p_sCmdStr) {
-		Type=CMenuTokenType::MENU_BIND;
-		fAttribs = p_fAttributeFlag;		
-	}
+	: sName(p_sName), sCmdStr(p_sCmdStr) {fAttribs = p_fAttributeFlag;}
 	
 	Parser::BindToken::BindToken(const std::string& p_sKey, const std::string& p_sName, const std::string& p_sCmdStr, const char& p_fAttributeFlag)
-	: sKey(p_sKey), sName(p_sName), sCmdStr(p_sCmdStr) {
-		Type=CMenuTokenType::MENU_BIND;
-		fAttribs = p_fAttributeFlag;		
-	}
+	: sKey(p_sKey), sName(p_sName), sCmdStr(p_sCmdStr) {fAttribs = p_fAttributeFlag;		}
 	
-	Parser::BindToken::~BindToken() {
-		
-	}
+	Parser::BindToken::~BindToken() {}
 	
-	Parser::ToggleBindToken::ToggleBindToken() {
-		
-	}
+	Parser::ToggleBindToken::ToggleBindToken() {}
 	
 	Parser::ToggleBindToken::ToggleBindToken(const std::string p_names[MAX_TOGGLE_STATES], const std::string p_CmdStrContainer[MAX_TOGGLE_STATES], unsigned short p_iToggleStates, const char& p_fAttributeFlag)
 	: ToggleStates(p_iToggleStates)
@@ -75,7 +62,7 @@ namespace Parser {
 			CmdStrContainer[i]=p_CmdStrContainer[i];
 			CmdStrContainer[i].shrink_to_fit();
 		}
-		Type=CMenuTokenType::MENU_TOGGLE_BIND;
+		
 		fAttribs = p_fAttributeFlag;
 	}
 	
@@ -90,41 +77,28 @@ namespace Parser {
 			CmdStrContainer[i]=p_CmdStrContainer[i];
 			CmdStrContainer[i].shrink_to_fit();
 		}
-		Type=CMenuTokenType::MENU_TOGGLE_BIND;
 		fAttribs = p_fAttributeFlag;
 	}
 	
-	Parser::ToggleBindToken::~ToggleBindToken() {
-		
-	}
+	Parser::ToggleBindToken::~ToggleBindToken() {}
 	
-	Parser::CMenuToken::CMenuToken() {
-		
-	}
+	Parser::CMenuToken::CMenuToken() {}
 	
 	Parser::CMenuToken::CMenuToken(const std::string& sName, const char& p_fAttributeFlag)
 	: sName(sName) {
-		Type=CMenuTokenType::DECLARE_CMENU;
 		fAttribs = p_fAttributeFlag;
 	}
 
 	Parser::CMenuToken::CMenuToken(const std::string& p_sKey, const std::string& sName, const char& p_fAttributeFlag)
 	: sName(sName), sKey(p_sKey) {
-		Type=CMenuTokenType::DECLARE_CMENU;
 		fAttribs = p_fAttributeFlag;
 	}
 	
-	Parser::CMenuToken::~CMenuToken() {
-		
-	}
+	Parser::CMenuToken::~CMenuToken() {}
 	
-	Parser::CMenuEndToken::CMenuEndToken() {
-		Type=CMenuTokenType::END_CMENU;
-	}
+	Parser::CMenuEndToken::CMenuEndToken() {}
 	
-	Parser::CMenuEndToken::~CMenuEndToken() {
-		
-	}
+	Parser::CMenuEndToken::~CMenuEndToken() {}
 	
 	/* Parses the tokens from the lexer
 		Returns true if parsing was successful; false if it wasn't.
