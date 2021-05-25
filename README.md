@@ -46,3 +46,7 @@ Counter-Strike: Global Offensive | Ok<sup>[1]</sup> | Broken | Good<sup>[2]</sup
 <sup>[2]</sup> - Command menus will not display if a command menu was not already ran.
 
 Any source games that I left out are untested. If you encounter issues while using this program, then make an issue on what issues you encountered and if it is possible to fix.
+
+# Disclaimer
+
+Any responsibilities that comes with using this compiler (such as not spamming chat binds) are soley bound to the user. The creator (WhyIsEvery4thYearAlwaysBad or Amicdict) does not bear any responsibility for bans/mutes from malicious use of this program caused by other users of this program.
