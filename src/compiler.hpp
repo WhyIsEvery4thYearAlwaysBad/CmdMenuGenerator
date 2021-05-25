@@ -27,7 +27,6 @@
 bool ParseMenuTokens(unsigned short& p_iBindCount, char& p_bUsedDisplayFlags);
 namespace Parser {
 	struct MenuToken {
-		CMenuTokenType Type;
 		char fAttribs=0; // Attribute flag.
 		MenuToken();
 		virtual ~MenuToken();
