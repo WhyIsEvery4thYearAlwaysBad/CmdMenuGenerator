@@ -123,13 +123,6 @@ namespace Lexer {
 						}
 					}
 					break;
-						}
-						else {
-							if (p_sInStr.at(i)=='\t') iLineColumn += 4 - (iLineColumn % 4);
-							t_sStrTemp+=p_sInStr.at(i);
-						}
-					}
-					break;
 				//terminals
 				case '=':
 					TokenContainer.push_back(Token(iLineNum,iLineColumn,TokenType::EQUALS,"="));
