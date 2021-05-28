@@ -44,7 +44,9 @@ int main(int argc, char** argv) {
 	if (!Lexer::Tokenize(InFileContent) 
 		|| !Parser::ParseTokens()
 		|| !ParseMenuTokens(iBindCount, bUsedDisplayFlags)) {
-		std::for_each(ErrorTokens.cbegin(),ErrorTokens.cend(),[](const Token& e){std::cout << e.sValue << '\n';});
+		std::for_each(ErrorTokens.cbegin(),ErrorTokens.cend(),[](const Token& e){
+			std::cout << std::to_string(e.iLineNum) << ':' << std::to_string(e.iLineColumn) << ' ' << e.sValue << '\n';
+		});
 		return -1;
 	}
 	// Now start creating the neccessary CFG and Captions files for CMenus.

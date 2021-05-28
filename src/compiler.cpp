@@ -120,12 +120,12 @@ namespace Parser {
 		for (auto token=TokenContainer.begin(); token!=TokenContainer.end(); ) {
 			switch (token->Type) {
 				case TokenType::NOEXIT:
-					if (fParserStateFlag & PARSER_STATE_NOEXIT) ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,token->GetFileLoc()+": error: Duplicate modifier \"NOEXIT\"."));
+					if (fParserStateFlag & PARSER_STATE_NOEXIT) ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,"error: Duplicate modifier \"NOEXIT\"."));
 					else fParserStateFlag |= PARSER_STATE_NOEXIT;
 					token++;
 					break;
 				case TokenType::NOFORMAT:
-					if (!(fParserStateFlag & PARSER_STATE_FORMATTED)) ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,token->GetFileLoc()+": error: Duplicate modifier \"NOFORMAT\"."));
+					if (!(fParserStateFlag & PARSER_STATE_FORMATTED)) ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,"error: Duplicate modifier \"NOFORMAT\"."));
 					else fParserStateFlag &= ~PARSER_STATE_FORMATTED;
 					token++;
 					break;
@@ -135,9 +135,9 @@ namespace Parser {
 						std::string CmdList[MAX_TOGGLE_STATES];
 						unsigned short i=1;
 						if (iCMenuDepth<=0) 
-							ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,token->GetFileLoc()+": error: Toggle bind must be set in a command menu."));
+							ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,"error: Toggle bind must be set in a command menu."));
 						if ((token+i)->Type!=TokenType::BIND)
-							ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,token->GetFileLoc()+": error: Expected \'BIND\' keyword here."));
+							ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,"error: Expected \'BIND\' keyword here."));
 						else i++;
 						while ((token+i)->Type == TokenType::STRING)
 						{
@@ -146,7 +146,7 @@ namespace Parser {
 							i++;
 						}
 						if (i-1<=1 || i % 2 != 0)  // Even amount of strings indicate that the toggle bind has names and cmdstrs
-							ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,token->GetFileLoc()+": error: Expected string here."));
+							ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,"error: Expected string here."));
 						if ((token+i)->Type != TokenType::VBAR) 
 							ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,(token+i)->GetFileLoc()+"error: Expected '|'."));
 						if (!(fParserStateFlag & PARSER_STATE_ERRORS_FOUND)) 
@@ -160,17 +160,17 @@ namespace Parser {
 					{
 						unsigned short i=1u;
 						if (iCMenuDepth<=0) 
-							ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,token->GetFileLoc()+": error: Bind must be set in a command menu."));
+							ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,"error: Bind must be set in a command menu."));
 						if ((token+i)->Type!=TokenType::STRING) 
-							ErrorTokens.push_back(Token((token+i)->iLineNum,(token+i)->iLineColumn,TokenType::COMPILER_ERROR,(token+i)->GetFileLoc()+": error: Expected a string."));
+							ErrorTokens.push_back(Token((token+i)->iLineNum,(token+i)->iLineColumn,TokenType::COMPILER_ERROR,"error: Expected a string."));
 						else {
 							i++;
 							if ((token+i)->Type != TokenType::STRING)
-								ErrorTokens.push_back(Token((token+i)->iLineNum,(token+i)->iLineColumn,TokenType::COMPILER_ERROR,(token+i)->GetFileLoc()+": error: Expected a string."));
+								ErrorTokens.push_back(Token((token+i)->iLineNum,(token+i)->iLineColumn,TokenType::COMPILER_ERROR,"error: Expected a string."));
 							else i++;
 						}
 						if ((token+i)->Type != TokenType::VBAR)
-							ErrorTokens.push_back(Token((token+i)->iLineNum,(token+i)->iLineColumn,TokenType::COMPILER_ERROR,(token+i)->GetFileLoc()+": error: Expected '|'."));
+							ErrorTokens.push_back(Token((token+i)->iLineNum,(token+i)->iLineColumn,TokenType::COMPILER_ERROR,"error: Expected '|'."));
 						else i++;
 						if (!(fParserStateFlag & PARSER_STATE_ERRORS_FOUND))
 							CMenuTokens.push_back(Parser::BindToken((token+1)->sValue, (token+2)->sValue, ((fParserStateFlag & PARSER_STATE_FORMATTED) ? CMTOKATTRIB_FORMATTED : 0) | ((fParserStateFlag & PARSER_STATE_NOEXIT) ? CMTOKATTRIB_NOEXIT : 0)));
@@ -185,11 +185,11 @@ namespace Parser {
 					unsigned short i=1u;
 					// CMenus will never run cmenu.exitmenu so NOEXIT is redundant.
 					if (fParserStateFlag & PARSER_STATE_NOEXIT) {
-						ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,token->GetFileLoc()+": error: 'NOEXIT' modifier cannot be used with CMenus."));
+						ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,"error: 'NOEXIT' modifier cannot be used with CMenus."));
 						fParserStateFlag &= ~CMTOKATTRIB_NOEXIT;
 					}
 					if ((token+i)->Type!=TokenType::LCBRACKET) 
-						ErrorTokens.push_back(Token((token+i)->iLineNum,(token+i)->iLineColumn,TokenType::COMPILER_ERROR,(token+i)->GetFileLoc()+": error: Expected '{' here."));
+						ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,"error: Expected '{' here."));
 					if (!(fParserStateFlag & PARSER_STATE_ERRORS_FOUND)) 
 						CMenuTokens.push_back(Parser::CMenuToken(token->sValue,((fParserStateFlag & PARSER_STATE_FORMATTED) ? CMTOKATTRIB_FORMATTED : 0) | CMTOKATTRIB_NOEXIT));
 					fParserStateFlag |= CMTOKATTRIB_FORMATTED;
@@ -200,15 +200,15 @@ namespace Parser {
 				{
 					// Key Values should never have modifiers.
 					if (!(fParserStateFlag & PARSER_STATE_FORMATTED) || (fParserStateFlag & PARSER_STATE_NOEXIT) || (fParserStateFlag & PARSER_STATE_BIND_KEYSET)) {
-						ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,token->GetFileLoc()+": error: Modifiers can only be applied to CMenus, binds, or toggle binds."));
+						ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,"error: Modifiers can only be applied to CMenus, binds, or toggle binds."));
 					}
 					unsigned short i=1u;
 					if ((token+i)->Type!=TokenType::EQUALS) {
-						ErrorTokens.push_back(Token((token+i)->iLineNum,(token+i)->iLineColumn,TokenType::COMPILER_ERROR,(token+i)->GetFileLoc()+": error: Expected a '=' here."));
+						ErrorTokens.push_back(Token((token+i)->iLineNum,(token+i)->iLineColumn,TokenType::COMPILER_ERROR,"error: Expected a '=' here."));
 					} 
 					else i++;
 					if ((token+i)->Type!=TokenType::STRING) {
-						ErrorTokens.push_back(Token((token+i)->iLineNum,(token+i)->iLineColumn,TokenType::COMPILER_ERROR,(token+i)->GetFileLoc()+": error: Expected a string here."));
+						ErrorTokens.push_back(Token((token+i)->iLineNum,(token+i)->iLineColumn,TokenType::COMPILER_ERROR,"error: Expected a string here."));
 					}
 					else i++;
 					if (!(fParserStateFlag & PARSER_STATE_ERRORS_FOUND)) CMenuTokens.push_back(Parser::KVToken(token->sValue,(token+2)->sValue));
@@ -218,7 +218,7 @@ namespace Parser {
 				case TokenType::LCBRACKET:
 					iCMenuDepth++;
 					if (token>TokenContainer.begin() && (token-1)->Type!=TokenType::STRING) {
-						ErrorTokens.push_back(Token((token-1)->iLineNum,(token-1)->iLineColumn,TokenType::COMPILER_ERROR,(token-1)->GetFileLoc()+": error: Expected a string here."));
+						ErrorTokens.push_back(Token((token-1)->iLineNum,(token-1)->iLineColumn,TokenType::COMPILER_ERROR,": error: Expected a string here."));
 						iCMenuDepth--;
 					}
 					token++;
@@ -226,7 +226,7 @@ namespace Parser {
 				case TokenType::RCBRACKET:
 					iCMenuDepth--;
 					if (iCMenuDepth<0) {
-						ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,token->GetFileLoc()+": error: Stray '}'"));
+						ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,"error: Stray '}'"));
 						iCMenuDepth++;
 					}
 					if (!(fParserStateFlag & PARSER_STATE_ERRORS_FOUND)) CMenuTokens.push_back(Parser::CMenuEndToken());
@@ -238,7 +238,7 @@ namespace Parser {
 					token=TokenContainer.end();
 					break;
 				case TokenType::UNDEFINED: 
-					ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,token->GetFileLoc()+": error: Unrecognized character \'"+token->sValue+"\'."));
+					ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,"error: Unrecognized character \'"+token->sValue+"\'."));
 					token++;
 					break;
 				default:

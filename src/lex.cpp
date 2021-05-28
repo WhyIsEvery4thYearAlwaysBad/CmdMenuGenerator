@@ -18,7 +18,7 @@ std::string formatRaw(std::string p_sInStr) {
 	p_sInStr.erase(std::remove_if(p_sInStr.begin(), p_sInStr.end(), [](char c){return std::ispunct(c) || !isascii(c);}), p_sInStr.end());
 	// and replace spaces with underscores
 	std::replace(p_sInStr.begin(), p_sInStr.end(), ' ', '_');
-	// replace uppercase with lower case 
+	// replace uppercase with lower case
 	std::transform(p_sInStr.begin(), p_sInStr.end(), p_sInStr.begin(), [](char c){ return std::tolower(c);});
 	return p_sInStr;
 }
@@ -27,211 +27,157 @@ std::string formatRaw(std::string p_sInStr) {
 namespace Lexer {
 	// Checks if character is usable in a nonterminal.
 	bool IsIdentChar(const char& c) {
-		if (isalnum(c)
-		|| c=='#' 
-		|| c=='.'
-		|| c=='_') return true;
+		if (isalnum(c)) return true;
 		else return false;
 	}
 	// Convert string to token stream. Returns true if successful and false if an error occurs.
 	bool Tokenize(const std::string_view& p_sInStr) {
 		bool bErrorsFound=false, bInBlockComment=false;
 		std::string t_sStrTemp;
-		for (std::size_t i=0; i < p_sInStr.length(); )
+		for (auto str_it = p_sInStr.begin(); str_it < p_sInStr.end(); )
 		{
-			if (bInBlockComment) {
-				if (p_sInStr.find("*/",i)==std::string::npos) {
-					ErrorTokens.push_back(Token(iLineNum,iLineColumn,TokenType::COMPILER_ERROR,std::to_string(iLineNum)+':'+std::to_string(iLineColumn)+": error: Block quote has no ending sequence ('*/')."));
-					bErrorsFound=true;
-					i=p_sInStr.length();
-					break;
-				}
-				else if (p_sInStr.at(i)=='*' && p_sInStr.at(i+1)=='/') {
-					bInBlockComment=false;	
-					i+=2;
-					iLineColumn+=2;
-					continue;
-				}
-				else switch (p_sInStr.at(i)) {
-					//spaces and colon
-					case '\t':
-						iLineColumn += 4 - (iLineColumn % 4);
-						i++;
-					break;
-					case ' ':
-						iLineColumn++;
-						i++;
-					break;
-					case '\r':
-						iLineColumn=1u;
-						if ((i+1)<p_sInStr.length() && p_sInStr.at(i+1)!='\n') iLineNum++;
-						i++;
-					break;
-					case '\v':
-						i++;
-						iLineNum++;
-					break;
-					case '\n':
-						iLineNum++;
-						if (i>0 && p_sInStr.at(i-1)!='\r') iLineColumn=1u;
-						i++;
-					break;
-					default:
-						i++;
-						iLineColumn++;
-					break;
-				}
+			if (TokenContainer.size()>0) TokenContainer.back().sValue.shrink_to_fit();
+			// Nonterminals / Identifiers
+			if (std::isalnum(*str_it) || *str_it == '_') {
+				auto last_identifier_char_it = std::find_if(str_it, p_sInStr.cend(), [](unsigned char c){return !(std::isalnum(c) || c == '_');});
+				// Keep the line column at the initial character.
+				TokenContainer.push_back(Token(iLineNum, iLineColumn, TokenType::IDENTIFIER, std::string(str_it, last_identifier_char_it)));
+				iLineColumn += std::distance(str_it, last_identifier_char_it);
+				// Check for terminals.
+				if (TokenContainer.back().sValue=="TOGGLE") TokenContainer.back().Type=TokenType::TOGGLE;
+				else if (TokenContainer.back().sValue=="BIND") TokenContainer.back().Type=TokenType::BIND;
+				else if (TokenContainer.back().sValue=="NOEXIT") TokenContainer.back().Type=TokenType::NOEXIT;
+				else if (TokenContainer.back().sValue=="NOFORMAT") TokenContainer.back().Type=TokenType::NOFORMAT;
+				str_it = last_identifier_char_it;
+				continue;
 			}
-			else {
-				if (TokenContainer.size()>0) TokenContainer.back().sValue.shrink_to_fit();
-				// EOF Token
-				if (i == p_sInStr.length() - 1) {
-					TokenContainer.push_back(Token(iLineNum,p_sInStr.length()-1,TokenType::END_OF_FILE,""));
-					TokenContainer.back().sValue.shrink_to_fit();
-					break;
-				}
-				// Nonterminal
-				if (IsIdentChar(p_sInStr.at(i))) {
-					TokenContainer.push_back(Token(iLineNum,iLineColumn,TokenType::IDENTIFIER,""));
-					while (IsIdentChar(p_sInStr.at(i)))
-					{
-						TokenContainer.back().sValue.push_back(p_sInStr.at(i));
-						i++;
-						iLineColumn++;
-					}
-					// Check for terminals.
-					if (TokenContainer.back().sValue=="TOGGLE") TokenContainer.back().Type=TokenType::TOGGLE;
-					else if (TokenContainer.back().sValue=="BIND") TokenContainer.back().Type=TokenType::BIND;
-					else if (TokenContainer.back().sValue=="NOEXIT") TokenContainer.back().Type=TokenType::NOEXIT;
-					else if (TokenContainer.back().sValue=="NOFORMAT") TokenContainer.back().Type=TokenType::NOFORMAT;
-					continue;
-				}
-				switch (p_sInStr.at(i))
-				{
+			switch (*(str_it))
+			{
 				// comments
 				case '/':
 					// Line comments
-					if (p_sInStr.at(i+1)=='/') {
-						for (auto t=p_sInStr.begin()+i; t!=p_sInStr.end(); t++, i++) {
-							if (*t=='\t') iLineColumn += 4 - (iLineColumn % 4);
-							else iLineColumn++;
-							if (*t=='\n' || *t=='\r') break;
-						}
+					if (*(str_it + 1) == '/') {
+						// Trying to capture the iterator will just implicitly convert it. WHY?
+						unsigned long long lambda_char_pos = p_sInStr.length();
+						std::for_each(str_it, std::find(str_it, p_sInStr.end(), '\n'), [lambda_char_pos, iLineColumn](char c) mutable -> void {
+							switch (c) {
+								lambda_char_pos++;
+								case '\t': {iLineColumn += 4 - (lambda_char_pos % 4); break;}
+								case '\n': break;
+								default: iLineColumn++;
+							}
+						});
+						iLineNum++;
+						iLineColumn = 0u;
+						str_it = std::find(str_it, p_sInStr.end(), '\n') + 1;
 					}
 					/* Block comments */
-					else if (p_sInStr.at(i+1)=='*') { //
-						bInBlockComment=true;
-						i+=2;
-						iLineColumn+=2;
+					else if (*(str_it + 1) == '*') {
+						const std::string end_seq_ref = "*/";
+						auto end_seq_it = std::search(str_it, p_sInStr.cend(), end_seq_ref.cbegin(), end_seq_ref.cend());
+						if (end_seq_it >= p_sInStr.cend()) {
+							ErrorTokens.push_back(Token(iLineNum,iLineColumn,TokenType::COMPILER_ERROR,"error: Matching '*/' sequence not found."));
+							str_it = end_seq_it;
+						}
+						else {
+							// Trying to capture the iterator will just implicitly convert it. WHY?
+							unsigned long long lambda_char_pos = p_sInStr.length();
+							std::for_each(str_it, end_seq_it, [lambda_char_pos, iLineColumn](char c) mutable -> void {
+								switch (c) {
+									lambda_char_pos++;
+									case '\t': {iLineColumn += 4 - (lambda_char_pos % 4); break;}
+									case '\n': {iLineColumn = 1; iLineNum++; break;}
+									default: iLineColumn++;
+								}
+							});
+							iLineNum += std::count(str_it, end_seq_it, '\n');
+							str_it = end_seq_it + 2;
+						}
 					}
 					else {
 						TokenContainer.push_back(Token(iLineNum,iLineColumn,TokenType::UNDEFINED,"/"));
 						iLineColumn++;
-						i++;
 					}
 					break;
 				// strings
 				case '\"':
 					{
-					// New lines or carriage returns cannot be in strings. (I don't mean the '\r' or '\n' character.)
-					for (i++, iLineColumn++; i < p_sInStr.length(); i++, iLineColumn++) {
-						if (p_sInStr.at(i)=='\r') {
-							ErrorTokens.push_back(Token(iLineNum,iLineColumn,TokenType::COMPILER_ERROR,std::to_string(iLineNum)+':'+std::to_string(iLineColumn)+": error: Ending '\"' is missing."));
-							bErrorsFound=true;
-							TokenContainer.push_back(Token(iLineNum,iLineColumn,TokenType::STRING,""));
-							t_sStrTemp="";
-							iLineColumn=1u;
-							if (p_sInStr.at(i+1)!='\n') {
-								iLineNum++;
-								i++;
-							}
-							break;
+						std::string_view::iterator end_quote_it = std::find(str_it + 1, p_sInStr.end(), '\"');
+						// New lines or carriage returns cannot be in strings. (As in ASCII values 10 and 13, not the C-style escapes though those arent interpreted.)
+						if (end_quote_it >= p_sInStr.end()
+							|| std::any_of(str_it, end_quote_it, [](char c){return c == '\n' || c == '\r'; })) {
+							ErrorTokens.push_back(Token(iLineNum,iLineColumn,TokenType::COMPILER_ERROR,"error: String not properly closed with '\"'."));
+							str_it = p_sInStr.end();
+							iLineColumn++;
 						}
-						else if (p_sInStr.at(i)=='\n') {
-							ErrorTokens.push_back(Token(iLineNum,iLineColumn,TokenType::COMPILER_ERROR,std::to_string(iLineNum)+':'+std::to_string(iLineColumn)+": error: Ending '\"' is missing."));
-							bErrorsFound=true;
-							TokenContainer.push_back(Token(iLineNum,iLineColumn,TokenType::STRING,""));
-							t_sStrTemp="";
-							iLineNum++;
-							if (p_sInStr.at(i-1)!='\r') {
-								iLineColumn=1u;
-								i++;
-							}
-							break;
+						else {
+							// Line column and number for strings should be located at the beginning '"'.
+							TokenContainer.push_back(Token(iLineNum, iLineColumn, TokenType::STRING, std::string(str_it + 1, end_quote_it)));
+							unsigned long long lambda_char_pos = p_sInStr.length();
+							std::for_each(str_it, end_quote_it, [lambda_char_pos, iLineColumn](char c) mutable -> void {
+								lambda_char_pos++;
+								if (c == '\t') iLineColumn += 4 - (lambda_char_pos % 4);
+								else if (!std::iscntrl(c)) iLineColumn++;
+							});
+							str_it = end_quote_it + 1;
 						}
-						else if (i==p_sInStr.length()-1){
-							ErrorTokens.push_back(Token(iLineNum,iLineColumn,TokenType::COMPILER_ERROR,std::to_string(iLineNum)+':'+std::to_string(iLineColumn)+": error: Ending '\"' is missing."));
-							bErrorsFound=true;
-							t_sStrTemp="";
-							break;
-						}
-						else if (p_sInStr.at(i)=='\"') {
-							TokenContainer.push_back(Token(iLineNum,iLineColumn,TokenType::STRING,t_sStrTemp));
-							t_sStrTemp="";
-							break;
+					}
+					break;
 						}
 						else {
 							if (p_sInStr.at(i)=='\t') iLineColumn += 4 - (iLineColumn % 4);
 							t_sStrTemp+=p_sInStr.at(i);
 						}
 					}
-					i++; // Starts at the ending quote if this doesn't exist.
-					iLineColumn++;
-					}
 					break;
 				//terminals
 				case '=':
 					TokenContainer.push_back(Token(iLineNum,iLineColumn,TokenType::EQUALS,"="));
-					i++;
+					str_it++;
 					iLineColumn++;
 					break;
 				case '|':
 					TokenContainer.push_back(Token(iLineNum,iLineColumn,TokenType::VBAR,"|"));
-					i++;
+					str_it++;
 					iLineColumn++;
 					break;
 				case '{':
 					TokenContainer.push_back(Token(iLineNum,iLineColumn,TokenType::LCBRACKET,"{"));
-					i++;
+					str_it++;
 					iLineColumn++;
 					break;
 				case '}':
 					TokenContainer.push_back(Token(iLineNum,iLineColumn,TokenType::RCBRACKET,"}"));
-					i++;
+					str_it++;
 					iLineColumn++;
 					break;
 				//spaces and colon
 				case '\t':
 					iLineColumn += 4 - (iLineColumn % 4);
-					i++;
+					str_it++;
 					break;
 				case ' ':
 					iLineColumn++;
-					i++;
+					str_it++;
 					break;
 				case '\r':
-					iLineColumn=1u;
-					if (i+1==p_sInStr.length() || p_sInStr.at(i+1)!='\n') iLineNum++;
-					i++;
-					break;
 				case '\v':
-					i++;
-					iLineNum++;
+					str_it++;
 					break;
 				case '\n':
 					iLineNum++;
-					if (i>0 && p_sInStr.at(i-1)!='\r') iLineColumn=1u;
-					i++;
+					iLineColumn = 1u;
+					str_it++;
 					break;
 				default:
-					ErrorTokens.push_back(Token(iLineNum,iLineColumn,TokenType::UNDEFINED,""));
-					ErrorTokens.back().sValue.push_back(p_sInStr.at(i));
+					TokenContainer.push_back(Token(iLineNum,iLineColumn,TokenType::UNDEFINED,std::string(*str_it, 0)));
 					iLineColumn++;
-					i++;				
+					str_it++;
 					break;
-				}
 			}
 		}
+		TokenContainer.push_back(Token(iLineNum,p_sInStr.length()-1,TokenType::END_OF_FILE,""));
+		TokenContainer.back().sValue.shrink_to_fit();
 		return !bErrorsFound;
 	}
 }
