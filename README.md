@@ -1,7 +1,7 @@
 # Command Menu Generator
-A compiler made for custom recursive bind-voicemenus for TF2, but may work for other games made in the Source Engine. Refer to the Introduction wiki for more information.
+A generator made for custom recursive bind-voicemenus for TF2, but may work for other games made in the Source Engine. Refer to the Introduction wiki for more information.
 
-If you are on a non-WinNT OS then use the [Wine](https://www.winehq.org/) program to run the compiler. If [Wine](https://www.winehq.org/) is not supported (like MacOS Catalina), then use a Virtual Machine with Windows (or the Bootcamp software that comes with MacOS). Alternatively you can just compile from the source code as this program does not use any Operating System specific code.
+If you are on a non-WinNT OS then use the [Wine](https://www.winehq.org/) program to run the generator. If [Wine](https://www.winehq.org/) is not supported (like MacOS Catalina), then use a Virtual Machine with Windows (or the Bootcamp software that comes with MacOS). Alternatively you can just compile from the source code as this program does not use any Operating System specific code.
 
 ## "What is this?"
 
@@ -13,12 +13,12 @@ This program aims to automate the process of creating command menus, as they can
 
 ## "How do I use it?"
 
-1. Download the compiler through the "releases" tab. (You may have to scroll down to see it.)
+1. Download the generator through the "releases" tab. (You may have to scroll down to see it.)
 
 2. Create a file with the contents being your choice. [You can use an example from this wiki.](https://github.com/WhyIsEvery4thYearAlwaysBad/CmdMenuGenerator/wiki/Examples) (If you're the section of text withCMenu code.)
 
-3. Drag the file you created onto the compiler. The folder "customvoicemenu" should appear. 
-	* You can also just run the compiler from command line (like cmd.exe or any BASH terminal) if you want more customization.
+3. Drag the file you created onto the generator. The folder "customvoicemenu" should appear. 
+	* You can also just run the generator from command line (like cmd.exe or any BASH terminal) if you want more customization.
 
 4. Drag the folder "customvoicemenu" into the folder path `<base source game directory>/<mod directory>/custom` (e.g `Team Fortress 2/tf/custom`). 
 	
@@ -49,4 +49,4 @@ Any source games that I left out are untested. If you encounter issues while usi
 
 # Disclaimer
 
-Any responsibilities that comes with using this compiler (such as not spamming chat binds) are soley bound to the user. The creator (WhyIsEvery4thYearAlwaysBad or Amicdict) does not bear any responsibility for bans/mutes from malicious use of this program caused by other users of this program.
+Any responsibilities that comes with using this generator (such as not spamming chat binds) are soley bound to the user. The creator (WhyIsEvery4thYearAlwaysBad or Amicdict) does not bear any responsibility for bans/mutes from malicious use of this program caused by other users of this program.
