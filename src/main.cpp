@@ -6,7 +6,6 @@
 #include <algorithm>
 #include <map>
 #include <cstdio>
-#include <windows.h>
 #include <locale>
 #include "lex.hpp"
 #include "token.hpp"
