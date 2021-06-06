@@ -4,6 +4,7 @@
 enum TokenType {
 	IDENTIFIER = 0, // asd
 	STRING, // " "
+	RAW_STRING, // ` `
 	EQUALS, // =
 	LCBRACKET, // {
 	RCBRACKET, // }

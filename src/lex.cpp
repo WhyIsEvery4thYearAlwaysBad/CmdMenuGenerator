@@ -14,8 +14,8 @@ extern std::deque<Parser::MenuToken*> CMenuTokens;
 
 // Convert to a safer string format for file and caption names.
 std::string formatRaw(std::string p_sInStr) {
-	// Remove punctation and nonascii characters
-	p_sInStr.erase(std::remove_if(p_sInStr.begin(), p_sInStr.end(), [](char c){return std::ispunct(c) || !isascii(c);}), p_sInStr.end());
+	// Remove punctation and unicode characters.
+	p_sInStr.erase(std::remove_if(p_sInStr.begin(), p_sInStr.end(), [](char c){ return std::ispunct(c) || !isascii(c); }), p_sInStr.end());
 	// and replace spaces with underscores
 	std::replace(p_sInStr.begin(), p_sInStr.end(), ' ', '_');
 	// replace uppercase with lower case
@@ -32,7 +32,7 @@ namespace Lexer {
 	}
 	// Convert string to token stream. Returns true if successful and false if an error occurs.
 	bool Tokenize(const std::string_view& p_sInStr) {
-		bool bErrorsFound=false, bInBlockComment=false;
+		bool bErrorsFound=false;
 		std::string t_sStrTemp;
 		for (auto str_it = p_sInStr.begin(); str_it < p_sInStr.end(); )
 		{
@@ -100,19 +100,21 @@ namespace Lexer {
 					}
 					break;
 				// strings
+				case '`':
 				case '\"':
 					{
-						std::string_view::iterator end_quote_it = std::find(str_it + 1, p_sInStr.end(), '\"');
+						std::string_view::iterator end_quote_it = std::find(str_it + 1, p_sInStr.end(), *str_it);
 						// New lines or carriage returns cannot be in strings. (As in ASCII values 10 and 13, not the C-style escapes though those arent interpreted.)
 						if (end_quote_it >= p_sInStr.end()
 							|| std::any_of(str_it, end_quote_it, [](char c){return c == '\n' || c == '\r'; })) {
-							ErrorTokens.push_back(Token(iLineNum,iLineColumn,TokenType::COMPILER_ERROR,"error: String not properly closed with '\"'."));
+							ErrorTokens.push_back(Token(iLineNum,iLineColumn,TokenType::COMPILER_ERROR,"error: String not properly closed with "));
+							ErrorTokens.back().sValue += *str_it + '.';
 							str_it = p_sInStr.end();
 							iLineColumn++;
 						}
 						else {
 							// Line column and number for strings should be located at the beginning '"'.
-							TokenContainer.push_back(Token(iLineNum, iLineColumn, TokenType::STRING, std::string(str_it + 1, end_quote_it)));
+							TokenContainer.push_back(Token(iLineNum, iLineColumn, (*str_it == '\"' ? TokenType::STRING : TokenType::RAW_STRING), std::string(str_it + 1, end_quote_it)));
 							unsigned long long lambda_char_pos = p_sInStr.length();
 							std::for_each(str_it, end_quote_it, [lambda_char_pos, iLineColumn](char c) mutable -> void {
 								lambda_char_pos++;

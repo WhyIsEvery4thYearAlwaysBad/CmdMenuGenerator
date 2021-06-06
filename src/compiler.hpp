@@ -24,7 +24,8 @@
 #define FL_DISPLAY_CONSOLE (1<<1)
 #define FL_DISPLAY_CAPTION (1<<2)
 
-bool ParseMenuTokens(unsigned short& p_iBindCount, char& p_bUsedDisplayFlags);
+// Summary in compiler.cpp definition.
+bool ParseMenuTokens(unsigned short& p_iBindCount, unsigned char& p_bUsedDisplayFlags, std::string& init_defined_code);
 namespace Parser {
 	struct MenuToken {
 		char fAttribs=0; // Attribute flag.
@@ -36,6 +37,7 @@ namespace Parser {
 		std::string Key, Value;
 		KVToken();
 		KVToken(const std::string& ident, const std::string& value);
+		~KVToken();
 	};
 	// Bind
 	struct BindToken : public MenuToken {
@@ -64,6 +66,14 @@ namespace Parser {
 		CMenuToken(const std::string& sName, const char& p_fAttributeFlag);
 		CMenuToken(const std::string& p_sKey, const std::string& sName, const char& p_fAttributeFlag);
 		~CMenuToken();
+	};
+	
+	// Raw code
+	struct CodeToken : public MenuToken {
+		std::string sValue;
+		CodeToken();
+		CodeToken(const std::string& p_sValue);
+		~CodeToken();
 	};
 	// CMenu end
 	struct CMenuEndToken : public MenuToken {

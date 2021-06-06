@@ -15,42 +15,28 @@ extern std::map<std::string,std::string> KVMap;
 std::deque<Token> TokenContainer;
 std::deque<Token> ErrorTokens;
 // Raw pointer bad, std::variant good.
-typedef std::variant<Parser::MenuToken, Parser::KVToken, Parser::BindToken, Parser::ToggleBindToken, Parser::CMenuToken, Parser::CMenuEndToken> MenuToken_t;
+typedef std::variant<Parser::MenuToken, Parser::KVToken, Parser::BindToken, Parser::ToggleBindToken, Parser::CMenuToken, Parser::CodeToken, Parser::CMenuEndToken> MenuToken_t;
 std::deque<MenuToken_t> CMenuTokens;
 
 extern std::deque<CommandMenu> CMenuContainer; // Made in main.cpp
 extern std::vector<std::string> UsedKeys; // made in main.cpp
 
 namespace Parser {
-	Parser::MenuToken::MenuToken() {
-		
-	}
-	
-	Parser::MenuToken::~MenuToken() {
-		
-	}
-	
-	Parser::KVToken::KVToken() {
-		
-	}
-	
+	Parser::MenuToken::MenuToken() {}
+	Parser::MenuToken::~MenuToken() {}
+	Parser::KVToken::KVToken() {}
 	Parser::KVToken::KVToken(const std::string& ident, const std::string& value)
 	: Key(ident), Value(value) {
 		fAttribs=0;
 	}
-	
+	Parser::KVToken::~KVToken() {}
 	Parser::BindToken::BindToken() {}
-	
 	Parser::BindToken::BindToken(const std::string& p_sName, const std::string& p_sCmdStr, const char& p_fAttributeFlag)
 	: sName(p_sName), sCmdStr(p_sCmdStr) {fAttribs = p_fAttributeFlag;}
-	
 	Parser::BindToken::BindToken(const std::string& p_sKey, const std::string& p_sName, const std::string& p_sCmdStr, const char& p_fAttributeFlag)
-	: sKey(p_sKey), sName(p_sName), sCmdStr(p_sCmdStr) {fAttribs = p_fAttributeFlag;		}
-	
+	: sKey(p_sKey), sName(p_sName), sCmdStr(p_sCmdStr) {fAttribs = p_fAttributeFlag;}
 	Parser::BindToken::~BindToken() {}
-	
 	Parser::ToggleBindToken::ToggleBindToken() {}
-	
 	Parser::ToggleBindToken::ToggleBindToken(const std::string p_names[MAX_TOGGLE_STATES], const std::string p_CmdStrContainer[MAX_TOGGLE_STATES], unsigned short p_iToggleStates, const char& p_fAttributeFlag)
 	: ToggleStates(p_iToggleStates)
 	{
@@ -65,7 +51,6 @@ namespace Parser {
 		
 		fAttribs = p_fAttributeFlag;
 	}
-	
 	Parser::ToggleBindToken::ToggleBindToken(const std::string& p_sKey, const std::string p_names[MAX_TOGGLE_STATES], const std::string p_CmdStrContainer[MAX_TOGGLE_STATES], unsigned short p_iToggleStates, const char& p_fAttributeFlag)
 	: ToggleStates(p_iToggleStates), sKey(p_sKey)
 	{
@@ -79,25 +64,22 @@ namespace Parser {
 		}
 		fAttribs = p_fAttributeFlag;
 	}
-	
 	Parser::ToggleBindToken::~ToggleBindToken() {}
-	
 	Parser::CMenuToken::CMenuToken() {}
-	
 	Parser::CMenuToken::CMenuToken(const std::string& sName, const char& p_fAttributeFlag)
 	: sName(sName) {
 		fAttribs = p_fAttributeFlag;
 	}
-
 	Parser::CMenuToken::CMenuToken(const std::string& p_sKey, const std::string& sName, const char& p_fAttributeFlag)
 	: sName(sName), sKey(p_sKey) {
 		fAttribs = p_fAttributeFlag;
 	}
-	
 	Parser::CMenuToken::~CMenuToken() {}
-	
+	Parser::CodeToken::CodeToken() {}
+	Parser::CodeToken::CodeToken(const std::string& p_sValue)
+	: sValue(p_sValue) {}
+	Parser::CodeToken::~CodeToken() {}
 	Parser::CMenuEndToken::CMenuEndToken() {}
-	
 	Parser::CMenuEndToken::~CMenuEndToken() {}
 	
 	/* Parses the tokens from the lexer
@@ -193,8 +175,12 @@ namespace Parser {
 					if (!(fParserStateFlag & PARSER_STATE_ERRORS_FOUND)) 
 						CMenuTokens.push_back(Parser::CMenuToken(token->sValue,((fParserStateFlag & PARSER_STATE_FORMATTED) ? CMTOKATTRIB_FORMATTED : 0) | CMTOKATTRIB_NOEXIT));
 					fParserStateFlag |= CMTOKATTRIB_FORMATTED;
-					token+=i;
+					token += i;
 				}
+				break;
+				case TokenType::RAW_STRING:
+					CMenuTokens.push_back(Parser::CodeToken(token->sValue));
+					token++;
 				break;
 				case TokenType::IDENTIFIER: // Check for set keymaps
 				{
@@ -247,12 +233,12 @@ namespace Parser {
 			}
 		}
 		if (!(fParserStateFlag & PARSER_STATE_EOF_FOUND)) std::cout<<"warning: EOF not found!\n";
-		if (ErrorTokens.size()>=1) fParserStateFlag |= PARSER_STATE_ERRORS_FOUND;
+		if (ErrorTokens.size() >= 1) fParserStateFlag |= PARSER_STATE_ERRORS_FOUND;
 		return !(fParserStateFlag >> 7 /* Errors Found? */);
 	}
 }
 
-/* Convert menu tokens in TokenContainer into something useful.
+/* Convert menu tokens in TokenContainer into cmenus and cfg code (from ``).
 	* p_iBindCount (unsigned short) stores how many binds were counted
 	* p_bUsedDisplayFlags (a flag) stores what display types were used. Used to optimize proper closing of CMenu displays.
 		- 3rd bit: Is the "none" display method used?
@@ -261,7 +247,7 @@ namespace Parser {
 		
 	Returns true if conversion was successful. If not then it returns false.
 */
-bool ParseMenuTokens(unsigned short& p_iBindCount, char& p_bUsedDisplayFlags) {
+bool ParseMenuTokens(unsigned short& p_iBindCount, unsigned char& p_bUsedDisplayFlags, std::string& init_defined_code) {
 	// Has there been an error? BAIL.
 	char t_bUsedDisplayFlags = p_bUsedDisplayFlags;
 	if (ErrorTokens.size()>=1) return false;
@@ -270,7 +256,6 @@ bool ParseMenuTokens(unsigned short& p_iBindCount, char& p_bUsedDisplayFlags) {
 	
 	// This variable is in the function scope instead of the switch-case scope, because the end cmenu tokens NEED to remember the attributes of their cmenus.
 	Parser::CMenuToken CurrentCMenu;
-	
 	for (auto token = CMenuTokens.begin(); token != CMenuTokens.end(); token++) {
 		// Automatically resets the KEY KV to prevent other binds from being affected by it.
 		if (token != CMenuTokens.begin() && !std::holds_alternative<Parser::KVToken>(*(token - 1))) KVMap["KEY"]="";
@@ -315,15 +300,15 @@ bool ParseMenuTokens(unsigned short& p_iBindCount, char& p_bUsedDisplayFlags) {
 			if (CMenuStack.size() > 1) {
 				if (CurrentCMenu.fAttribs & CMTOKATTRIB_BIND_KEYSET) {
 					if (iDuplicateNumber > 0)
-						(CMenuStack.begin()+1)->binds.push_back(Bind(CurrentCMenu.sKey,Parser::BindToken(CurrentCMenu.sName,"exec $cmenu_"+formatRaw(CurrentCMenu.sName)+'_'+std::to_string(iDuplicateNumber),CurrentCMenu.fAttribs)));
+						(CMenuStack.begin()+1)->Entries.push_back(Bind(CurrentCMenu.sKey,Parser::BindToken(CurrentCMenu.sName,"exec $cmenu_"+formatRaw(CurrentCMenu.sName)+'_'+std::to_string(iDuplicateNumber),CurrentCMenu.fAttribs)));
 					else 
-						(CMenuStack.begin()+1)->binds.push_back(Bind(CurrentCMenu.sKey,Parser::BindToken(CurrentCMenu.sName,"exec $cmenu_"+formatRaw(CurrentCMenu.sName),CurrentCMenu.fAttribs)));
+						(CMenuStack.begin()+1)->Entries.push_back(Bind(CurrentCMenu.sKey,Parser::BindToken(CurrentCMenu.sName,"exec $cmenu_"+formatRaw(CurrentCMenu.sName),CurrentCMenu.fAttribs)));
 					// Add the keyname to a list of used key names if it isn't already added.
 					if (std::none_of(UsedKeys.cbegin(),UsedKeys.cend(),[&CurrentCMenu](std::string_view s){ return s == CurrentCMenu.sKey; })) UsedKeys.push_back(CurrentCMenu.sKey);
 				}
 				else {
-					if (iDuplicateNumber>0) (CMenuStack.begin()+1)->binds.push_back(Bind(std::to_string(NumKeyStack.top() % 10),Parser::BindToken(CurrentCMenu.sName,"exec $cmenu_"+formatRaw(CurrentCMenu.sName)+'_'+std::to_string(iDuplicateNumber),CurrentCMenu.fAttribs)));
-					else (CMenuStack.begin()+1)->binds.push_back(Bind(std::to_string(NumKeyStack.top() % 10),Parser::BindToken(CurrentCMenu.sName,"exec $cmenu_"+formatRaw(CurrentCMenu.sName),CurrentCMenu.fAttribs)));
+					if (iDuplicateNumber>0) (CMenuStack.begin()+1)->Entries.push_back(Bind(std::to_string(NumKeyStack.top() % 10),Parser::BindToken(CurrentCMenu.sName,"exec $cmenu_"+formatRaw(CurrentCMenu.sName)+'_'+std::to_string(iDuplicateNumber),CurrentCMenu.fAttribs)));
+					else (CMenuStack.begin()+1)->Entries.push_back(Bind(std::to_string(NumKeyStack.top() % 10),Parser::BindToken(CurrentCMenu.sName,"exec $cmenu_"+formatRaw(CurrentCMenu.sName),CurrentCMenu.fAttribs)));
 				}
 			}
 			if (!(CurrentCMenu.fAttribs & CMTOKATTRIB_BIND_KEYSET) && !NumKeyStack.empty()) NumKeyStack.top()=(NumKeyStack.top()+1);
@@ -346,11 +331,11 @@ bool ParseMenuTokens(unsigned short& p_iBindCount, char& p_bUsedDisplayFlags) {
 			CurrentBindToken.sKey = KVMap["KEY"];
 			assert(CMenuStack.size() > 0);
 			if (!(CurrentBindToken.fAttribs & CMTOKATTRIB_BIND_KEYSET)) {
-				CMenuStack.front().binds.push_back(Bind(std::to_string(NumKeyStack.top() % 10),CurrentBindToken));
-				NumKeyStack.top()=(NumKeyStack.top()+1);
+				CMenuStack.front().Entries.push_back(Bind(std::to_string(NumKeyStack.top() % 10),CurrentBindToken));
+				NumKeyStack.top() = (NumKeyStack.top()+1);
 			}
 			else {
-				CMenuStack.front().binds.push_back(Bind(CurrentBindToken.sKey,CurrentBindToken));
+				CMenuStack.front().Entries.push_back(Bind(CurrentBindToken.sKey,CurrentBindToken));
 				// Add the keyname to a list of used key names if it isn't already added.
 				if (std::none_of(UsedKeys.cbegin(),UsedKeys.cend(),[&CurrentBindToken](std::string_view s){ return s == CurrentBindToken.sKey;})) UsedKeys.push_back(CurrentBindToken.sKey);
 			}
@@ -362,20 +347,23 @@ bool ParseMenuTokens(unsigned short& p_iBindCount, char& p_bUsedDisplayFlags) {
 			CurrentToggleBindToken.sKey = KVMap["KEY"];
 			assert(CMenuStack.size() > 0);				
 			if (!(CurrentToggleBindToken.fAttribs & CMTOKATTRIB_BIND_KEYSET)) {
-				CMenuStack.front().binds.push_back(Bind(std::to_string(NumKeyStack.top() % 10),CurrentToggleBindToken));
+				CMenuStack.front().Entries.push_back(Bind(std::to_string(NumKeyStack.top() % 10),CurrentToggleBindToken));
 				assert(!NumKeyStack.empty());
 				NumKeyStack.top()=(NumKeyStack.top()+1);
 			}
 			else {
-				CMenuStack.front().binds.push_back(Bind(CurrentToggleBindToken.sKey,CurrentToggleBindToken));
+				CMenuStack.front().Entries.push_back(Bind(CurrentToggleBindToken.sKey,CurrentToggleBindToken));
 				// Add the keyname to a list of used key names if it isn't already added.
 				if (std::none_of(UsedKeys.cbegin(),UsedKeys.cend(),[&CurrentToggleBindToken](std::string_view s){ return s == CurrentToggleBindToken.sKey;})) UsedKeys.push_back(CurrentToggleBindToken.sKey);
 			}
 			p_iBindCount++;
+		}	
+		else if (std::holds_alternative<Parser::CodeToken>(*token)) {
+			if (!CMenuStack.empty()) CMenuStack.front().Entries.push_back(std::get<Parser::CodeToken>(*token).sValue);
+			else if (!CMenuContainer.empty()) CMenuContainer.back().Entries.push_back(std::get<Parser::CodeToken>(*token).sValue);
+			else init_defined_code += std::get<Parser::CodeToken>(*token).sValue;
 		}
-		else {
-			
-		}
+		else std::cout << "ParseMenuTokens(): warning: std::variant has invalid type. Not parsing this variant.\n";
 	}
 	return true;
 }
