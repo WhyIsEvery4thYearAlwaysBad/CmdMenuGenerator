@@ -1,7 +1,9 @@
 # Command Menu Generator
 A generator made for custom recursive bind-voicemenus for TF2, but may work for other games made in the Source Engine. Refer to the Introduction wiki for more information.
 
-If you are on a non-WinNT OS then use the [Wine](https://www.winehq.org/) program to run the generator. If [Wine](https://www.winehq.org/) is not supported (like MacOS Catalina), then use a Virtual Machine with Windows (or the Bootcamp software that comes with MacOS). Alternatively you can just compile from the source code as this program does not use any Operating System specific code.
+If you are on a non-WinNT OS then use [Wine](https://www.winehq.org/) to run the generator, a Virtual Machine with Windows or the Bootcamp software that comes with MacOS (if Wine doesn't work), or just compile from the source code as this program does not use any OS specific code.
+
+NOTE: Non Windows users can get captioncompiler.exe from Source SDK Base 2007 on Steam and run it through Wine.
 
 ## "What is this?"
 
