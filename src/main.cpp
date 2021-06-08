@@ -165,7 +165,7 @@ cmenu.exitmenu
 						// Write the ending double quote when we hit the last bind or the next entry is a toggle bind.
 						auto next_bind = std::find_if(kBind + 1, CMenu->Entries.end(), [](const auto& v) { return std::holds_alternative<Bind>(v); });
 						if (kBind == (last_bind + 1).base()
-						|| (std::holds_alternative<Bind>(*(kBind+1)) && std::get<Bind>(next_bind == CMenu->Entries.end() ? *kBind : *next_bind).bToggleBind == true))
+						|| (std::holds_alternative<Bind>(*next_bind) && std::get<Bind>(next_bind == CMenu->Entries.end() ? *kBind : *next_bind).bToggleBind == true))
 							CMenuCaptionFile<<L"\"\n";
 						CMenuCFG<<"alias _cmenu.k_"<<((t_kBind.sKey.length() + CMENU_KEY_ALIAS_LENGTH > 32) ? t_kBind.sKey.substr(0, t_kBind.sKey.length() - CMENU_KEY_ALIAS_LENGTH) : t_kBind.sKey)<<"\""<<t_kBind.CmdStrContainer.at(0)<<"\"\n";
 					}
@@ -190,7 +190,7 @@ cmenu.exitmenu
 						CMenuCFG<<"echo "<< t_kBind.NameContainer.front() << '\n' << "alias _cmenu.k_" << t_kBind.sKey << " \"" << t_kBind.CmdStrContainer.front() << "\"\n";
 					}
 				}
-				else if (CMenu->Display==CMenuDisplayType::NONE) {
+				else if (CMenu->Display == CMenuDisplayType::NONE) {
 					if (t_kBind.bToggleBind) {
 						InitRoutineFile<<"alias _cmenu.toggle_"<<std::to_string(iToggleNumber)<<" _cmenu.toggle_"<<std::to_string(iToggleNumber)<<"_0\n";
 						for (unsigned char sti=0u; sti < t_kBind.NameContainer.size(); sti++) {
