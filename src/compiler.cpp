@@ -204,7 +204,7 @@ namespace Parser {
 				case TokenType::LCBRACKET:
 					iCMenuDepth++;
 					if (token>TokenContainer.begin() && (token-1)->Type!=TokenType::STRING) {
-						ErrorTokens.push_back(Token((token-1)->iLineNum,(token-1)->iLineColumn,TokenType::COMPILER_ERROR,": error: Expected a string here."));
+						ErrorTokens.push_back(Token(token->iLineNum, token->iLineColumn, TokenType::COMPILER_ERROR, "error: Expected a string here."));
 						iCMenuDepth--;
 					}
 					token++;
