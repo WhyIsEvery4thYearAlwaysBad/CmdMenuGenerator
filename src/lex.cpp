@@ -5,9 +5,6 @@
 #include "compiler.hpp"
 #include "token.hpp"
 
-std::size_t iLineNum=1u;
-std::size_t iLineColumn=1u;
-
 extern std::deque<Token> ErrorTokens;
 extern std::deque<Token> TokenContainer;
 extern std::deque<Parser::MenuToken*> CMenuTokens;
@@ -25,15 +22,11 @@ std::string formatRaw(std::string p_sInStr) {
 
 
 namespace Lexer {
-	// Checks if character is usable in a nonterminal.
-	bool IsIdentChar(const char& c) {
-		if (isalnum(c)) return true;
-		else return false;
-	}
 	// Convert string to token stream. Returns true if successful and false if an error occurs.
 	bool Tokenize(const std::string_view& p_sInStr) {
+		std::size_t iLineNum=1u;
+		std::size_t iLineColumn=1u;
 		bool bErrorsFound=false;
-		std::string t_sStrTemp;
 		for (auto str_it = p_sInStr.begin(); str_it < p_sInStr.end(); )
 		{
 			if (TokenContainer.size()>0) TokenContainer.back().sValue.shrink_to_fit();
@@ -58,18 +51,24 @@ namespace Lexer {
 					// Line comments
 					if (*(str_it + 1) == '/') {
 						// Trying to capture the iterator will just implicitly convert it. WHY?
-						unsigned long long lambda_char_pos = p_sInStr.length();
-						std::for_each(str_it, std::find(str_it, p_sInStr.end(), '\n'), [lambda_char_pos, iLineColumn](char c) mutable -> void {
+						auto line_comment_end = std::find_if(str_it, p_sInStr.cend(), [](const char c) { return c == '\n' || c == '\0'; });
+						if (line_comment_end == p_sInStr.cend()) {
+							ErrorTokens.push_back(Token(iLineNum,iLineColumn,TokenType::COMPILER_ERROR,"error: No newline or null terminator found."));
+							str_it = line_comment_end;
+						}
+						std::for_each(str_it, line_comment_end, [&iLineColumn, &iLineNum](char c) mutable -> void {
 							switch (c) {
-								lambda_char_pos++;
-								case '\t': {iLineColumn += 4 - (lambda_char_pos % 4); break;}
-								case '\n': break;
-								default: iLineColumn++;
+								case '\t': {iLineColumn += 5 - (iLineColumn % 4); break;}
+								case '\n': 
+									iLineNum++;
+									iLineColumn = 1;
+									break;
+								default: 
+									iLineColumn++;
+									break;
 							}
 						});
-						iLineNum++;
-						iLineColumn = 0u;
-						str_it = std::find(str_it, p_sInStr.end(), '\n') + 1;
+						str_it = line_comment_end + 1;
 					}
 					/* Block comments */
 					else if (*(str_it + 1) == '*') {
@@ -81,44 +80,47 @@ namespace Lexer {
 						}
 						else {
 							// Trying to capture the iterator will just implicitly convert it. WHY?
-							unsigned long long lambda_char_pos = p_sInStr.length();
-							std::for_each(str_it, end_seq_it, [lambda_char_pos, iLineColumn](char c) mutable -> void {
+							std::for_each(str_it, end_seq_it, [&iLineNum, &iLineColumn](const char& c) mutable -> void {
 								switch (c) {
-									lambda_char_pos++;
-									case '\t': {iLineColumn += 4 - (lambda_char_pos % 4); break;}
-									case '\n': {iLineColumn = 1; iLineNum++; break;}
-									default: iLineColumn++;
+									case '\t': 
+										iLineColumn += 5 - (iLineColumn % 4);
+										break;
+									case '\n': 
+										iLineColumn = 1;
+										iLineNum++;
+										break;
+									default:
+										iLineColumn++;
+										break;
 								}
 							});
-							iLineNum += std::count(str_it, end_seq_it, '\n');
 							str_it = end_seq_it + 2;
 						}
 					}
 					else {
-						TokenContainer.push_back(Token(iLineNum,iLineColumn,TokenType::UNDEFINED,"/"));
-						iLineColumn++;
+						TokenContainer.push_back(Token(iLineNum, iLineColumn++, TokenType::UNDEFINED, "/"));
+						str_it++;
 					}
 					break;
-				// strings
+	 			// "strings"
 				case '`':
 				case '\"':
 					{
 						std::string_view::iterator end_quote_it = std::find(str_it + 1, p_sInStr.end(), *str_it);
 						// New lines or carriage returns cannot be in strings. (As in ASCII values 10 and 13, not the C-style escapes though those arent interpreted.)
-						if (end_quote_it >= p_sInStr.end()
-							|| std::any_of(str_it, end_quote_it, [](char c){return c == '\n' || c == '\r'; })) {
-							ErrorTokens.push_back(Token(iLineNum,iLineColumn,TokenType::COMPILER_ERROR,"error: String not properly closed with "));
-							ErrorTokens.back().sValue += *str_it + '.';
+						if (end_quote_it >= p_sInStr.cend()
+							|| std::any_of(str_it, end_quote_it, [](const char& c){ return c == '\n' || c == '\0'; })) {
+							ErrorTokens.push_back(Token(iLineNum, iLineColumn, TokenType::COMPILER_ERROR, "error: String not properly closed with "));
+							ErrorTokens.back().sValue += *str_it;
+							ErrorTokens.back().sValue += '.';
 							str_it = p_sInStr.end();
 							iLineColumn++;
 						}
 						else {
 							// Line column and number for strings should be located at the beginning '"'.
 							TokenContainer.push_back(Token(iLineNum, iLineColumn, (*str_it == '\"' ? TokenType::STRING : TokenType::RAW_STRING), std::string(str_it + 1, end_quote_it)));
-							unsigned long long lambda_char_pos = p_sInStr.length();
-							std::for_each(str_it, end_quote_it, [lambda_char_pos, iLineColumn](char c) mutable -> void {
-								lambda_char_pos++;
-								if (c == '\t') iLineColumn += 4 - (lambda_char_pos % 4);
+							std::for_each(str_it, end_quote_it, [&iLineColumn](char c) mutable -> void {
+								if (c == '\t') iLineColumn += 5 - (iLineColumn % 4);
 								else if (!std::iscntrl(c)) iLineColumn++;
 							});
 							str_it = end_quote_it + 1;
@@ -127,28 +129,24 @@ namespace Lexer {
 					break;
 				//terminals
 				case '=':
-					TokenContainer.push_back(Token(iLineNum,iLineColumn,TokenType::EQUALS,"="));
+					TokenContainer.push_back(Token(iLineNum, iLineColumn++, TokenType::EQUALS, "="));
 					str_it++;
-					iLineColumn++;
 					break;
 				case '|':
-					TokenContainer.push_back(Token(iLineNum,iLineColumn,TokenType::VBAR,"|"));
+					TokenContainer.push_back(Token(iLineNum, iLineColumn++, TokenType::VBAR, "|"));
 					str_it++;
-					iLineColumn++;
 					break;
 				case '{':
-					TokenContainer.push_back(Token(iLineNum,iLineColumn,TokenType::LCBRACKET,"{"));
+					TokenContainer.push_back(Token(iLineNum, iLineColumn++, TokenType::LCBRACKET, "{"));
 					str_it++;
-					iLineColumn++;
 					break;
 				case '}':
-					TokenContainer.push_back(Token(iLineNum,iLineColumn,TokenType::RCBRACKET,"}"));
+					TokenContainer.push_back(Token(iLineNum, iLineColumn++, TokenType::RCBRACKET, "}"));
 					str_it++;
-					iLineColumn++;
 					break;
 				//spaces and colon
 				case '\t':
-					iLineColumn += 4 - (iLineColumn % 4);
+					iLineColumn += 5 - (iLineColumn % 4);
 					str_it++;
 					break;
 				case ' ':
@@ -165,8 +163,7 @@ namespace Lexer {
 					str_it++;
 					break;
 				default:
-					TokenContainer.push_back(Token(iLineNum,iLineColumn,TokenType::UNDEFINED,std::string(*str_it, 0)));
-					iLineColumn++;
+					TokenContainer.push_back(Token(iLineNum, iLineColumn++, TokenType::UNDEFINED, std::string(*str_it, 0)));
 					str_it++;
 					break;
 			}
