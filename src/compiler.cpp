@@ -189,16 +189,16 @@ namespace Parser {
 						ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,"error: Modifiers can only be applied to CMenus, binds, or toggle binds."));
 					}
 					unsigned short i=1u;
-					if ((token+i)->Type!=TokenType::EQUALS) {
+					if ((token + i)->Type!=TokenType::EQUALS) {
 						ErrorTokens.push_back(Token((token+i)->iLineNum,(token+i)->iLineColumn,TokenType::COMPILER_ERROR,"error: Expected a '=' here."));
 					} 
 					else i++;
-					if ((token+i)->Type!=TokenType::STRING) {
+					if ((token + i)->Type!=TokenType::STRING) {
 						ErrorTokens.push_back(Token((token+i)->iLineNum,(token+i)->iLineColumn,TokenType::COMPILER_ERROR,"error: Expected a string here."));
 					}
 					else i++;
 					if (!(fParserStateFlag & PARSER_STATE_ERRORS_FOUND)) CMenuTokens.push_back(Parser::KVToken(token->sValue,(token+2)->sValue));
-					token+=i;
+					token += i;
 				}
 				break;
 				case TokenType::LCBRACKET:
