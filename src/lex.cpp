@@ -95,6 +95,7 @@ namespace Lexer {
 								}
 							});
 							str_it = end_seq_it + 2;
+							iLineColumn += 2;
 						}
 					}
 					else {
