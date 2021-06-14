@@ -55,19 +55,20 @@ namespace Lexer {
 						if (line_comment_end == p_sInStr.cend()) {
 							ErrorTokens.push_back(Token(iLineNum,iLineColumn,TokenType::COMPILER_ERROR,"error: No newline or null terminator found."));
 							str_it = line_comment_end;
+							break;
 						}
-						std::for_each(str_it, line_comment_end, [&str_it, &iLineColumn, &iLineNum](const unsigned char& c) mutable -> void {
+						std::for_each(str_it, line_comment_end, [&iLineColumn, &iLineNum](const unsigned char& c) mutable -> void {
 							switch (c) {
 								case '\t': {iLineColumn += 5 - (iLineColumn % 4); break;}
-								case '\n': 
-									iLineNum++;
-									iLineColumn = 1;
-									break;
 								default: 
 									if (!std::iscntrl(c) && (c & 0xC0) != 0x80) iLineColumn++;
 									break;
 							}
 						});
+						if (line_comment_end < p_sInStr.cend() && *line_comment_end == '\n') {
+							iLineNum++;
+							iLineColumn = 1;
+						}
 						str_it = line_comment_end + 1;
 					}
 					/* Block comments */
@@ -79,8 +80,7 @@ namespace Lexer {
 							str_it = end_seq_it;
 						}
 						else {
-							// Trying to capture the iterator will just implicitly convert it. WHY?
-							std::for_each(str_it, end_seq_it, [&str_it, &iLineNum, &iLineColumn](const unsigned char& c) mutable -> void {
+							std::for_each(str_it, end_seq_it, [&iLineNum, &iLineColumn](const unsigned char& c) mutable -> void {
 								switch (c) {
 									case '\t': 
 										iLineColumn += 5 - (iLineColumn % 4);
