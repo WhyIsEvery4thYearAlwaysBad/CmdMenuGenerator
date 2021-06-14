@@ -44,7 +44,7 @@ namespace Lexer {
 				str_it = last_identifier_char_it;
 				continue;
 			}
-			switch (*(str_it))
+			switch (*str_it)
 			{
 				// comments
 				case '/':
@@ -56,7 +56,7 @@ namespace Lexer {
 							ErrorTokens.push_back(Token(iLineNum,iLineColumn,TokenType::COMPILER_ERROR,"error: No newline or null terminator found."));
 							str_it = line_comment_end;
 						}
-						std::for_each(str_it, line_comment_end, [&iLineColumn, &iLineNum](char c) mutable -> void {
+						std::for_each(str_it, line_comment_end, [&str_it, &iLineColumn, &iLineNum](const unsigned char& c) mutable -> void {
 							switch (c) {
 								case '\t': {iLineColumn += 5 - (iLineColumn % 4); break;}
 								case '\n': 
@@ -64,7 +64,7 @@ namespace Lexer {
 									iLineColumn = 1;
 									break;
 								default: 
-									iLineColumn++;
+									if (!std::iscntrl(c) && (c & 0xC0) != 0x80) iLineColumn++;
 									break;
 							}
 						});
@@ -80,7 +80,7 @@ namespace Lexer {
 						}
 						else {
 							// Trying to capture the iterator will just implicitly convert it. WHY?
-							std::for_each(str_it, end_seq_it, [&iLineNum, &iLineColumn](const char& c) mutable -> void {
+							std::for_each(str_it, end_seq_it, [&str_it, &iLineNum, &iLineColumn](const unsigned char& c) mutable -> void {
 								switch (c) {
 									case '\t': 
 										iLineColumn += 5 - (iLineColumn % 4);
@@ -90,7 +90,8 @@ namespace Lexer {
 										iLineNum++;
 										break;
 									default:
-										iLineColumn++;
+										// UTF-8 Continuation bytes always have 10 as their high bits.
+										if (!std::iscntrl(c) && (c & 0xC0) != 0x80) iLineColumn++;
 										break;
 								}
 							});
@@ -120,9 +121,10 @@ namespace Lexer {
 						else {
 							// Line column and number for strings should be located at the beginning '"'.
 							TokenContainer.push_back(Token(iLineNum, iLineColumn, (*str_it == '\"' ? TokenType::STRING : TokenType::RAW_STRING), std::string(str_it + 1, end_quote_it)));
-							std::for_each(str_it, end_quote_it, [&iLineColumn](char c) mutable -> void {
+							std::for_each(str_it, end_quote_it, [&iLineColumn](const unsigned char& c) mutable -> void {
 								if (c == '\t') iLineColumn += 5 - (iLineColumn % 4);
-								else if (!std::iscntrl(c)) iLineColumn++;
+								// UTF-8 Continuation bytes always have 10 as their high bits.
+								else if (!std::iscntrl(c) && (c & 0xC0) != 0x80) iLineColumn++;
 							});
 							str_it = end_quote_it + 1;
 						}
@@ -164,7 +166,7 @@ namespace Lexer {
 					str_it++;
 					break;
 				default:
-					TokenContainer.push_back(Token(iLineNum, iLineColumn++, TokenType::UNDEFINED, std::string(*str_it, 0)));
+					if ((*str_it & 0xC0) != 0x80) TokenContainer.push_back(Token(iLineNum, iLineColumn++, TokenType::UNDEFINED, std::string(1, *str_it)));
 					str_it++;
 					break;
 			}
