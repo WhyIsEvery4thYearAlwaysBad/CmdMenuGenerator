@@ -109,6 +109,9 @@ namespace Lexer {
 				case '\"':
 					{
 						std::string_view::iterator end_quote_it = std::find(str_it + 1, p_sInStr.end(), *str_it);
+						while (*(end_quote_it - 1) == '\\') {
+							end_quote_it = std::find(end_quote_it + 1, p_sInStr.end(), *str_it);
+						}
 						// New lines or carriage returns cannot be in strings. (As in ASCII values 10 and 13, not the C-style escapes though those arent interpreted.)
 						if (end_quote_it >= p_sInStr.cend()
 							|| std::any_of(str_it, end_quote_it, [](const char& c){ return c == '\n' || c == '\0'; })) {
@@ -121,6 +124,13 @@ namespace Lexer {
 						else {
 							// Line column and number for strings should be located at the beginning '"'.
 							TokenContainer.push_back(Token(iLineNum, iLineColumn, (*str_it == '\"' ? TokenType::STRING : TokenType::RAW_STRING), std::string(str_it + 1, end_quote_it)));
+							// Erase \'s.
+							auto backslash_loc = TokenContainer.back().sValue.find('\\');
+							while (backslash_loc < TokenContainer.back().sValue.npos) {
+								if ((backslash_loc + 1) == '\\') backslash_loc++;
+								TokenContainer.back().sValue.erase(backslash_loc, 1);
+								backslash_loc = TokenContainer.back().sValue.find('\\', backslash_loc + 1);
+							}
 							std::for_each(str_it, end_quote_it, [&iLineColumn](const unsigned char& c) mutable -> void {
 								if (c == '\t') iLineColumn += 5 - (iLineColumn % 4);
 								// UTF-8 Continuation bytes always have 10 as their high bits.
