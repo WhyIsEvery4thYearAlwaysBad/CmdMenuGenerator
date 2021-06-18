@@ -3,7 +3,7 @@ A generator made for custom recursive bind-voicemenus for TF2, but may work for 
 
 If you are on a non-WinNT OS then use [Wine](https://www.winehq.org/) to run the generator, a Virtual Machine with Windows or the Bootcamp software that comes with MacOS (if Wine doesn't work), or just compile from the source code as this program does not use any OS specific code.
 
-NOTE: Non Windows users can get captioncompiler.exe from Source SDK Base 2007 on Steam and run it through Wine.
+NOTE: Non Windows users can get the needed captioncompiler.exe for a Source Game by forcing installation of the Windows version of the specified Source Game (through Properties > Compatibility).
 
 ## "What is this?"
 
