@@ -9,8 +9,8 @@ then
 fi
 ${COMPILER_X64} ${@}
 # Compile Windows binaries too.
-COMPILER_X32="i686-w64-mingw32-g++ * -o ../cmg-x32 -std=c++2a"
-COMPILER_X64="x86_64-w64-mingw32-g++ * -o ../cmg-x64 -std=c++2a"
+COMPILER_X32="i686-w64-mingw32-g++ * -o ../cmg-x32 -std=c++2a -static"
+COMPILER_X64="x86_64-w64-mingw32-g++ * -o ../cmg-x64 -std=c++2a -static"
 ${COMPILER_X32} ${@}
 ${COMPILER_X64} ${@}
 # Done!
