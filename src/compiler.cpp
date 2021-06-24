@@ -247,7 +247,7 @@ namespace Parser {
 		
 	Returns true if conversion was successful. If not then it returns false.
 */
-bool ParseMenuTokens(unsigned short& p_iBindCount, unsigned char& p_bUsedDisplayFlags, std::string& init_defined_code) {
+bool ParseMenuTokens(unsigned long long& p_iBindCount, unsigned char& p_bUsedDisplayFlags, std::string& init_defined_code) {
 	// Has there been an error? BAIL.
 	char t_bUsedDisplayFlags = p_bUsedDisplayFlags;
 	if (ErrorTokens.size()>=1) return false;

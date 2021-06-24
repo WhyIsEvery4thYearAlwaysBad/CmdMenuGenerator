@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
 		InFileContent+=Line+'\n';
 	}
 	// If tokenization and parsing process failed then error out and return. Also get the compiled bind count.
-	unsigned short iBindCount=0u;
+	unsigned long long iBindCount=0u;
 	unsigned char bUsedDisplayFlags = 0; // Flag used to mark if and what display types were used.
 	std::string init_file_user_code = ""; // Code inserted via ``.
 	if (!Lexer::Tokenize(InFileContent) 
