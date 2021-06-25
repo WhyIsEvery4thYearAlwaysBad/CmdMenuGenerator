@@ -30,8 +30,9 @@ std::vector<std::string> UsedKeys = {"0", "1", "2", "3", "4", "5", "6", "7", "8"
 extern std::filesystem::path InputFilePath;
 extern std::filesystem::path sOutputDir;
 int main(int argc, char** argv) {
-	// Evaluate launch options.
-	if (!EvaluateLaunchOptions(argc,argv)) return -1;
+	// Evaluate launch options. Exit program if ran with --help or launch options were invalid.
+	char Status = EvaluateLaunchOptions(argc, argv);
+	if (Status != 0) return -(Status < 0);
 	// Get content from input file.
 	std::string Line, InFileContent; 
 	std::ifstream inputf(InputFilePath,std::ios_base::binary);
