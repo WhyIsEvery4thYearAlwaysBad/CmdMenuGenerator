@@ -11,7 +11,7 @@
 #include "lex.hpp"
 #include "token.hpp"
 #include "commandmenu.hpp"
-#include "compiler.hpp"
+#include "parser.hpp"
 #include "launchoptions.hpp"
 
 #define CMENU_KEY_ALIAS_LENGTH 9 /* length of "_cmenu.k_" */

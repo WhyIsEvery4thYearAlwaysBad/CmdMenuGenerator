@@ -1,6 +1,6 @@
 #include <map>
 #include "commandmenu.hpp"
-#include "compiler.hpp"
+#include "parser.hpp"
 #include "lex.hpp"
 
 extern std::map<std::string,std::string> KVMap;

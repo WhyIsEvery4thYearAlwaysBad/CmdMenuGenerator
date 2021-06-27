@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 #include <variant>
-#include "compiler.hpp"
+#include "parser.hpp"
 #include "bind.hpp"
 
 enum class CMenuDisplayType {

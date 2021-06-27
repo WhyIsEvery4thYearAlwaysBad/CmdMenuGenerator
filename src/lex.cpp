@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <deque>
 #include "lex.hpp"
-#include "compiler.hpp"
+#include "parser.hpp"
 #include "token.hpp"
 
 extern std::deque<Token> ErrorTokens;

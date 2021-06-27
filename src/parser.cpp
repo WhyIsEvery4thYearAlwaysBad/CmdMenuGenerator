@@ -5,7 +5,7 @@
 #include <iomanip>
 #include <stack>
 #include <variant>
-#include "compiler.hpp"
+#include "parser.hpp"
 #include "lex.hpp"
 #include "token.hpp"
 #include "bind.hpp"
