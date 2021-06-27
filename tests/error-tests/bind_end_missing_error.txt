@@ -1,0 +1,5 @@
+// MetaInfo:Expected '|' error
+// error: Expected '|'.
+"[Misc Chat]" {
+	BIND "MvM Ticket" "say I'm a repeater so I'll leave early on the last round to save my ticket! (BIND)"
+}

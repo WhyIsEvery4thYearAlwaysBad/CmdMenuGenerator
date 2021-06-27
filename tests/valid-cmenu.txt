@@ -1,0 +1,37 @@
+KV1 = "KV1 val"
+
+// C++-style Comment Test
+/* C-style Comment Test */
+"[Misc Chat]" {
+	"[Common]" {
+		"[Bind Talk]" {
+			BIND "Bind Count" "say I currently have 53563 effective binds. 52044 of them are chat binds. (BIND)" |
+			BIND "CMenu Explanation" "say All of my binds are organized into nested voicemenus that are displayed to me by captions. (BIND)" |
+			"[Generator]" {
+				BIND "CMGen Explanation" "say I made a generator for these bind-voicemenus because they take so long to make otherwise. (BIND)" |
+				BIND "CMGen Link" "say My bind-voicemenu generator link: github.com/WhyIsEvery4thYearAlwaysBad/CmdMenuGenerator (copy and paste it) (BIND)" |
+			}
+			BIND "Annoying Binds" "say Just mute me from the scoreboard if you hate my binds. (Enable the scoreboard mouse mode to do so!) (BIND)" |
+			BIND "Improving Binds" "say How can I improve my binds at github.com/WhyIsEvery4thYearAlwaysBad/420weedsmoker69/blob/mastercoms/420cmdmenu.cmenu? (BIND)" |
+		}
+		"[Performance]" {
+			"[General]" {
+				BIND "Mastercomfig fix problem" "say Try out mastercomfig (at mastercomfig.com) as it might fix your performance problems. (BIND)" |
+				BIND "Change to mastercomfig" "say I recommend using mastercomfig instead. The other configs are outdated, poorly made, or haven't gone under any proper review. (BIND)" |
+				BIND "Other mods" "say Try out some more performance mods located here: docs.mastercomfig.com/en/latest/customization/see_also (copy and paste it) (BIND)" |
+			}
+		}
+		"[Memes]" {
+			BIND "MiningCraft" "say hEY gOyS iM MOiNInG FoR DOiAmoNDS!! (BIND)" |
+			TOGGLE BIND "DF Nerf" "say drAgoN's fURy iS tRAsH! *singlehandedly demolishes 4 enemies in 2 seconds* (BIND)" "DF Nerf" "say dRaGoN'S furY IS trAsh *singlehandedly demolishes 4 enemies in 2 seconds* (BIND)" "DF Nerf" "say DrAgon'S furY IS TrAsH! *singlehandedly demolishes 4 enemies in 2 seconds* (BIND)" |
+		}
+		BIND "MvM Ticket" "say I'm a repeater so I'll leave early on the last round to save my ticket! (BIND)" |
+	}
+}
+
+"root" {
+	KEY = ";" "where ami" {
+		BIND "Bind Test" "bind test" |
+	}
+	TOGGLE BIND "Toggle Bind test" "TB1" "Toggle Bind test" "TB2" |
+}
