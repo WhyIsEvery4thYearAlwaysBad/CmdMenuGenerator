@@ -176,8 +176,15 @@ namespace Lexer {
 					str_it++;
 					break;
 				default:
-					if ((*str_it & 0xC0) != 0x80) TokenContainer.push_back(Token(iLineNum, iLineColumn++, TokenType::UNDEFINED, std::string(1, *str_it)));
-					str_it++;
+					if ((unsigned char)*str_it > 0x7F) {
+						auto multibye_char_end = std::find_if(str_it + 1, p_sInStr.cend(), [](const char& c){ return (c & 0xC0) != 0x80; });
+						TokenContainer.push_back(Token(iLineNum, iLineColumn++, TokenType::UNDEFINED, std::string(str_it, multibye_char_end)));
+						str_it = multibye_char_end;
+					}
+					else {
+						TokenContainer.push_back(Token(iLineNum, iLineColumn++, TokenType::UNDEFINED, std::string(1, *str_it)));
+						str_it++;
+					}
 					break;
 			}
 		}
