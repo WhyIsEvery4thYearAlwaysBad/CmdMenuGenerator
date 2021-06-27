@@ -1,9 +1,10 @@
 #!/bin/sh
 # Tests the program to ensure it works properly. Text colored in red indicates that something has gone wrong, in case you haven't realized.
 # Script is POSIX-only for portability and enjoyment reasons.
-TEST_FAIL_COUNT=0
+TEST_FAIL_COUNT=0 # Amount of tests failed.
+LAUNCH_OPS="${@}"
 # Config
-EXECUTABLE="../cmg-x64"
+EXEC="../cmg-x64"
 TEST_DIR="../tests"
 # Func defines.
 
@@ -13,18 +14,32 @@ report_error() {
 	printf "\033[1m\033[91m%s\033[0m%s\n" "${1?Cannot be blank}" "${2:+" (Code $2)"}"
 	TEST_FAIL_COUNT=$((TEST_FAIL_COUNT+1))
 }
+
+# Wrapper for the cmenu generator.
+exec_cmg() {
+	case "$LAUNCH_OPS" in
+	*-v* ) $EXEC ${@};;
+	*--verbose--* ) $EXEC ${@};;
+	* ) $EXEC ${@} > /dev/null;;
+	esac
+}
+
 # Script
 BINDIR=$(dirname "$(readlink -fn "$0")")
 cd "${BINDIR}" || exit
+case "$LAUNCH_OPS" in
+	*--help* ) printf "Launch Options:\n\t-h, --help	Displays this menu.\n\t-v, --verbose	Desilences generator output.\n"; exit ;;
+	*-h* ) printf "Launch Options:\n\t-h, --help	Displays this menu.\n\t-v, --verbose	Desilences generator output.\n"; exit ;;
+esac
 cd $TEST_DIR || exit
 # Test the compiler itself first. 
 ## Valid CMenu file should be perfectly compilable.
-printf "\n------------------------------------------------\nCompiling valid cmenu. Should succeed.\n-------------------------------------------------\n"
-$EXECUTABLE ./valid-cmenu.txt
+printf "\0--------------------------------------\nCompiling valid cmenu. Should succeed.\n--------------------------------------\n"
+exec_cmg ./valid-cmenu.txt
 STATUS=$?
 if [ $STATUS -eq 0 ]
 then
-	printf "\033[92mCompiler succeeded!\033[0m"
+	printf "\033[92mCompiler succeeded!\033[0m\n"
 elif [ $STATUS -eq 255 ]
 then
 	report_error "Compiler ran into errors and exited normally!" "$STATUS"
@@ -37,7 +52,7 @@ for ErrorCMenuTestFile in $(dir ./error-tests)
 do
 	ErrorTypeMessage=$(grep -E "//\s*MetaInfo:" "./error-tests/$ErrorCMenuTestFile")
 	ErrorTypeMessage=${ErrorTypeMessage#"// MetaInfo:"}
-	$EXECUTABLE "./error-tests/$ErrorCMenuTestFile"
+	exec_cmg "./error-tests/$ErrorCMenuTestFile"
 	STATUS=$?
 	printf "\033[1m%s\033[0m: " "$ErrorTypeMessage"
 	if [ $STATUS -eq 255 ]
@@ -53,14 +68,15 @@ done
 rm -rf customvoicemenu
 # Test command line options.
 ## --help and -h launch options should succeed and then exit.
+printf "\n---------------\nLaunch options.\n---------------\n"
 for LaunchOP in "--help" "-h"
 do
-	printf "\n--------------------------------------------------\nLaunch option %s should succeed while exiting.\n--------------------------------------------------\n" "$LaunchOP"
-	$EXECUTABLE --help 1> /dev/null
+	exec_cmg --help
 	STATE=$?
+	printf "\033[1m%s\033[0m: " "$LaunchOP"
 	if [ $STATE -eq 0 ]
 	then
-		printf "\033[92m%s launch option succeeded as expected. \033[0m(Code %u)\n" "$LaunchOP" "$STATUS"
+		printf "\033[92mSucceeded and exited as expected. \033[0m(Code %u)\n" "$STATUS"
 	elif [ $STATE -eq 255 ]
 	then
 		report_error "$LaunchOP launch option failed." "$STATUS"
@@ -69,38 +85,37 @@ do
 	fi
 done
 ## --output-dir
-### with no param should fail.
-printf "\n---------------------------------------------------\nTesting --outputdir with no path. Should fail.\n---------------------------------------------------\n"
-$EXECUTABLE ./valid-cmenu.txt --output-dir
+### with no param should fail and exit.
+exec_cmg ./valid-cmenu.txt --output-dir
 STATE=$?
+printf "\033[1m--output-dir\033[0m: "
 if [ $STATE -eq 255 ]
 then
-	printf "\033[92m%s with \"--output-dir\" launch option failed as expected. \033[0m(Code %u)\n" "$EXECUTABLE" "$STATUS"
+	printf "\033[92mFailed as expected. \033[0m(Code %u)\n" "$STATUS"
 elif [ $STATE -eq 0 ]
 then
-	report_error "empty --output-dir launch option succeeded." "$STATUS"
+	report_error "Succeeded and continued." "$STATUS"
 else
-	report_error "empty --output-dir launch option failed abnormally." "$STATUS"
+	report_error "Failed abnormally." "$STATUS"
 fi
 ### --output-dir with param should succeed.
-printf "\n---------------------------------------------------\nTesting --outputdir with a path. Should succeed.\n---------------------------------------------------\n"
-$EXECUTABLE ./valid-cmenu.txt --output-dir out-test-dir
+exec_cmg ./valid-cmenu.txt --output-dir out-test-dir
 STATE=$?
+printf "\033[1m--output-dir (with parameter out-dest-dir)\033[0m: "
 if [ $STATE -eq 0 ]
 then
-	printf "\033[92m%s with \"--output-dir out-test-dir\" launch option succeeded." "$EXECUTABLE"
+	printf "\033[92mSucceeded and continued. \033[0m(Code %s)\n" "$STATE"
 
 elif [ $STATE -eq 255 ]
 then
-	report_error "%s with \"--output-dir out-test-dir\" launch option failed." "$EXECUTABLE" "$STATUS"
+	report_error "Failed normally." "$EXEC" "$STATUS"
 else
-	report_error "%s with \"--output-dir out-test-dir\" launch option failed abnormally." "$EXECUTABLE" "$STATUS"
+	report_error "Failed abnormally." "$EXEC" "$STATUS"
 fi
-printf " \033[0m(Code %s)\n" "$STATE"
 rm -rf out-test-dir
 # Check captions are being generated correctly.
 printf "\n----------------------------\nValidating caption displays.\n----------------------------\n"
-$EXECUTABLE ./caption-cmenu.txt
+exec_cmg ./caption-cmenu.txt
 STATUS=$?
 if [ $STATUS -eq 0 ]
 then
@@ -152,7 +167,6 @@ else
 fi
 cd .. || exit
 rm -rf ./customvoicemenu
-
 # End Testing
 if [ $TEST_FAIL_COUNT -le 0 ]
 then
