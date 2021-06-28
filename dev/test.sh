@@ -144,7 +144,7 @@ then
 		report_error "Caption file is encoded incorrectly! (Encoding: $(echo "$FILE_ENCODING" | tr '[:lower:]' '[:upper:]'))"
 	fi
 	### Convert file to UTF-8 temporarily so that grep can properly process stuff.
-	iconv -c -f UTF-16LE -t UTF-8 ./resource/closecaption_commandmenu.txt -o ./resource/temp_caption.txt --verbose
+	iconv -c -f UTF-16LE -t UTF-8 ./resource/closecaption_commandmenu.txt -o ./resource/temp_caption.txt
 	## TOFINISH: Validate that the cfg file works.
 	for CFGFile in $(dir ./cfg --ignore="cmenu_initialize.cfg")
 	do
@@ -160,7 +160,7 @@ then
 			report_error "Captions for cmenu \"$CMenuRName\" are shown $MATCHES times when running its cfg file!"
 		fi
 		### Verify the cmenu's captions are actually in the caption file.
-		MATCHES=$(grep -c -E "\"\_#cmenu.$CMenuRName\"" ./resource/closecaption_commandmenu.txt)
+		MATCHES=$(grep -c -E "\"\_#cmenu.$CMenuRName\"" ./resource/temp_caption.txt)
 		if [ "$MATCHES" -eq 0 ]
 		then
 			report_error "CMenu \"$CMenuRName\" captions aren't in the caption file!"
