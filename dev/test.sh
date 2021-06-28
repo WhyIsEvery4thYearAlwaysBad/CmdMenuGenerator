@@ -2,7 +2,6 @@
 # Tests the program to ensure it works properly. Text colored in red indicates that something has gone wrong, in case you haven't realized.
 # Script is POSIX-only for portability and enjoyment reasons.
 TEST_FAIL_COUNT=0 # Amount of tests failed.
-LAUNCH_OPS="${@}"
 # Config
 EXEC="../cmg-x64"
 TEST_DIR="../tests"
@@ -17,17 +16,18 @@ report_error() {
 
 # Wrapper for the cmenu generator.
 exec_cmg() {
-	case "$LAUNCH_OPS" in
-	*-v* ) $EXEC ${@};;
-	*--verbose--* ) $EXEC ${@};;
-	* ) $EXEC ${@} > /dev/null;;
+	case "${@}" in
+	( *--verbose--* | *-v* ) $EXEC "${@}";;
+	( * ) $EXEC "${@}" > /dev/null;;
 	esac
 }
 
 # Script
 BINDIR=$(dirname "$(readlink -fn "$0")")
 cd "${BINDIR}" || exit
-case "$LAUNCH_OPS" in
+
+# --help launch option.
+case "${@}" in
 	*--help* ) printf "Launch Options:\n\t-h, --help	Displays this menu.\n\t-v, --verbose	Desilences generator output.\n"; exit ;;
 	*-h* ) printf "Launch Options:\n\t-h, --help	Displays this menu.\n\t-v, --verbose	Desilences generator output.\n"; exit ;;
 esac
@@ -119,7 +119,7 @@ exec_cmg ./caption-cmenu.txt
 STATUS=$?
 if [ $STATUS -eq 0 ]
 then
-	printf "\033[92mCompiler succeeded!\033[0m (Code $STATUS)\n"
+	printf "\033[92mCompiler succeeded!\033[0m (Code %u)\n" "$STATUS"
 else
 	report_error "Compiler ran into errors." "$STATUS"
 fi
@@ -140,7 +140,7 @@ then
 	then
 		printf "\033[92mCaption file is encoded in %s (aka UCS-2).\033[0m\n" "$(echo "$FILE_ENCODING" | tr '[:lower:]' '[:upper:]')"
 	else
-		report_error "Caption file is encoded incorrectly! (Encoding: $(echo $FILE_ENCODING | tr '[:lower:]' '[:upper:]'))"
+		report_error "Caption file is encoded incorrectly! (Encoding: $(echo "$FILE_ENCODING" | tr '[:lower:]' '[:upper:]'))"
 	fi
 	### Convert file to UTF-8 temporarily so that grep can properly process stuff.
 	iconv -c -f UTF-16LE -t UTF-8 ./resource/closecaption_commandmenu.txt -o ./resource/temp_caption.txt --verbose
@@ -151,7 +151,6 @@ then
 		CMenuRName=${CMenuRName#\$cmenu_}
 		### Ensure that captions are properly shown when the cmenu cfg is executed.
 		MATCHES=$(grep -c -E "cc_emit\s*\_#cmenu.$CMenuRName" ./cfg/"$CFGFile")
-		POSIXLY_CORRECT="true" grep --text "_#cmenu.$CMenuRName" ./resource/temp_caption.txt > /dev/null
 		if [ "$MATCHES" -eq 0 ]
 		then
 			report_error "\033[91mCaptions for cmenu \"$CMenuRName\" aren't shown when running its cfg file!\n"
@@ -160,7 +159,14 @@ then
 			report_error "Captions for cmenu \"$CMenuRName\" are shown $MATCHES times when running its cfg file!"
 		fi
 		### Verify the cmenu's captions are actually in the caption file.
-
+		MATCHES=$(grep -c -E "\"\_#cmenu.$CMenuRName\"" ./resource/closecaption_commandmenu.txt)
+		if [ "$MATCHES" -eq 0 ]
+		then
+			report_error "CMenu \"$CMenuRName\" captions aren't in the caption file!"
+		elif [ "$MATCHES" -gt 1 ] 
+		then
+			report_error "CMenu \"$CMenuRName\" captions has duplicated $((MATCHES-1)) times in the caption file!"
+		fi
 	done
 else
 	report_error "Caption file has not been generated, when it should have been!"
@@ -174,4 +180,3 @@ then
 else
 	report_error "$TEST_FAIL_COUNT failures detected! Patch the bugs!"
 fi
-exit
