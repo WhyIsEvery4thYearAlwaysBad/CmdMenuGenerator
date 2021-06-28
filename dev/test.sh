@@ -2,6 +2,7 @@
 # Tests the program to ensure it works properly. Text colored in red indicates that something has gone wrong, in case you haven't realized.
 # Script is POSIX-only for portability and enjoyment reasons.
 TEST_FAIL_COUNT=0 # Amount of tests failed.
+LAUNCH_OPS="${@}" # Launch options
 # Config
 EXEC="../cmg-x64"
 TEST_DIR="../tests"
@@ -13,21 +14,21 @@ report_error() {
 	printf "\033[1m\033[91m%s\033[0m%s\n" "${1?Cannot be blank}" "${2:+" (Code $2)"}"
 	TEST_FAIL_COUNT=$((TEST_FAIL_COUNT+1))
 }
-
 # Wrapper for the cmenu generator.
+# If --verbose or -v was passed, then allow generator output.
 exec_cmg() {
-	case "${@}" in
-	( *--verbose--* | *-v* ) $EXEC "${@}";;
+	case "$LAUNCH_OPS" in
+	( *--verbose* ) $EXEC "${@}";;
+	( *-v* ) $EXEC "${@}";;
 	( * ) $EXEC "${@}" > /dev/null;;
 	esac
 }
-
 # Script
 BINDIR=$(dirname "$(readlink -fn "$0")")
 cd "${BINDIR}" || exit
 
 # --help launch option.
-case "${@}" in
+case "$LAUNCH_OPS" in
 	*--help* ) printf "Launch Options:\n\t-h, --help	Displays this menu.\n\t-v, --verbose	Desilences generator output.\n"; exit ;;
 	*-h* ) printf "Launch Options:\n\t-h, --help	Displays this menu.\n\t-v, --verbose	Desilences generator output.\n"; exit ;;
 esac
@@ -165,7 +166,7 @@ then
 			report_error "CMenu \"$CMenuRName\" captions aren't in the caption file!"
 		elif [ "$MATCHES" -gt 1 ] 
 		then
-			report_error "CMenu \"$CMenuRName\" captions has duplicated $((MATCHES-1)) times in the caption file!"
+			report_error "CMenu \"$CMenuRName\" captions has duplicated $((MATCHES - 1)) time(s) in the caption file!"
 		fi
 	done
 else
