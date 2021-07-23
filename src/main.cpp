@@ -8,6 +8,8 @@
 #include <map>
 #include <cstdio>
 #include <locale>
+#include <thread>
+#include <chrono>
 #include "lex.hpp"
 #include "token.hpp"
 #include "commandmenu.hpp"
@@ -214,6 +216,8 @@ cmenu.exitmenu
 			CMenuCFG << "con_filter_enable 1\ncon_filter_text zzzzzzzzzzzzzzzzzzz\nalias _cmenu.exitmenu \"developer 0;con_filter_enable 0;clear\"";
 		else if (CMenu->Display != CMenuDisplayType::CONSOLE && (bUsedDisplayFlags & FL_DISPLAY_CONSOLE)) 
 			CMenuCFG << "con_filter_enable 0\ncon_filter_text \"\"\nalias _cmenu.exitmenu";
+		// Sleep for a bit.
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	}
 	// We're done compiling so close the file streams.
 	CMenuCaptionFile << "\t}\n}";

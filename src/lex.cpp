@@ -1,6 +1,8 @@
 #include <string>
 #include <algorithm>
 #include <deque>
+#include <thread>
+#include <chrono>
 #include "lex.hpp"
 #include "parser.hpp"
 #include "token.hpp"
@@ -187,6 +189,7 @@ namespace Lexer {
 					}
 					break;
 			}
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
 		}
 		TokenContainer.push_back(Token(iLineNum,p_sInStr.length()-1,TokenType::END_OF_FILE,""));
 		TokenContainer.back().sValue.shrink_to_fit();

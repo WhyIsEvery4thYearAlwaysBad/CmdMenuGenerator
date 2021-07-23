@@ -5,6 +5,8 @@
 #include <iomanip>
 #include <stack>
 #include <variant>
+#include <thread>
+#include <chrono>
 #include "parser.hpp"
 #include "lex.hpp"
 #include "token.hpp"
@@ -231,6 +233,7 @@ namespace Parser {
 					token++;
 				break;
 			}
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
 		}
 		if (!(fParserStateFlag & PARSER_STATE_EOF_FOUND)) std::cout<<"warning: EOF not found!\n";
 		if (ErrorTokens.size() >= 1) fParserStateFlag |= PARSER_STATE_ERRORS_FOUND;
