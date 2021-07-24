@@ -26,11 +26,13 @@ std::string formatRaw(std::string p_sInStr) {
 namespace Lexer {
 	// Convert string to token stream. Returns true if successful and false if an error occurs.
 	bool Tokenize(const std::string_view& p_sInStr) {
+		std::cout<<"Doing lexing!\n";
 		std::size_t iLineNum=1u;
 		std::size_t iLineColumn=1u;
 		bool bErrorsFound=false;
-		for (auto str_it = p_sInStr.begin(); str_it < p_sInStr.end(); )
+		for (auto str_it = p_sInStr.begin(); str_it < p_sInStr.end();)
 		{
+			if (std::distance(p_sInStr.begin(), str_it) % 100 == 0) std::this_thread::sleep_for(std::chrono::milliseconds(1));
 			if (TokenContainer.size()>0) TokenContainer.back().sValue.shrink_to_fit();
 			// Nonterminals / Identifiers
 			if (std::isalnum(*str_it) || *str_it == '_') {
@@ -189,7 +191,6 @@ namespace Lexer {
 					}
 					break;
 			}
-			std::this_thread::sleep_for(std::chrono::milliseconds(1));
 		}
 		TokenContainer.push_back(Token(iLineNum,p_sInStr.length()-1,TokenType::END_OF_FILE,""));
 		TokenContainer.back().sValue.shrink_to_fit();

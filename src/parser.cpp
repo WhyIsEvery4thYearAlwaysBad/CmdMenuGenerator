@@ -89,6 +89,7 @@ namespace Parser {
 	*/
 	
 	bool ParseTokens() {
+		std::cout<<"Doing parsing!\n";
 		// TODO: At some point convert the array into an actual parse tree. 
 		/* `fParserStateFlag` records the states of the parser. 
 			1st bit - PARSER_STATE_FORMATTED - Default: 1
@@ -101,7 +102,8 @@ namespace Parser {
 		int iCMenuDepth=0; // Records how nested is a CMenu.
 		// Check if there have already been errors and keep that in mind.
 		if (ErrorTokens.size()>=1) fParserStateFlag |= PARSER_STATE_ERRORS_FOUND;
-		for (auto token=TokenContainer.begin(); token!=TokenContainer.end(); ) {
+		for (auto token = TokenContainer.begin(); token != TokenContainer.end(); ) {
+			if (std::distance(TokenContainer.begin(), token) % 50 == 0) std::this_thread::sleep_for(std::chrono::milliseconds(1));
 			switch (token->Type) {
 				case TokenType::NOEXIT:
 					if (fParserStateFlag & PARSER_STATE_NOEXIT) ErrorTokens.push_back(Token(token->iLineNum,token->iLineColumn,TokenType::COMPILER_ERROR,"error: Duplicate modifier \"NOEXIT\"."));
@@ -233,7 +235,6 @@ namespace Parser {
 					token++;
 				break;
 			}
-			std::this_thread::sleep_for(std::chrono::milliseconds(1));
 		}
 		if (!(fParserStateFlag & PARSER_STATE_EOF_FOUND)) std::cout<<"warning: EOF not found!\n";
 		if (ErrorTokens.size() >= 1) fParserStateFlag |= PARSER_STATE_ERRORS_FOUND;
@@ -251,15 +252,19 @@ namespace Parser {
 	Returns true if conversion was successful. If not then it returns false.
 */
 bool ParseMenuTokens(unsigned long long& p_iBindCount, unsigned char& p_bUsedDisplayFlags, std::string& init_defined_code) {
+	std::cout<<"Doing menu token parsing!\n";
 	// Has there been an error? BAIL.
 	char t_bUsedDisplayFlags = p_bUsedDisplayFlags;
 	if (ErrorTokens.size()>=1) return false;
 	std::deque<CommandMenu> CMenuStack;
 	std::stack<unsigned char> NumKeyStack;
-	
+	//
+	std::multimap<std::size_t,std::string> CMenuNames;
 	// This variable is in the function scope instead of the switch-case scope, because the end cmenu tokens NEED to remember the attributes of their cmenus.
 	Parser::CMenuToken CurrentCMenu;
 	for (auto token = CMenuTokens.begin(); token != CMenuTokens.end(); token++) {
+		// Reduce CPU Usage by slowing down, but don't slow down too much.
+		if (std::distance(CMenuTokens.begin(), token) % 50 == 0) std::this_thread::sleep_for(std::chrono::milliseconds(1));
 		// Automatically resets the KEY KV to prevent other binds from being affected by it.
 		if (token != CMenuTokens.begin() && !std::holds_alternative<Parser::KVToken>(*(token - 1))) KVMap["KEY"]="";
 		if (!std::holds_alternative<Parser::KVToken>(*token)
@@ -289,29 +294,18 @@ bool ParseMenuTokens(unsigned long long& p_iBindCount, unsigned char& p_bUsedDis
 			//For binds to CMenuContainer.
 			CurrentCMenu = std::get<Parser::CMenuToken>(*token);
 			CurrentCMenu.sKey = KVMap["KEY"];
-			std::size_t iDuplicateNumber = 0llu;
-			// Form duplicates if formatted name is already taken.
-			if (CMenuStack.size() > 0) iDuplicateNumber += std::count_if(CMenuStack.rbegin(), CMenuStack.rend(), [&CurrentCMenu](const CommandMenu p){
-				return (formatRaw(p.sName) == formatRaw(CurrentCMenu.sName));
-			});
-			if (CMenuContainer.size() > 1) iDuplicateNumber += std::count_if(CMenuContainer.begin(), CMenuContainer.end(), [&CurrentCMenu](const CommandMenu p){
-				return (formatRaw(p.sName) == formatRaw(CurrentCMenu.sName));
-			});
-			else if (CMenuContainer.size() == 1) iDuplicateNumber += (formatRaw(CMenuContainer.front().sName) == formatRaw(CurrentCMenu.sName));
 			CMenuStack.push_front(CommandMenu(CurrentCMenu.sName));
-			if (iDuplicateNumber > 0) CMenuStack.front().sRawName+='_'+std::to_string(iDuplicateNumber);
+			CMenuNames.emplace(std::hash<std::string>{}(CMenuStack.front().sRawName), CMenuStack.front().sRawName);
+			if (CMenuNames.count(std::hash<std::string>{}(CMenuStack.front().sRawName)) > 1) 
+				CMenuStack.front().sRawName += '_' + std::to_string(CMenuNames.count(std::hash<std::string>{}(CMenuStack.front().sRawName)) - 1);
 			if (CMenuStack.size() > 1) {
 				if (CurrentCMenu.fAttribs & CMTOKATTRIB_BIND_KEYSET) {
-					if (iDuplicateNumber > 0)
-						(CMenuStack.begin()+1)->Entries.push_back(Bind(CurrentCMenu.sKey,Parser::BindToken(CurrentCMenu.sName,"exec $cmenu_"+formatRaw(CurrentCMenu.sName)+'_'+std::to_string(iDuplicateNumber),CurrentCMenu.fAttribs)));
-					else 
-						(CMenuStack.begin()+1)->Entries.push_back(Bind(CurrentCMenu.sKey,Parser::BindToken(CurrentCMenu.sName,"exec $cmenu_"+formatRaw(CurrentCMenu.sName),CurrentCMenu.fAttribs)));
+					(CMenuStack.begin()+1)->Entries.push_back(Bind(CurrentCMenu.sKey,Parser::BindToken(CurrentCMenu.sName,"exec $cmenu_"+CMenuStack.front().sRawName,CurrentCMenu.fAttribs)));
 					// Add the keyname to a list of used key names if it isn't already added.
 					if (std::none_of(UsedKeys.cbegin(),UsedKeys.cend(),[&CurrentCMenu](std::string_view s){ return s == CurrentCMenu.sKey; })) UsedKeys.push_back(CurrentCMenu.sKey);
 				}
 				else {
-					if (iDuplicateNumber>0) (CMenuStack.begin()+1)->Entries.push_back(Bind(std::to_string(NumKeyStack.top() % 10),Parser::BindToken(CurrentCMenu.sName,"exec $cmenu_"+formatRaw(CurrentCMenu.sName)+'_'+std::to_string(iDuplicateNumber),CurrentCMenu.fAttribs)));
-					else (CMenuStack.begin()+1)->Entries.push_back(Bind(std::to_string(NumKeyStack.top() % 10),Parser::BindToken(CurrentCMenu.sName,"exec $cmenu_"+formatRaw(CurrentCMenu.sName),CurrentCMenu.fAttribs)));
+					(CMenuStack.begin()+1)->Entries.push_back(Bind(std::to_string(NumKeyStack.top() % 10),Parser::BindToken(CurrentCMenu.sName,"exec $cmenu_"+CMenuStack.front().sRawName,CurrentCMenu.fAttribs)));
 				}
 			}
 			if (!(CurrentCMenu.fAttribs & CMTOKATTRIB_BIND_KEYSET) && !NumKeyStack.empty()) NumKeyStack.top()=(NumKeyStack.top()+1);
@@ -322,7 +316,7 @@ bool ParseMenuTokens(unsigned long long& p_iBindCount, unsigned char& p_bUsedDis
 		{
 			assert(CMenuStack.size() > 0);
 			// if there are more than 10 number-key binds, they will overlap
-			if (NumKeyStack.top()>11) std::cout<<"Warning: More than ten number-key binds in CMenu \'"<<CMenuStack.front().sName<<"\'. Some binds will overlap each other!\n";
+			if (NumKeyStack.top() > 11) std::cout<<"Warning: More than ten number-key binds in CMenu \'"<<CMenuStack.front().sName<<"\'. Some binds will overlap each other!\n";
 			CMenuContainer.push_back(CMenuStack.front());
 			CMenuStack.pop_front();
 			assert(!NumKeyStack.empty());
@@ -366,7 +360,7 @@ bool ParseMenuTokens(unsigned long long& p_iBindCount, unsigned char& p_bUsedDis
 			else if (!CMenuContainer.empty()) CMenuContainer.back().Entries.push_back(std::get<Parser::CodeToken>(*token).sValue);
 			else init_defined_code += std::get<Parser::CodeToken>(*token).sValue;
 		}
-		else std::cout << "ParseMenuTokens(): warning: std::variant has invalid type. Not parsing this variant.\n";
+		else std::cerr << "ParseMenuTokens(): error: std::variant has invalid type. Not parsing this variant.\n";
 	}
 	return true;
 }

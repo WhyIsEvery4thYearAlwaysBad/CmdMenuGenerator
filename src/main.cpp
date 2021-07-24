@@ -53,6 +53,7 @@ int main(int argc, char** argv) {
 		});
 		return -1;
 	}
+	std::cout<<"Doing file io!\n";
 	// Now start creating the neccessary CFG and Captions files for CMenus.
 	std::filesystem::create_directories(sOutputDir.string()+"/cfg");
 	// Main CFG file that initializes our CMenus.
@@ -86,6 +87,9 @@ cmenu.exitmenu
 	std::string CMenuCFGPath; // String path for each CMenu CFG.
 	unsigned long iToggleNumber = 0u;
 	for (auto CMenu = CMenuContainer.begin(); CMenu != CMenuContainer.end(); CMenu++) {
+		// Sleep for a bit.
+		if (std::distance(CMenuContainer.begin(), CMenu) % 50 == 0) std::this_thread::sleep_for(std::chrono::milliseconds(1));
+		// Get to work!
 		unsigned int iTBindSegmentNum=0u;
 		CMenuCFGPath=sOutputDir.string()+"/cfg/$cmenu_"+CMenu->sRawName+".cfg";
 		std::ofstream CMenuCFG(CMenuCFGPath);
@@ -216,8 +220,6 @@ cmenu.exitmenu
 			CMenuCFG << "con_filter_enable 1\ncon_filter_text zzzzzzzzzzzzzzzzzzz\nalias _cmenu.exitmenu \"developer 0;con_filter_enable 0;clear\"";
 		else if (CMenu->Display != CMenuDisplayType::CONSOLE && (bUsedDisplayFlags & FL_DISPLAY_CONSOLE)) 
 			CMenuCFG << "con_filter_enable 0\ncon_filter_text \"\"\nalias _cmenu.exitmenu";
-		// Sleep for a bit.
-		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	}
 	// We're done compiling so close the file streams.
 	CMenuCaptionFile << "\t}\n}";
