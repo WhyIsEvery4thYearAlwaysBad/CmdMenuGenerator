@@ -258,8 +258,8 @@ bool ParseMenuTokens(unsigned long long& p_iBindCount, unsigned char& p_bUsedDis
 	if (ErrorTokens.size()>=1) return false;
 	std::deque<CommandMenu> CMenuStack;
 	std::stack<unsigned char> NumKeyStack;
-	//
-	std::multimap<std::size_t,std::string> CMenuNames;
+	// Storage for cmenu raw names (no duplicate number).
+	std::multimap<std::size_t,std::string> CMenuRawNames;
 	// This variable is in the function scope instead of the switch-case scope, because the end cmenu tokens NEED to remember the attributes of their cmenus.
 	Parser::CMenuToken CurrentCMenu;
 	for (auto token = CMenuTokens.begin(); token != CMenuTokens.end(); token++) {
@@ -291,13 +291,14 @@ bool ParseMenuTokens(unsigned long long& p_iBindCount, unsigned char& p_bUsedDis
 		}
 		else if (std::holds_alternative<Parser::CMenuToken>(*token))
 		{
-			//For binds to CMenuContainer.
+			// For binds to CMenuContainer.
 			CurrentCMenu = std::get<Parser::CMenuToken>(*token);
 			CurrentCMenu.sKey = KVMap["KEY"];
 			CMenuStack.push_front(CommandMenu(CurrentCMenu.sName));
-			CMenuNames.emplace(std::hash<std::string>{}(CMenuStack.front().sRawName), CMenuStack.front().sRawName);
-			if (CMenuNames.count(std::hash<std::string>{}(CMenuStack.front().sRawName)) > 1) 
-				CMenuStack.front().sRawName += '_' + std::to_string(CMenuNames.count(std::hash<std::string>{}(CMenuStack.front().sRawName)) - 1);
+			// Append number to the cmenu's raw name if it has the same raw name as other cmenus.
+			CMenuRawNames.emplace(std::hash<std::string>{}(CMenuStack.front().sRawName), CMenuStack.front().sRawName);
+			if (CMenuRawNames.count(std::hash<std::string>{}(CMenuStack.front().sRawName)) > 1) 
+				CMenuStack.front().sRawName += '_' + std::to_string(CMenuRawNames.count(std::hash<std::string>{}(CMenuStack.front().sRawName)) - 1);
 			if (CMenuStack.size() > 1) {
 				if (CurrentCMenu.fAttribs & CMTOKATTRIB_BIND_KEYSET) {
 					(CMenuStack.begin()+1)->Entries.push_back(Bind(CurrentCMenu.sKey,Parser::BindToken(CurrentCMenu.sName,"exec $cmenu_"+CMenuStack.front().sRawName,CurrentCMenu.fAttribs)));
@@ -315,7 +316,7 @@ bool ParseMenuTokens(unsigned long long& p_iBindCount, unsigned char& p_bUsedDis
 		else if (std::holds_alternative<Parser::CMenuEndToken>(*token))
 		{
 			assert(CMenuStack.size() > 0);
-			// if there are more than 10 number-key binds, they will overlap
+			// If there are more than 10 number-key binds they will overlap each other.
 			if (NumKeyStack.top() > 11) std::cout<<"Warning: More than ten number-key binds in CMenu \'"<<CMenuStack.front().sName<<"\'. Some binds will overlap each other!\n";
 			CMenuContainer.push_back(CMenuStack.front());
 			CMenuStack.pop_front();
