@@ -26,7 +26,6 @@ std::string formatRaw(std::string p_sInStr) {
 namespace Lexer {
 	// Convert string to token stream. Returns true if successful and false if an error occurs.
 	bool Tokenize(const std::string_view& p_sInStr) {
-		std::cout<<"Doing lexing!\n";
 		std::size_t iLineNum=1u;
 		std::size_t iLineColumn=1u;
 		bool bErrorsFound=false;

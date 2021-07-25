@@ -53,7 +53,6 @@ int main(int argc, char** argv) {
 		});
 		return -1;
 	}
-	std::cout<<"Doing file io!\n";
 	// Now start creating the neccessary CFG and Captions files for CMenus.
 	std::filesystem::create_directories(sOutputDir.string()+"/cfg");
 	// Main CFG file that initializes our CMenus.

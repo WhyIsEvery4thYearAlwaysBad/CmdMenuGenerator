@@ -89,7 +89,6 @@ namespace Parser {
 	*/
 	
 	bool ParseTokens() {
-		std::cout<<"Doing parsing!\n";
 		// TODO: At some point convert the array into an actual parse tree. 
 		/* `fParserStateFlag` records the states of the parser. 
 			1st bit - PARSER_STATE_FORMATTED - Default: 1
@@ -252,7 +251,6 @@ namespace Parser {
 	Returns true if conversion was successful. If not then it returns false.
 */
 bool ParseMenuTokens(unsigned long long& p_iBindCount, unsigned char& p_bUsedDisplayFlags, std::string& init_defined_code) {
-	std::cout<<"Doing menu token parsing!\n";
 	// Has there been an error? BAIL.
 	char t_bUsedDisplayFlags = p_bUsedDisplayFlags;
 	if (ErrorTokens.size()>=1) return false;
