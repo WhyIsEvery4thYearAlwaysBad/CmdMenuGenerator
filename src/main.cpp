@@ -134,13 +134,17 @@ cmenu.exitmenu
 		// Get the last bind that exists in the current cmenu so we can properly add the ending quote in captions if there are any. We store it outside the for loop for efficiency.
 		auto last_bind = std::find_if(CMenu->Entries.rbegin(), CMenu->Entries.rend(), [](const std::variant<Bind, std::string>& v) constexpr -> bool { return std::holds_alternative<Bind>(v); });
 		// Write out the code for binds and stuff.
+		bool WroteCMenuCaption=false;
 		for (auto kBind = CMenu->Entries.begin(); kBind < CMenu->Entries.end(); kBind++) {
 			if (std::holds_alternative<Bind>(*kBind)) {
 				t_kBind = std::get<Bind>(*kBind);
 				if (CMenu->Display == CMenuDisplayType::CAPTIONS) {
-					// Show the cmenu.
-					if (kBind == CMenu->Entries.begin() && t_kBind.bToggleBind != true) 
+					// Write cmenu caption once IF the first bind is not a toggle bind.
+					auto first_bind = std::find_if(CMenu->Entries.begin(), CMenu->Entries.end(), [](const std::variant<Bind, std::string>& v) constexpr -> bool { return std::holds_alternative<Bind>(v); });
+					if (!WroteCMenuCaption && first_bind < CMenu->Entries.end() && std::get<Bind>(*first_bind).bToggleBind != true) {
+						WroteCMenuCaption = true;
 						CMenuCaptionFile<<convert.from_bytes("\t\t\"_#cmenu."+CMenu->sRawName+"\" \"");
+					}
 					// Show the toggle bind titles.
 					if (t_kBind.bToggleBind == true) {
 						InitRoutineFile << "alias _cmenu.toggle_"<<std::to_string(iToggleNumber) << " _cmenu.toggle_" << std::to_string(iToggleNumber) << "_0\n";
