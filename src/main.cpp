@@ -57,7 +57,8 @@ int main(int argc, char** argv) {
 	std::filesystem::create_directories(sOutputDir.string()+"/cfg");
 	// Main CFG file that initializes our CMenus.
 	std::ofstream InitRoutineFile(sOutputDir.string()+"/cfg/cmenu_initialize.cfg");	
-	if (bUsedDisplayFlags & FL_DISPLAY_CAPTION) InitRoutineFile<<"closecaption 1\ncc_lang commandmenu\nalias _cmenu.nullkeys \"";
+	if (bUsedDisplayFlags & FL_DISPLAY_CAPTION) InitRoutineFile<<"closecaption 1\ncc_lang commandmenu\n";
+	InitRoutineFile<<"alias _cmenu.nullkeys \"";
 	// Output the null keys alias.
 	std::for_each(UsedKeys.cbegin(), UsedKeys.cend(), 
 	[&InitRoutineFile](const std::string_view key){
