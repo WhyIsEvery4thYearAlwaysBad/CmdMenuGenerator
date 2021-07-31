@@ -1,9 +1,9 @@
 #ifndef COMMANDMENU_HPP
 #define COMMANDMENU_HPP
 #include <string>
-#include <vector>
 #include <variant>
-#include "compiler.hpp"
+#include <deque>
+#include "parser.hpp"
 #include "bind.hpp"
 
 enum class CMenuDisplayType {
@@ -14,7 +14,7 @@ enum class CMenuDisplayType {
 
 struct CommandMenu {
 	std::string sRawName, sName;
-	std::vector<std::variant<Bind, std::string> > Entries;
+	std::deque<std::variant<Bind, std::string> > Entries;
 	CMenuDisplayType Display;
 	CommandMenu();
 	CommandMenu(const std::string& p_sName);

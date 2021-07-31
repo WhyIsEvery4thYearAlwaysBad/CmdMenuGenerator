@@ -1,8 +1,10 @@
 #include <string>
 #include <algorithm>
 #include <deque>
+#include <thread>
+#include <chrono>
 #include "lex.hpp"
-#include "compiler.hpp"
+#include "parser.hpp"
 #include "token.hpp"
 
 extern std::deque<Token> ErrorTokens;
@@ -27,8 +29,9 @@ namespace Lexer {
 		std::size_t iLineNum=1u;
 		std::size_t iLineColumn=1u;
 		bool bErrorsFound=false;
-		for (auto str_it = p_sInStr.begin(); str_it < p_sInStr.end(); )
+		for (auto str_it = p_sInStr.begin(); str_it < p_sInStr.end();)
 		{
+			if (std::distance(p_sInStr.begin(), str_it) % 100 == 0) std::this_thread::sleep_for(std::chrono::milliseconds(1));
 			if (TokenContainer.size()>0) TokenContainer.back().sValue.shrink_to_fit();
 			// Nonterminals / Identifiers
 			if (std::isalnum(*str_it) || *str_it == '_') {
@@ -176,8 +179,15 @@ namespace Lexer {
 					str_it++;
 					break;
 				default:
-					if ((*str_it & 0xC0) != 0x80) TokenContainer.push_back(Token(iLineNum, iLineColumn++, TokenType::UNDEFINED, std::string(1, *str_it)));
-					str_it++;
+					if ((unsigned char)*str_it > 0x7F) {
+						auto multibye_char_end = std::find_if(str_it + 1, p_sInStr.cend(), [](const char& c){ return (c & 0xC0) != 0x80; });
+						TokenContainer.push_back(Token(iLineNum, iLineColumn++, TokenType::UNDEFINED, std::string(str_it, multibye_char_end)));
+						str_it = multibye_char_end;
+					}
+					else {
+						TokenContainer.push_back(Token(iLineNum, iLineColumn++, TokenType::UNDEFINED, std::string(1, *str_it)));
+						str_it++;
+					}
 					break;
 			}
 		}

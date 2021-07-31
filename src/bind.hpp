@@ -1,7 +1,7 @@
 #ifndef BINDS_HPP
 #define BINDS_HPP
 #include <vector>
-#include "compiler.hpp"
+#include "parser.hpp"
 class Bind {
 public:
 	bool bToggleBind=false;

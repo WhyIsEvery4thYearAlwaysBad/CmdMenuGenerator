@@ -8,10 +8,12 @@
 #include <map>
 #include <cstdio>
 #include <locale>
+#include <thread>
+#include <chrono>
 #include "lex.hpp"
 #include "token.hpp"
 #include "commandmenu.hpp"
-#include "compiler.hpp"
+#include "parser.hpp"
 #include "launchoptions.hpp"
 
 #define CMENU_KEY_ALIAS_LENGTH 9 /* length of "_cmenu.k_" */
@@ -30,8 +32,9 @@ std::vector<std::string> UsedKeys = {"0", "1", "2", "3", "4", "5", "6", "7", "8"
 extern std::filesystem::path InputFilePath;
 extern std::filesystem::path sOutputDir;
 int main(int argc, char** argv) {
-	// Evaluate launch options.
-	if (!EvaluateLaunchOptions(argc,argv)) return -1;
+	// Evaluate launch options. Exit program if ran with --help or launch options were invalid.
+	char Status = EvaluateLaunchOptions(argc, argv);
+	if (Status != 0) return -(Status < 0);
 	// Get content from input file.
 	std::string Line, InFileContent; 
 	std::ifstream inputf(InputFilePath,std::ios_base::binary);
@@ -39,7 +42,7 @@ int main(int argc, char** argv) {
 		InFileContent+=Line+'\n';
 	}
 	// If tokenization and parsing process failed then error out and return. Also get the compiled bind count.
-	unsigned short iBindCount=0u;
+	unsigned long long iBindCount=0u;
 	unsigned char bUsedDisplayFlags = 0; // Flag used to mark if and what display types were used.
 	std::string init_file_user_code = ""; // Code inserted via ``.
 	if (!Lexer::Tokenize(InFileContent) 
@@ -54,7 +57,8 @@ int main(int argc, char** argv) {
 	std::filesystem::create_directories(sOutputDir.string()+"/cfg");
 	// Main CFG file that initializes our CMenus.
 	std::ofstream InitRoutineFile(sOutputDir.string()+"/cfg/cmenu_initialize.cfg");	
-	InitRoutineFile<<"cc_lang commandmenu\nalias _cmenu.nullkeys \"";
+	if (bUsedDisplayFlags & FL_DISPLAY_CAPTION) InitRoutineFile<<"closecaption 1\ncc_lang commandmenu\n";
+	InitRoutineFile<<"alias _cmenu.nullkeys \"";
 	// Output the null keys alias.
 	std::for_each(UsedKeys.cbegin(), UsedKeys.cend(), 
 	[&InitRoutineFile](const std::string_view key){
@@ -83,6 +87,9 @@ cmenu.exitmenu
 	std::string CMenuCFGPath; // String path for each CMenu CFG.
 	unsigned long iToggleNumber = 0u;
 	for (auto CMenu = CMenuContainer.begin(); CMenu != CMenuContainer.end(); CMenu++) {
+		// Sleep for a bit.
+		if (std::distance(CMenuContainer.begin(), CMenu) % 50 == 0) std::this_thread::sleep_for(std::chrono::milliseconds(1));
+		// Get to work!
 		unsigned int iTBindSegmentNum=0u;
 		CMenuCFGPath=sOutputDir.string()+"/cfg/$cmenu_"+CMenu->sRawName+".cfg";
 		std::ofstream CMenuCFG(CMenuCFGPath);
@@ -128,13 +135,17 @@ cmenu.exitmenu
 		// Get the last bind that exists in the current cmenu so we can properly add the ending quote in captions if there are any. We store it outside the for loop for efficiency.
 		auto last_bind = std::find_if(CMenu->Entries.rbegin(), CMenu->Entries.rend(), [](const std::variant<Bind, std::string>& v) constexpr -> bool { return std::holds_alternative<Bind>(v); });
 		// Write out the code for binds and stuff.
+		bool WroteCMenuCaption=false;
 		for (auto kBind = CMenu->Entries.begin(); kBind < CMenu->Entries.end(); kBind++) {
 			if (std::holds_alternative<Bind>(*kBind)) {
 				t_kBind = std::get<Bind>(*kBind);
 				if (CMenu->Display == CMenuDisplayType::CAPTIONS) {
-					// Show the cmenu.
-					if (kBind == CMenu->Entries.begin() && t_kBind.bToggleBind != true) 
+					// Write cmenu caption once IF the first bind is not a toggle bind.
+					auto first_bind = std::find_if(CMenu->Entries.begin(), CMenu->Entries.end(), [](const std::variant<Bind, std::string>& v) constexpr -> bool { return std::holds_alternative<Bind>(v); });
+					if (!WroteCMenuCaption && first_bind < CMenu->Entries.end() && std::get<Bind>(*first_bind).bToggleBind != true) {
+						WroteCMenuCaption = true;
 						CMenuCaptionFile<<convert.from_bytes("\t\t\"_#cmenu."+CMenu->sRawName+"\" \"");
+					}
 					// Show the toggle bind titles.
 					if (t_kBind.bToggleBind == true) {
 						InitRoutineFile << "alias _cmenu.toggle_"<<std::to_string(iToggleNumber) << " _cmenu.toggle_" << std::to_string(iToggleNumber) << "_0\n";

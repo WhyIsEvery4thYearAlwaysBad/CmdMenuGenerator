@@ -1,5 +1,5 @@
 #include "bind.hpp"
-#include "compiler.hpp"
+#include "parser.hpp"
 #include "lex.hpp"
 #include <map>
 extern std::map<std::string,std::string> KVMap;

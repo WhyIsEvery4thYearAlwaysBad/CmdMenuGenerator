@@ -1,0 +1,9 @@
+KV1 = "KV1 val"
+display="caption"
+"[Misc Chat]" {
+	BIND "Bind 1" "" |
+	"[CMenu 1]" {
+		BIND "Bind 2" "stuff" |
+	}
+	TOGGLE BIND "Bind 3" "more stuff that shouldnt be in captions" "Bind 4" "too much stuf" |
+}

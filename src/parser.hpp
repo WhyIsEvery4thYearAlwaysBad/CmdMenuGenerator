@@ -25,7 +25,7 @@
 #define FL_DISPLAY_CAPTION (1<<2)
 
 // Summary in compiler.cpp definition.
-bool ParseMenuTokens(unsigned short& p_iBindCount, unsigned char& p_bUsedDisplayFlags, std::string& init_defined_code);
+bool ParseMenuTokens(unsigned long long& p_iBindCount, unsigned char& p_bUsedDisplayFlags, std::string& init_defined_code);
 namespace Parser {
 	struct MenuToken {
 		char fAttribs=0; // Attribute flag.

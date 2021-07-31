@@ -1,0 +1,3 @@
+// MetaInfo:KV missing string
+// error: error: Expected a '=' here.
+test =
