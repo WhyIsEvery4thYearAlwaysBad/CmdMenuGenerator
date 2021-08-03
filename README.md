@@ -3,7 +3,7 @@ A custom language made for efficient generation of custom recursive bind-voiceme
 
 If you are on a non-WinNT OS then use [Wine](https://www.winehq.org/) to run the generator, a Virtual Machine with Windows or the Bootcamp software that comes with MacOS (if Wine doesn't work), or just compile from the source code as this program does not use any OS specific code.
 
-NOTE: Non Windows users can get the needed captioncompiler.exe for a Source Game by forcing installation of the Windows version of the specified Source Game (through Properties > Compatibility).
+NOTE: Non-Windows users can get the needed captioncompiler.exe for a Source Game by forcing installation of the Windows version of the specified Source Game in Steam (through Properties > Compatibility). 
 
 ## "What is this?"
 
@@ -14,6 +14,7 @@ Voice menus can be replicated with binds to run *any* command rather than just v
 This program aims to automate the process of creating command menus, as they can take a long time to make if you have a lot of binds (like ≥20 binds) to make and want a display as well, so that you can focus most of your time on desiging a good command menu.
 
 ## "How do I use it?"
+Here's a quick and dirty tutorial.
 
 1. Download the generator through the "releases" tab. (You may have to scroll down to see it.)
 
@@ -26,7 +27,7 @@ This program aims to automate the process of creating command menus, as they can
 	
 	* If there is no custom folder, then go into "customvoicemenu" folder and move the cfg folder in it into `<base source game directory>/<mod directory>/cfg` (e.g `Team Fortress 2/tf/cfg`) and move the `customvoicemenu/resource/cap` into `<base source game directory>/<mod directory>/resource`.
 	
-	* If there is no "resource" folder, then prepend "consolemode=\"true\"" in the CMenu code.
+	* If there is no "resource" folder in the game folder, then prepend `display=console` in the CMenu code and do steps 3 and 4 again.
 
 5. Now create a CFG file in `<base source game directory>/<mod directory>/cfg` or `<base source game directory>/<mod directory>/custom/<name of choice>/cfg` and choose the file contents of your choosing.
 
