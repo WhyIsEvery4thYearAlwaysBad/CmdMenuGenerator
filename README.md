@@ -1,5 +1,5 @@
 # Command Menu Generator
-A programming language made for efficient generation of custom recursive bind-voicemenus for TF2, but may work for other games made in the Source Engine. Refer to the Introduction wiki for more information.
+A custom language made for efficient generation of custom recursive bind-voicemenus for TF2, but may work for other games made in the Source Engine. Refer to the Introduction wiki for more information.
 
 If you are on a non-WinNT OS then use [Wine](https://www.winehq.org/) to run the generator, a Virtual Machine with Windows or the Bootcamp software that comes with MacOS (if Wine doesn't work), or just compile from the source code as this program does not use any OS specific code.
 
