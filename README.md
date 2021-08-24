@@ -1,9 +1,9 @@
 # Command Menu Generator
-A custom language made for efficient generation of custom recursive bind-voicemenus for TF2, but may work for other games made in the Source Engine. Refer to the Introduction wiki for more information.
+A custom language made for efficient generation of custom recursively nested bind-voicemenus for TF2, but may work for other games made in the Source Engine. Refer to the Introduction wiki for more information.
 
 If you are on a non-WinNT OS then use [Wine](https://www.winehq.org/) to run the generator, a Virtual Machine with Windows or the Bootcamp software that comes with MacOS (if Wine doesn't work), or just compile from the source code as this program does not use any OS specific code.
 
-NOTE: Non-Windows users can get the needed captioncompiler.exe for a Source Game by forcing installation of the Windows version of the specified Source Game in Steam (through Properties > Compatibility). 
+NOTE: Non-Windows users can get the needed captioncompiler.exe for a Source Game by forcing installation of the Windows version of the specified Source Game in Steam (through Properties > Compatibility).
 
 ## "What is this?"
 
@@ -20,19 +20,19 @@ Here's a quick and dirty tutorial.
 
 2. Create a file with the contents being your choice. [You can use an example from this wiki.](https://github.com/WhyIsEvery4thYearAlwaysBad/CmdMenuGenerator/wiki/Examples) (If you're the section of text withCMenu code.)
 
-3. Drag the file you created onto the generator. The folder "customvoicemenu" should appear. 
+3. Drag the file you created onto the generator. The folder "customvoicemenu" should appear.
 	* You can also just run the generator from command line (like cmd.exe or any BASH terminal) if you want more customization.
 
-4. Drag the folder "customvoicemenu" into the folder path `<base source game directory>/<mod directory>/custom` (e.g `Team Fortress 2/tf/custom`). 
-	
+4. Drag the folder "customvoicemenu" into the folder path `<base source game directory>/<mod directory>/custom` (e.g `Team Fortress 2/tf/custom`).
+
 	* If there is no custom folder, then go into "customvoicemenu" folder and move the cfg folder in it into `<base source game directory>/<mod directory>/cfg` (e.g `Team Fortress 2/tf/cfg`) and move the `customvoicemenu/resource/cap` into `<base source game directory>/<mod directory>/resource`.
-	
+
 	* If there is no "resource" folder in the game folder, then prepend `display=console` in the CMenu code and do steps 3 and 4 again.
 
 5. Now create a CFG file in `<base source game directory>/<mod directory>/cfg` or `<base source game directory>/<mod directory>/custom/<name of choice>/cfg` and choose the file contents of your choosing.
 
 	* If you're using an [example](https://github.com/WhyIsEvery4thYearAlwaysBad/CmdMenuGenerator/wiki/Examples) then use the section of text with "CFG script code" above it.
-	
+
 6. Run the CFG script code and press the key you replaced "\<KEY\>" with. You should see some amount of text pop up. If you do see that, then you're done.
 
 [More information in the wiki.](https://github.com/WhyIsEvery4thYearAlwaysBad/CmdMenuGenerator/wiki/Compiletime-and-Runtime)
